@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { Plus, Users } from "lucide-react";
 import { Reveal } from "@/components/motion/reveal";
@@ -22,6 +22,7 @@ import {
 import { rankMembers, totalPointsForUser } from "@/lib/points";
 
 export default function AppHomePage() {
+  const router = useRouter();
   const { currentUser, state, createGroup, joinGroupByCode } = useApp();
   const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState("");
@@ -43,7 +44,7 @@ export default function AppHomePage() {
     const id = createGroup({ name, kind });
     setOpenCreate(false);
     setName("");
-    window.location.href = `/app/group/${id}`;
+    router.push(`/app/group/${id}`);
   }
 
   function onJoin(e: FormEvent) {
@@ -54,7 +55,7 @@ export default function AppHomePage() {
       return;
     }
     setJoinError("");
-    window.location.href = `/app/group/${id}`;
+    router.push(`/app/group/${id}`);
   }
 
   return (
@@ -75,9 +76,7 @@ export default function AppHomePage() {
       <Reveal delayMs={80} className="flex flex-wrap gap-3">
         <Dialog open={openCreate} onOpenChange={setOpenCreate}>
           <DialogTrigger
-            render={
-              <Button className="h-11 rounded-xl bg-[var(--brand-pop)] text-white hover:bg-[var(--brand-pop)]/90" />
-            }
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-pop)] px-3 text-sm font-medium text-white hover:bg-[var(--brand-pop)]/90"
           >
             <Plus className="size-4" />
             Crear grupo
@@ -171,9 +170,10 @@ export default function AppHomePage() {
                 : 0;
               return (
                 <Reveal key={group.id} delayMs={100 + index * 40}>
-                  <Link
-                    href={`/app/group/${group.id}`}
-                    className="surface-panel block rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/app/group/${group.id}`)}
+                    className="surface-panel block w-full cursor-pointer rounded-3xl p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -205,7 +205,7 @@ export default function AppHomePage() {
                         </span>
                       ) : null}
                     </div>
-                  </Link>
+                  </button>
                 </Reveal>
               );
             })}

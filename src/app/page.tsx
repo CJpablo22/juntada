@@ -56,9 +56,9 @@ export default function LandingPage() {
             <Reveal delayMs={200}>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Button
-                  render={<Link href="/enter" />}
                   size="lg"
                   className="h-12 rounded-2xl bg-[var(--brand-pop)] px-5 text-base text-white hover:bg-[var(--brand-pop)]/90"
+                  onClick={() => router.push("/enter")}
                 >
                   Empezar ahora
                   <ArrowRight data-icon="inline-end" />

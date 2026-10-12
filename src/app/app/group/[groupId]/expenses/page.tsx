@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
 import { Button } from "@/components/ui/button";
@@ -14,14 +14,20 @@ import { formatEuro, parseEuroToCents } from "@/lib/money";
 
 export default function ExpensesPage() {
   const params = useParams<{ groupId: string }>();
-  const { state, currentUser, addExpense } = useApp();
+  const { ready, state, currentUser, addExpense } = useApp();
   const group = state.groups.find((g) => g.id === params.groupId);
 
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [paidBy, setPaidBy] = useState(currentUser?.id ?? "");
-  const [split, setSplit] = useState<string[]>(group?.memberIds ?? []);
+  const [paidBy, setPaidBy] = useState("");
+  const [split, setSplit] = useState<string[]>([]);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!currentUser || !group) return;
+    setPaidBy((prev) => prev || currentUser.id);
+    setSplit((prev) => (prev.length ? prev : group.memberIds));
+  }, [currentUser, group]);
 
   const expenses = useMemo(
     () =>
@@ -40,7 +46,15 @@ export default function ExpensesPage() {
     [balances],
   );
 
-  if (!group || !currentUser) {
+  if (!ready || !currentUser) {
+    return (
+      <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
+        Cargando gastos…
+      </div>
+    );
+  }
+
+  if (!group) {
     return (
       <div className="surface-panel rounded-3xl p-6">
         Grupo no encontrado.{" "}

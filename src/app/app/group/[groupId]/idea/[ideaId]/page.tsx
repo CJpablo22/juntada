@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 export default function IdeaDetailPage() {
   const params = useParams<{ groupId: string; ideaId: string }>();
   const {
+    ready,
     state,
     currentUser,
     castVote,
@@ -51,7 +52,15 @@ export default function IdeaDetailPage() {
     return values.reduce((a, b) => a + b, 0) / values.length;
   }, [idea]);
 
-  if (!idea || !group || !currentUser) {
+  if (!ready || !currentUser) {
+    return (
+      <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
+        Cargando idea…
+      </div>
+    );
+  }
+
+  if (!idea || !group) {
     return (
       <div className="surface-panel rounded-3xl p-6">
         Idea no encontrada.{" "}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import {
   Copy,
@@ -45,7 +45,9 @@ const FILTERS: Array<"all" | IdeaType | "done"> = [
 
 export default function GroupPage() {
   const params = useParams<{ groupId: string }>();
+  const router = useRouter();
   const {
+    ready,
     state,
     currentUser,
     addIdea,
@@ -85,7 +87,15 @@ export default function GroupPage() {
     ? rankMembers(group.memberIds, state.points, group.id)
     : [];
 
-  if (!group || !currentUser) {
+  if (!ready || !currentUser) {
+    return (
+      <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
+        Cargando grupo…
+      </div>
+    );
+  }
+
+  if (!group) {
     return (
       <div className="surface-panel rounded-3xl p-6">
         Grupo no encontrado.{" "}
@@ -144,9 +154,9 @@ export default function GroupPage() {
               {copied ? "Copiado" : `Invite ${group.inviteCode}`}
             </Button>
             <Button
-              render={<Link href={`/app/group/${group.id}/expenses`} />}
               variant="outline"
               className="h-10 rounded-xl"
+              onClick={() => router.push(`/app/group/${group.id}/expenses`)}
             >
               <Wallet className="size-4" />
               Gastos
@@ -220,7 +230,7 @@ export default function GroupPage() {
               onSubmit={(data) => {
                 const id = addIdea({ groupId: group.id, ...data });
                 setOpenIdea(false);
-                window.location.href = `/app/group/${group.id}/idea/${id}`;
+                router.push(`/app/group/${group.id}/idea/${id}`);
               }}
             />
           </div>
@@ -239,10 +249,13 @@ export default function GroupPage() {
                 const myVote = idea.votes[currentUser.id];
                 return (
                   <Reveal key={idea.id} delayMs={40 + idx * 30}>
-                    <Link
-                      href={`/app/group/${group.id}/idea/${idea.id}`}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(`/app/group/${group.id}/idea/${idea.id}`)
+                      }
                       className={cn(
-                        "surface-panel block rounded-3xl p-4 transition hover:-translate-y-0.5 hover:shadow-md",
+                        "surface-panel block w-full rounded-3xl p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md",
                         idea.status === "chosen" &&
                           "ring-2 ring-[var(--brand-pop)]/50",
                       )}
@@ -288,7 +301,7 @@ export default function GroupPage() {
                               : `${voteCount} votos secretos`}
                         </span>
                       </div>
-                    </Link>
+                    </button>
                   </Reveal>
                 );
               })}
@@ -380,11 +393,7 @@ function NewIdeaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger
-        render={
-          <Button className="h-10 rounded-xl bg-[var(--brand-ink)] text-white" />
-        }
-      >
+      <DialogTrigger className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-ink)] px-3 text-sm font-medium text-white">
         <Plus className="size-4" />
         Proponer
       </DialogTrigger>
