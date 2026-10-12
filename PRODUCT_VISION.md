@@ -5,6 +5,45 @@ Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**
 
 Última actualización: 2026-10-12
 
+**Producto en construcción ahora:** solo el **#1** (planes en grupo privados).  
+Productos #2 (red social) y #3 (marketplace skills) quedan en backlog.
+
+**Nombre provisional de trabajo:** Juntada (final pendiente).
+
+---
+
+## 0. Estado de implementación (actualizar en cada iteración)
+
+### Hecho en el MVP web local
+- [x] Scaffold Next.js + TypeScript + Tailwind + shadcn/ui
+- [x] Persistencia local (`localStorage`) + seed demo (Lucía / Mateo / Sofía)
+- [x] Landing + entrar / crear usuario (ciudad + barrio)
+- [x] Grupos: crear, unirse por código, multi-grupo
+- [x] Ideas: peli / visitar / comer / plan + tags + dirección → Maps
+- [x] Voto secreto, revelar, “ahora no”, elegir plan
+- [x] Azar entre finalistas (top 3 / sin veto)
+- [x] Marcar hecho + rating + recuerdo
+- [x] Gastos EUR sueltos + saldos + “quién le debe a quién”
+- [x] Puntos + ranking + badges en grupo/perfil
+- [x] Diseño responsive con personalidad (no look genérico)
+- [x] README + vision doc vivos
+- [x] Preparado para crecer: `es-ES`, EUR, copy listo para i18n futuro / PWA-móvil
+
+### Falta / siguiente en el producto 1
+- [ ] Nombre final de la marca
+- [ ] Auth real + backend (hoy es demo local)
+- [ ] Gasto ligado a una idea desde UI (modelo ya lo permite)
+- [ ] Foto en recuerdos
+- [ ] Beneficio jugable real del #1 (romper empate con acción)
+- [ ] PWA / instalación móvil
+- [ ] Tests automatizados
+
+### Explícitamente futuro (no construir aún)
+- Red social / descubrimiento por intereses, estudios, cercanía
+- Ratings públicos comunitarios
+- Marketplace de skills (arreglar PC, etc.)
+- Chat, mapa embebido, IA, multi-moneda
+
 ---
 
 ## 1. Propuesta de valor (núcleo)
@@ -141,12 +180,12 @@ Idea general:
 **Nota de riesgo:** esto es casi otro producto (confianza, legal, pagos, seguridad). Mantenerlo en fase lejana.
 
 ### 4.5 Otras ideas aportadas en brainstorm
-- Veto suave / “ahora no”
 - Wishlist vs “este finde”
 - Digest semanal (planes, gastos, ranking)
-- Privacidad fuerte por grupo
+- Privacidad fuerte por grupo (cuando haya backend real)
 - Temporadas / badges temáticos
 - Álbum de recuerdos del grupo
+- Nota: “ahora no” (veto suave) ya entró al MVP web
 
 ---
 
@@ -164,13 +203,14 @@ Solo backlog futuro; no MVP:
 
 ## 6. Fases recomendadas
 
-### Fase 0 — Ahora (documento + definición)
-- Cerrar MVP
-- Definir pantallas y flujos
-- Elegir nombre después
+### Fase 0 — Definición
+- [x] Cerrar foco del MVP (producto 1)
+- [x] Definir pantallas y flujos base
+- [ ] Elegir nombre final
 
-### Fase 1 — MVP web (privado, útil, divertido)
+### Fase 1 — MVP web (privado, útil, divertido) — EN CURSO
 Grupos + ideas + votos secretos + azar + hechos/ratings + Maps link + gastos EUR + puntos básicos.
+Estado: **slice usable en local** (ver sección 0).
 
 ### Fase 2 — Más juego y retención
 Mood, ritual semanal, import links, mejor historial, PWA, más badges.
@@ -191,14 +231,15 @@ Oferta/demanda de skills, reputación por ámbito, cercanía, confianza.
 
 ---
 
-## 8. Pendientes de decisión (cuando volvamos a construir)
+## 8. Pendientes de decisión
 
-- [ ] Nombre de la app
-- [ ] Stack / scaffold del MVP web
-- [ ] Lista exacta de pantallas del MVP
-- [ ] Reglas finales de puntos y badges
-- [ ] Si la foto en recuerdos entra en MVP o fase 2
-- [ ] Copy base ES-ES + pinceladas AR
+- [ ] Nombre final de la app (hoy: Juntada provisional)
+- [x] Stack / scaffold del MVP web (Next.js)
+- [x] Pantallas base del MVP
+- [x] Reglas iniciales de puntos y badges (iterables)
+- [ ] Si la foto en recuerdos entra ya o en fase 2
+- [x] Copy base ES con pinceladas AR (seguir puliendo)
+- [ ] Cuándo pasar de localStorage a backend real
 
 ---
 
@@ -208,4 +249,4 @@ Cuando el usuario pida:
 
 > “hazme un resumen de ideas aplicadas hasta ahora e ideas que dejamos para futuro”
 
-Responder desde las secciones **3 (MVP / aplicadas)** y **4–5 (futuro)**, actualizando este archivo si hubo cambios.
+Responder desde **sección 0 (estado)**, **3 (MVP)** y **4–5 (futuro)**, y actualizar este archivo si hubo cambios.
