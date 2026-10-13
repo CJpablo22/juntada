@@ -113,9 +113,9 @@ try {
   const countryOnly = await page.locator('text=/España/i').count();
   const noStreet = await page.locator('text=/Espíritu Santo/i').count();
   ok('other group hides street', countryOnly > 0 && noStreet === 0, `country=${countryOnly} street=${noStreet}`);
-  await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/ux_group_next_step.png', fullPage: true });
+  await page.screenshot({ path: '/tmp/computer-use/ux_group_next_step.png', fullPage: true });
   await page.goto(base + '/app', { waitUntil: 'networkidle' });
-  await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/ux_home_clear.png', fullPage: true });
+  await page.screenshot({ path: '/tmp/computer-use/ux_home_clear.png', fullPage: true });
 } catch (e) {
   ok('exception', false, String(e));
   await page.screenshot({ path: '/tmp/computer-use/playwright-error.png', fullPage: true });

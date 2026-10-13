@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ArrowRight, Copy, MapPin, Plus, Wallet } from "lucide-react";
 import { LotteryButton } from "@/components/ideas/lottery-button";
-import { FlowSteps } from "@/components/shell/flow-steps";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -164,10 +163,10 @@ export default function GroupPage() {
         }
       : soonCount > 0
         ? {
-            title: `${soonCount} idea${soonCount === 1 ? "" : "s"} en Pronto`,
-            action: "Ver Pronto",
+            title: "Ya pueden decidir",
+            action: "Ir a Pronto",
             onClick: () => setShelf("soon"),
-            hint: "Pueden votar o tirar el azar para elegir.",
+            hint: "Revelen votos, elijan un plan o tiren el azar.",
           }
         : catalogCount > 0
           ? {
@@ -278,32 +277,33 @@ export default function GroupPage() {
         </div>
       </div>
 
-      <FlowSteps active={shelf === "soon" || chosen ? 3 : 2} />
 
-      <section className="surface-panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
-            Siguiente paso
-          </p>
-          <p className="mt-1 font-semibold text-[var(--ink)]">{nextStep.title}</p>
-          <p className="mt-1 text-sm text-[var(--mute)]">{nextStep.hint}</p>
-        </div>
-        {"href" in nextStep && nextStep.href ? (
-          <Link href={nextStep.href} className="btn-primary shrink-0">
-            {nextStep.action}
-            <ArrowRight className="size-4" />
-          </Link>
-        ) : (
-          <button
-            type="button"
-            className="btn-primary shrink-0"
-            onClick={nextStep.onClick}
-          >
-            {nextStep.action}
-            <ArrowRight className="size-4" />
-          </button>
-        )}
-      </section>
+      {nextStep ? (
+        <section className="surface-panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+              Siguiente paso
+            </p>
+            <p className="mt-1 font-semibold text-[var(--ink)]">{nextStep.title}</p>
+            <p className="mt-1 text-sm text-[var(--mute)]">{nextStep.hint}</p>
+          </div>
+          {"href" in nextStep && nextStep.href ? (
+            <Link href={nextStep.href} className="btn-primary shrink-0">
+              {nextStep.action}
+              <ArrowRight className="size-4" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="btn-primary shrink-0"
+              onClick={nextStep.onClick}
+            >
+              {nextStep.action}
+              <ArrowRight className="size-4" />
+            </button>
+          )}
+        </section>
+      ) : null}
 
       <section className="grid gap-2 sm:grid-cols-3">
         {(
