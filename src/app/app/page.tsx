@@ -2,8 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
-import { Plus, Users } from "lucide-react";
-import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +37,14 @@ export default function AppHomePage() {
     [state.groups, currentUser],
   );
 
+  const theme = currentUser
+    ? resolveRegionTheme({
+        country: currentUser.country,
+        province: currentUser.province,
+        city: currentUser.city,
+      })
+    : null;
+
   function onCreate(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
@@ -61,63 +67,46 @@ export default function AppHomePage() {
 
   return (
     <main className="space-y-8">
-      <Reveal>
-        <p className="text-sm font-medium text-[var(--brand-mute)]">
+      <div>
+        <p className="text-sm text-[var(--mute)]">
           Hola, {currentUser?.name}
+          {theme ? ` · ${theme.label}` : ""}
         </p>
-        <h1 className="type-display mt-1 text-3xl font-bold text-[var(--brand-ink)] sm:text-4xl">
-          ¿Qué hacemos?
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-[var(--ink)]">
+          Tus grupos
         </h1>
-        <p className="mt-2 max-w-xl text-[var(--brand-mute)]">
-          Entrá a un grupo, guardá en el catálogo o decidí en Pronto. El look
-          se adapta a tu ciudad.
+        <p className="mt-2 max-w-lg text-[var(--mute)]">
+          Entrá a uno, armá el catálogo o decidí en Pronto.
         </p>
-        {currentUser ? (
-          <p className="region-chip mt-3">
-            Look{" "}
-            {
-              resolveRegionTheme({
-                country: currentUser.country,
-                province: currentUser.province,
-                city: currentUser.city,
-              }).label
-            }
-          </p>
-        ) : null}
-      </Reveal>
+      </div>
 
-      <Reveal delayMs={80} className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2">
         <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-          <DialogTrigger
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-pop)] px-3 text-sm font-medium text-white hover:bg-[var(--brand-pop)]/90"
-          >
-            <Plus className="size-4" />
+          <DialogTrigger className="btn-primary">
             Crear grupo
           </DialogTrigger>
-          <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="type-display text-2xl">
-                Nuevo grupo
-              </DialogTitle>
+              <DialogTitle>Nuevo grupo</DialogTitle>
             </DialogHeader>
             <form onSubmit={onCreate} className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="gname">Nombre</Label>
                 <Input
                   id="gname"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ej. Nosotros dos"
-                  className="h-11 rounded-xl"
+                  className="field-input"
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="gkind">Tipo</Label>
                 <select
                   id="gkind"
                   value={kind}
                   onChange={(e) => setKind(e.target.value as GroupKind)}
-                  className="h-11 w-full rounded-xl border border-[var(--brand-line)] bg-white px-3 text-sm"
+                  className="field-select"
                 >
                   {Object.entries(GROUP_KIND_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -128,7 +117,7 @@ export default function AppHomePage() {
               </div>
               <Button
                 type="submit"
-                className="h-11 w-full rounded-xl bg-[var(--brand-ink)]"
+                className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
               >
                 Crear
               </Button>
@@ -141,32 +130,25 @@ export default function AppHomePage() {
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
             placeholder="Código invite"
-            className="h-11 rounded-xl uppercase tracking-wider"
+            className="field-input uppercase tracking-wider"
           />
-          <Button
-            type="submit"
-            variant="outline"
-            className="h-11 rounded-xl border-[var(--brand-ink)]/20"
-          >
+          <Button type="submit" variant="outline" className="h-10 border-[var(--line)]">
             Unirme
           </Button>
         </form>
-      </Reveal>
+      </div>
       {joinError ? (
-        <p className="text-sm text-[var(--brand-pop)]">{joinError}</p>
+        <p className="text-sm text-[var(--pop)]">{joinError}</p>
       ) : null}
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--brand-mute)]">
-          Tus grupos
-        </h2>
+      <section className="space-y-2">
         {myGroups.length === 0 ? (
-          <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
+          <div className="surface-panel p-5 text-[var(--mute)]">
             Todavía no estás en ningún grupo. Creá uno o pedí un código.
           </div>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {myGroups.map((group, index) => {
+          <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+            {myGroups.map((group) => {
               const pending = state.ideas.filter(
                 (i) =>
                   i.groupId === group.id &&
@@ -182,44 +164,33 @@ export default function AppHomePage() {
                 ? totalPointsForUser(state.points, currentUser.id, group.id)
                 : 0;
               return (
-                <Reveal key={group.id} delayMs={100 + index * 40}>
+                <li key={group.id}>
                   <button
                     type="button"
                     onClick={() => router.push(`/app/group/${group.id}`)}
-                    className="surface-panel block w-full cursor-pointer rounded-3xl p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg"
+                    className="flex w-full items-start justify-between gap-4 py-4 text-left hover:bg-white/60"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="type-display text-xl font-semibold text-[var(--brand-ink)]">
-                          {group.name}
-                        </p>
-                        <p className="mt-1 text-sm text-[var(--brand-mute)]">
-                          {GROUP_KIND_LABELS[group.kind]} ·{" "}
-                          {group.memberIds.length} personas
-                        </p>
-                      </div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-ink)]/5 px-2.5 py-1 text-xs font-medium text-[var(--brand-ink)]">
-                        <Users className="size-3.5" />
-                        {pending} pendientes
-                      </span>
+                    <div>
+                      <p className="text-lg font-semibold text-[var(--ink)]">
+                        {group.name}
+                      </p>
+                      <p className="mt-0.5 text-sm text-[var(--mute)]">
+                        {GROUP_KIND_LABELS[group.kind]} ·{" "}
+                        {group.memberIds.length} personas · {pending} pendientes
+                      </p>
                     </div>
-                    <div className="mt-4 flex items-center justify-between text-sm">
-                      <span className="text-[var(--brand-mute)]">
-                        Tus puntos:{" "}
-                        <strong className="text-[var(--brand-ink)]">
-                          {myPts}
-                        </strong>
-                      </span>
+                    <div className="shrink-0 text-right text-sm">
+                      <p className="font-semibold text-[var(--ink)]">{myPts} pts</p>
                       {top ? (
-                        <span className="text-[var(--brand-pop)]">
-                          #1:{" "}
+                        <p className="mt-0.5 text-[var(--mute)]">
+                          #1{" "}
                           {state.users.find((u) => u.id === top.userId)?.name ??
                             "—"}
-                        </span>
+                        </p>
                       ) : null}
                     </div>
                   </button>
-                </Reveal>
+                </li>
               );
             })}
           </ul>

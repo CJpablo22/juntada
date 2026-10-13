@@ -18,11 +18,11 @@ Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, va
 - **Descubrir**: opiniones públicas abiertas
 - Gastos del grupo y saldos (EUR)
 - Puntos + badges por grupo
-- Look tradicional adaptativo (tipografía, colores, fondos, botones) por provincia
+- Look regional sobrio (acentos de color por provincia)
 - País / provincia / ciudad / barrio solo desde listas reales
-- Dirección completa privada; en grupo podés compartir barrio o exacta
+- Privacidad de ubicación **por grupo**: solo país, provincia, barrio o dirección completa
 - Amigos de experiencia (solo si completaron algo juntos)
-- Diseño responsive, tono divertido ES con toque rioplatense
+- Diseño responsive, tono cercano ES con toque rioplatense
 
 ## Stack
 

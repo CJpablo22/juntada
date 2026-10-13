@@ -4,22 +4,29 @@ export type IdeaStatus = "pending" | "chosen" | "done" | "archived";
 export type IdeaTiming = "catalog" | "soon";
 export type GroupKind = "couple" | "friends" | "siblings" | "study" | "other";
 export type AuthProvider = "demo" | "email" | "phone" | "apple";
-export type AddressDetailLevel = "neighborhood" | "exact";
+
+/** Qué ven los miembros de UN grupo concreto sobre tu ubicación */
+export type GroupLocationVisibility =
+  | "country"
+  | "province"
+  | "neighborhood"
+  | "exact";
 
 export type User = {
   id: string;
   name: string;
-  /** ISO-ish country code: ES, AR, … */
   country: string;
   province: string;
   city: string;
   neighborhood?: string;
-  /** Calle y número — solo para recomendaciones; privacidad controlada */
+  /** Calle y número — para recomendaciones; se revela solo si el grupo tiene nivel "exact" */
   addressLine?: string;
   postalCode?: string;
-  /** Si true, los miembros de tus grupos pueden ver barrio o dirección según detailLevel */
-  shareAddressInGroups: boolean;
-  addressDetailLevel: AddressDetailLevel;
+  /**
+   * Privacidad por grupo: groupId → nivel visible.
+   * Si falta la clave, por defecto "province".
+   */
+  groupLocationVisibility: Record<string, GroupLocationVisibility>;
   email?: string;
   phone?: string;
   authProvider: AuthProvider;
@@ -47,7 +54,6 @@ export type Idea = {
   status: IdeaStatus;
   timing: IdeaTiming;
   tags: string[];
-  /** userId -> score 1-5, hidden until revealed (solo aplica a "soon") */
   votes: Record<string, number>;
   revealed: boolean;
   softVetoUserIds: string[];
@@ -62,7 +68,6 @@ export type Review = {
   userId: string;
   rating: number;
   comment: string;
-  /** Visible en el catálogo público para gente de fuera del grupo */
   publicVisible: boolean;
   createdAt: string;
 };
@@ -116,4 +121,14 @@ export const GROUP_KIND_LABELS: Record<GroupKind, string> = {
   siblings: "Hermanos",
   study: "Estudio",
   other: "Otro",
+};
+
+export const GROUP_LOCATION_VISIBILITY_LABELS: Record<
+  GroupLocationVisibility,
+  string
+> = {
+  country: "Solo país",
+  province: "Solo provincia",
+  neighborhood: "Barrio",
+  exact: "Dirección completa",
 };

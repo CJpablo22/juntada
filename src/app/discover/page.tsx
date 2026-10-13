@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Logo } from "@/components/brand/logo";
-import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
-import { Badge } from "@/components/ui/badge";
 import { IDEA_TYPE_LABELS, type IdeaType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -38,35 +36,30 @@ export default function DiscoverPage() {
         <Link href="/">
           <Logo />
         </Link>
-        <Link
-          href="/enter"
-          className="text-sm font-medium text-[var(--brand-ink)]"
-        >
+        <Link href="/enter" className="text-sm font-semibold underline decoration-[var(--pop)] underline-offset-4">
           Entrar
         </Link>
       </div>
 
-      <Reveal className="mt-10">
-        <p className="text-sm font-medium text-[var(--brand-mute)]">
-          Abierto para todo el mundo
-        </p>
-        <h1 className="type-display mt-1 text-3xl font-bold text-[var(--brand-ink)] sm:text-4xl">
+      <div className="mt-10">
+        <p className="text-sm text-[var(--mute)]">Abierto para todo el mundo</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-[var(--ink)]">
           Descubrir
         </h1>
-        <p className="mt-2 max-w-xl text-[var(--brand-mute)]">
-          Pelis, series, sitios y planes que la gente ya hizo — con valoración y
-          comentarios públicos. Ideal si estás pensando “¿vale la pena?”.
+        <p className="mt-2 max-w-xl text-[var(--mute)]">
+          Pelis, sitios y planes que la gente ya hizo — con valoración y
+          comentarios públicos.
         </p>
-      </Reveal>
+      </div>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        <FilterChip
+      <div className="mt-6 flex flex-wrap gap-3 text-sm">
+        <FilterLink
           active={type === "all"}
           onClick={() => setType("all")}
           label="Todo"
         />
         {(Object.keys(IDEA_TYPE_LABELS) as IdeaType[]).map((t) => (
-          <FilterChip
+          <FilterLink
             key={t}
             active={type === t}
             onClick={() => setType(t)}
@@ -76,44 +69,44 @@ export default function DiscoverPage() {
       </div>
 
       {!ready ? (
-        <p className="mt-8 text-[var(--brand-mute)]">Cargando…</p>
+        <p className="mt-8 text-[var(--mute)]">Cargando…</p>
       ) : entries.length === 0 ? (
-        <div className="surface-panel mt-8 rounded-3xl p-6 text-[var(--brand-mute)]">
+        <div className="surface-panel mt-8 p-5 text-[var(--mute)]">
           Todavía no hay valoraciones públicas. Cuando marques algo como hecho y
           lo publiques, aparece acá.
         </div>
       ) : (
-        <ul className="mt-8 space-y-3">
-          {entries.map((row, idx) => {
+        <ul className="mt-8 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+          {entries.map((row) => {
             if (!row) return null;
             return (
-              <Reveal key={row.idea.id} delayMs={40 + idx * 30}>
+              <li key={row.idea.id}>
                 <Link
                   href={`/discover/${row.idea.id}`}
-                  className="surface-panel block rounded-3xl p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="block py-4 hover:bg-white/50"
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">
+                  <div className="flex flex-wrap items-baseline gap-2 text-sm">
+                    <span className="text-[var(--mute)]">
                       {IDEA_TYPE_LABELS[row.idea.type]}
-                    </Badge>
-                    <span className="text-sm font-semibold text-[var(--brand-pop)]">
+                    </span>
+                    <span className="font-semibold text-[var(--pop)]">
                       {row.avg.toFixed(1)}/5
                     </span>
-                    <span className="text-xs text-[var(--brand-mute)]">
+                    <span className="text-xs text-[var(--mute)]">
                       {row.reviews.length}{" "}
                       {row.reviews.length === 1 ? "opinión" : "opiniones"}
                     </span>
                   </div>
-                  <p className="type-display mt-2 text-2xl font-semibold text-[var(--brand-ink)]">
+                  <p className="mt-1 text-xl font-semibold text-[var(--ink)]">
                     {row.idea.title}
                   </p>
                   {row.reviews[0]?.comment ? (
-                    <p className="mt-2 line-clamp-2 text-sm text-[var(--brand-mute)]">
+                    <p className="mt-1 line-clamp-2 text-sm text-[var(--mute)]">
                       “{row.reviews[0].comment}”
                     </p>
                   ) : null}
                 </Link>
-              </Reveal>
+              </li>
             );
           })}
         </ul>
@@ -122,7 +115,7 @@ export default function DiscoverPage() {
   );
 }
 
-function FilterChip({
+function FilterLink({
   active,
   onClick,
   label,
@@ -136,10 +129,10 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full px-3 py-1.5 text-xs font-semibold transition",
+        "underline-offset-2",
         active
-          ? "bg-[var(--brand-ink)] text-white"
-          : "bg-white/70 text-[var(--brand-mute)]",
+          ? "font-semibold text-[var(--ink)] underline"
+          : "text-[var(--mute)]",
       )}
     >
       {label}

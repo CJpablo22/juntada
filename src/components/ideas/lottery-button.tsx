@@ -33,7 +33,7 @@ export function LotteryButton({
         disabled={disabled || spinning}
         onClick={handleClick}
         className={cn(
-          "h-12 w-full gap-2 rounded-2xl bg-[var(--brand-ink)] text-[var(--brand-foam)] hover:bg-[var(--brand-ink)]/90",
+          "h-11 w-full gap-2 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90",
           spinning && "animate-shake",
         )}
       >
@@ -41,7 +41,7 @@ export function LotteryButton({
         {spinning ? "Sorteando…" : "Que decida el azar"}
       </Button>
       {result && !spinning ? (
-        <p className="animate-rise text-center text-sm text-[var(--brand-mute)]">
+        <p className="animate-rise text-center text-sm text-[var(--mute)]">
           Listo: hay un plan elegido. Mirá el destacadito.
         </p>
       ) : null}

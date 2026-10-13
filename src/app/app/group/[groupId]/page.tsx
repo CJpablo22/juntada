@@ -3,15 +3,8 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
-import {
-  Copy,
-  MapPin,
-  Plus,
-  Sparkles,
-  Wallet,
-} from "lucide-react";
+import { Copy, MapPin, Plus, Wallet } from "lucide-react";
 import { LotteryButton } from "@/components/ideas/lottery-button";
-import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,18 +106,14 @@ export default function GroupPage() {
     : [];
 
   if (!ready || !currentUser) {
-    return (
-      <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
-        Cargando grupo…
-      </div>
-    );
+    return <div className="p-6 text-[var(--mute)]">Cargando grupo…</div>;
   }
 
   if (!group) {
     return (
-      <div className="surface-panel rounded-3xl p-6">
+      <div className="surface-panel p-5">
         Grupo no encontrado.{" "}
-        <Link href="/app" className="text-[var(--brand-pop)] underline">
+        <Link href="/app" className="font-semibold text-[var(--pop)] underline">
           Volver
         </Link>
       </div>
@@ -141,82 +130,79 @@ export default function GroupPage() {
 
   return (
     <main className="space-y-8">
-      <Reveal>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm text-[var(--brand-mute)]">
-              {GROUP_KIND_LABELS[group.kind]}
-            </p>
-            <h1 className="type-display text-3xl font-bold text-[var(--brand-ink)] sm:text-4xl">
-              {group.name}
-            </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {members.map((m) => {
-                if (!m) return null;
-                const visible = getVisibleLocationForViewer(m, {
-                  inSharedGroup: true,
-                });
-                return (
-                  <span
-                    key={m.id}
-                    className="inline-flex max-w-full items-center gap-1.5 border border-[var(--brand-line)] bg-white/70 px-2 py-1 text-xs"
-                    style={{ borderRadius: "var(--btn-radius)" }}
-                    title={visible.detail ?? "Ubicación pública del grupo"}
-                  >
-                    <UserAvatar user={m} size="sm" className="size-5 text-[10px]" />
-                    <span className="truncate">
-                      {m.name}
-                      <span className="text-[var(--brand-mute)]">
-                        {" "}
-                        · {visible.label}
-                      </span>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-[var(--mute)]">
+            {GROUP_KIND_LABELS[group.kind]}
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-[var(--ink)]">
+            {group.name}
+          </h1>
+          <ul className="mt-4 space-y-2">
+            {members.map((m) => {
+              if (!m) return null;
+              const visible = getVisibleLocationForViewer(m, {
+                inSharedGroup: true,
+                groupId: group.id,
+              });
+              return (
+                <li
+                  key={m.id}
+                  className="flex items-center gap-2 text-sm"
+                  title={visible.detail}
+                >
+                  <UserAvatar user={m} size="sm" className="size-6 text-[10px]" />
+                  <span>
+                    <span className="font-medium">{m.name}</span>
+                    <span className="text-[var(--mute)]">
+                      {" "}
+                      · {visible.label}
                     </span>
                   </span>
-                );
-              })}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              className="h-10 rounded-xl"
-              onClick={copyInvite}
-            >
-              <Copy className="size-4" />
-              {copied ? "Copiado" : `Invite ${group.inviteCode}`}
-            </Button>
-            <Button
-              variant="outline"
-              className="h-10 rounded-xl"
-              onClick={() => router.push(`/app/group/${group.id}/expenses`)}
-            >
-              <Wallet className="size-4" />
-              Gastos
-            </Button>
-          </div>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-xs text-[var(--mute)]">
+            Qué ven de vos se elige en{" "}
+            <Link href="/app/profile" className="underline">
+              Perfil → Qué ven en cada grupo
+            </Link>
+            .
+          </p>
         </div>
-      </Reveal>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="h-10 border-[var(--line)]" onClick={copyInvite}>
+            <Copy className="size-4" />
+            {copied ? "Copiado" : `Invite ${group.inviteCode}`}
+          </Button>
+          <Button
+            variant="outline"
+            className="h-10 border-[var(--line)]"
+            onClick={() => router.push(`/app/group/${group.id}/expenses`)}
+          >
+            <Wallet className="size-4" />
+            Gastos
+          </Button>
+        </div>
+      </div>
 
-      <Reveal delayMs={70} className="surface-panel rounded-3xl p-5">
-        <div className="flex items-center gap-2 text-[var(--brand-ink)]">
-          <Sparkles className="size-4 text-[var(--brand-sun)]" />
-          <p className="type-display text-xl font-semibold">¿Qué hacemos?</p>
-        </div>
+      <section className="surface-panel p-4">
+        <p className="font-semibold text-[var(--ink)]">¿Qué hacemos?</p>
         {chosen ? (
-          <p className="mt-2 text-sm text-[var(--brand-mute)]">
+          <p className="mt-2 text-sm text-[var(--mute)]">
             Ahora mismo suena fuerte:{" "}
             <Link
               href={`/app/group/${group.id}/idea/${chosen.id}`}
-              className="font-semibold text-[var(--brand-pop)]"
+              className="font-semibold text-[var(--pop)]"
             >
               {chosen.title}
             </Link>
           </p>
         ) : (
-          <p className="mt-2 text-sm text-[var(--brand-mute)]">
-            El azar solo mira la bandeja <strong>Pronto</strong> (
-            {soonCount}). El <strong>Catálogo</strong> ({catalogCount}) es para
-            no olvidar.
+          <p className="mt-2 text-sm text-[var(--mute)]">
+            El azar solo mira <strong>Pronto</strong> ({soonCount}). El{" "}
+            <strong>Catálogo</strong> ({catalogCount}) es para no olvidar.
           </p>
         )}
         <div className="mt-4 max-w-md">
@@ -233,22 +219,22 @@ export default function GroupPage() {
             }
           />
         </div>
-      </Reveal>
+      </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <section className="grid gap-8 lg:grid-cols-[1.55fr_1fr]">
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] pb-3">
+            <div className="flex flex-wrap gap-1">
               {SHELVES.map((f) => (
                 <button
                   key={f.id}
                   type="button"
                   onClick={() => setShelf(f.id)}
                   className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-semibold transition",
+                    "px-3 py-1.5 text-sm font-semibold",
                     shelf === f.id
-                      ? "bg-[var(--brand-ink)] text-white"
-                      : "bg-white/70 text-[var(--brand-mute)] hover:text-[var(--brand-ink)]",
+                      ? "border-b-2 border-[var(--ink)] text-[var(--ink)]"
+                      : "text-[var(--mute)]",
                   )}
                 >
                   {f.label}
@@ -266,18 +252,18 @@ export default function GroupPage() {
               }}
             />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 text-sm">
             <button
               type="button"
               onClick={() => setTypeFilter("all")}
               className={cn(
-                "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                "underline-offset-2",
                 typeFilter === "all"
-                  ? "bg-[var(--brand-pop)]/15 text-[var(--brand-pop)]"
-                  : "text-[var(--brand-mute)]",
+                  ? "font-semibold text-[var(--ink)] underline"
+                  : "text-[var(--mute)]",
               )}
             >
-              Todos los tipos
+              Todos
             </button>
             {(Object.keys(IDEA_TYPE_LABELS) as IdeaType[]).map((t) => (
               <button
@@ -285,10 +271,10 @@ export default function GroupPage() {
                 type="button"
                 onClick={() => setTypeFilter(t)}
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                  "underline-offset-2",
                   typeFilter === t
-                    ? "bg-[var(--brand-pop)]/15 text-[var(--brand-pop)]"
-                    : "text-[var(--brand-mute)]",
+                    ? "font-semibold text-[var(--ink)] underline"
+                    : "text-[var(--mute)]",
                 )}
               >
                 {IDEA_TYPE_LABELS[t]}
@@ -297,7 +283,7 @@ export default function GroupPage() {
           </div>
 
           {ideas.length === 0 ? (
-            <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
+            <div className="surface-panel p-5 text-[var(--mute)]">
               {shelf === "catalog"
                 ? "Catálogo vacío. Guardá series, sitios y planes para no olvidarlos."
                 : shelf === "soon"
@@ -305,56 +291,52 @@ export default function GroupPage() {
                   : "No hay ideas acá todavía."}
             </div>
           ) : (
-            <ul className="space-y-3">
-              {ideas.map((idea, idx) => {
+            <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+              {ideas.map((idea) => {
                 const proposer = state.users.find(
                   (u) => u.id === idea.proposedBy,
                 );
                 const voteCount = Object.keys(idea.votes).length;
                 const myVote = idea.votes[currentUser.id];
                 return (
-                  <Reveal key={idea.id} delayMs={40 + idx * 30}>
+                  <li key={idea.id}>
                     <button
                       type="button"
                       onClick={() =>
                         router.push(`/app/group/${group.id}/idea/${idea.id}`)
                       }
                       className={cn(
-                        "surface-panel block w-full rounded-3xl p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md",
-                        idea.status === "chosen" &&
-                          "ring-2 ring-[var(--brand-pop)]/50",
+                        "block w-full py-4 text-left hover:bg-white/50",
+                        idea.status === "chosen" && "bg-[var(--pop-soft)]/40",
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary">
-                              {IDEA_TYPE_LABELS[idea.type]}
-                            </Badge>
-                            <Badge variant="outline">
-                              {IDEA_TIMING_LABELS[idea.timing]}
-                            </Badge>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--mute)]">
+                            <span>{IDEA_TYPE_LABELS[idea.type]}</span>
+                            <span>·</span>
+                            <span>{IDEA_TIMING_LABELS[idea.timing]}</span>
                             {idea.status === "chosen" ? (
-                              <Badge className="bg-[var(--brand-pop)] text-white">
+                              <Badge className="bg-[var(--pop)] text-white">
                                 Elegida
                               </Badge>
                             ) : null}
                             {idea.status === "done" ? (
-                              <Badge variant="outline">Hecha</Badge>
+                              <span>Hecha</span>
                             ) : null}
                           </div>
-                          <p className="type-display mt-2 text-xl font-semibold text-[var(--brand-ink)]">
+                          <p className="mt-1 text-lg font-semibold text-[var(--ink)]">
                             {idea.title}
                           </p>
                           {idea.notes ? (
-                            <p className="mt-1 line-clamp-2 text-sm text-[var(--brand-mute)]">
+                            <p className="mt-1 line-clamp-2 text-sm text-[var(--mute)]">
                               {idea.notes}
                             </p>
                           ) : null}
                         </div>
                         {proposer ? <UserAvatar user={proposer} /> : null}
                       </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[var(--brand-mute)]">
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--mute)]">
                         {idea.address ? (
                           <span className="inline-flex items-center gap-1">
                             <MapPin className="size-3.5" />
@@ -374,49 +356,45 @@ export default function GroupPage() {
                         ) : null}
                       </div>
                     </button>
-                  </Reveal>
+                  </li>
                 );
               })}
             </ul>
           )}
         </div>
 
-        <aside className="space-y-4">
-          <div className="surface-panel rounded-3xl p-5">
-            <p className="type-display text-lg font-semibold text-[var(--brand-ink)]">
-              Ranking del grupo
-            </p>
-            <ul className="mt-4 space-y-3">
-              {ranking.map((row, index) => {
-                const user = state.users.find((u) => u.id === row.userId);
-                if (!user) return null;
-                return (
-                  <li
-                    key={row.userId}
-                    className="flex items-center justify-between gap-3"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="w-5 text-sm font-semibold text-[var(--brand-mute)]">
-                        {index + 1}
+        <aside className="surface-panel p-4">
+          <p className="font-semibold text-[var(--ink)]">Ranking</p>
+          <ul className="mt-3 space-y-3">
+            {ranking.map((row, index) => {
+              const user = state.users.find((u) => u.id === row.userId);
+              if (!user) return null;
+              return (
+                <li
+                  key={row.userId}
+                  className="flex items-center justify-between gap-3"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-5 text-sm text-[var(--mute)]">
+                      {index + 1}
+                    </span>
+                    <UserAvatar user={user} size="sm" />
+                    <span>
+                      <span className="block text-sm font-medium">
+                        {user.name}
                       </span>
-                      <UserAvatar user={user} size="sm" />
-                      <span>
-                        <span className="block text-sm font-medium">
-                          {user.name}
-                        </span>
-                        <span className="block text-xs text-[var(--brand-mute)]">
-                          {badgeForRank(index, row.points)}
-                        </span>
+                      <span className="block text-xs text-[var(--mute)]">
+                        {badgeForRank(index, row.points)}
                       </span>
                     </span>
-                    <span className="text-sm font-semibold text-[var(--brand-pop)]">
-                      {row.points} pts
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+                  </span>
+                  <span className="text-sm font-semibold text-[var(--pop)]">
+                    {row.points} pts
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </aside>
       </section>
     </main>
@@ -471,15 +449,13 @@ function NewIdeaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-ink)] px-3 text-sm font-medium text-white">
+      <DialogTrigger className="btn-primary">
         <Plus className="size-4" />
         Guardar
       </DialogTrigger>
-      <DialogContent className="rounded-3xl sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="type-display text-2xl">
-            Nueva idea
-          </DialogTitle>
+          <DialogTitle>Nueva idea</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2 sm:grid-cols-2">
@@ -487,10 +463,10 @@ function NewIdeaDialog({
               type="button"
               onClick={() => setTiming("catalog")}
               className={cn(
-                "rounded-2xl border px-3 py-3 text-left text-sm transition",
+                "border px-3 py-3 text-left text-sm",
                 timing === "catalog"
-                  ? "border-[var(--brand-ink)] bg-[var(--brand-ink)] text-white"
-                  : "border-[var(--brand-line)] bg-white",
+                  ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                  : "border-[var(--line)] bg-white",
               )}
             >
               <span className="block font-semibold">Catálogo</span>
@@ -502,10 +478,10 @@ function NewIdeaDialog({
               type="button"
               onClick={() => setTiming("soon")}
               className={cn(
-                "rounded-2xl border px-3 py-3 text-left text-sm transition",
+                "border px-3 py-3 text-left text-sm",
                 timing === "soon"
-                  ? "border-[var(--brand-pop)] bg-[var(--brand-pop)] text-white"
-                  : "border-[var(--brand-line)] bg-white",
+                  ? "border-[var(--pop)] bg-[var(--pop)] text-white"
+                  : "border-[var(--line)] bg-white",
               )}
             >
               <span className="block font-semibold">Pronto</span>
@@ -514,13 +490,13 @@ function NewIdeaDialog({
               </span>
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="type">Tipo</Label>
             <select
               id="type"
               value={type}
               onChange={(e) => setType(e.target.value as IdeaType)}
-              className="h-11 w-full rounded-xl border border-[var(--brand-line)] bg-white px-3 text-sm"
+              className="field-select"
             >
               {Object.entries(IDEA_TYPE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -529,49 +505,49 @@ function NewIdeaDialog({
               ))}
             </select>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="title">Título</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ej. Severance, brunch en Lavapiés…"
-              className="h-11 rounded-xl"
+              className="field-input"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="notes">Notas</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Por qué la quieren guardar…"
-              className="min-h-24 rounded-xl"
+              className="min-h-24"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="address">Dirección (opcional)</Label>
             <Input
               id="address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Calle, ciudad"
-              className="h-11 rounded-xl"
+              className="field-input"
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="tags">Tags (coma)</Label>
             <Input
               id="tags"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               placeholder="serie, noche, cerca"
-              className="h-11 rounded-xl"
+              className="field-input"
             />
           </div>
           <Button
             type="submit"
-            className="h-11 w-full rounded-xl bg-[var(--brand-pop)] text-white"
+            className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
           >
             {timing === "catalog" ? "Guardar en catálogo" : "Meter en Pronto"}
           </Button>

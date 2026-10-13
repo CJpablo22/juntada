@@ -18,6 +18,7 @@ import type {
   Expense,
   Group,
   GroupKind,
+  GroupLocationVisibility,
   Idea,
   IdeaTiming,
   IdeaType,
@@ -49,8 +50,6 @@ type AppContextValue = {
     neighborhood?: string;
     addressLine?: string;
     postalCode?: string;
-    shareAddressInGroups?: boolean;
-    addressDetailLevel?: "neighborhood" | "exact";
     email?: string;
     phone?: string;
     authProvider?: AuthProvider;
@@ -102,9 +101,11 @@ type AppContextValue = {
     neighborhood?: string;
     addressLine?: string;
     postalCode?: string;
-    shareAddressInGroups: boolean;
-    addressDetailLevel: "neighborhood" | "exact";
   }) => void;
+  setGroupLocationVisibility: (
+    groupId: string,
+    level: GroupLocationVisibility,
+  ) => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -184,8 +185,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       neighborhood?: string;
       addressLine?: string;
       postalCode?: string;
-      shareAddressInGroups?: boolean;
-      addressDetailLevel?: "neighborhood" | "exact";
       email?: string;
       phone?: string;
       authProvider?: AuthProvider;
@@ -200,8 +199,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         neighborhood: input.neighborhood?.trim() || undefined,
         addressLine: input.addressLine?.trim() || undefined,
         postalCode: input.postalCode?.trim() || undefined,
-        shareAddressInGroups: input.shareAddressInGroups ?? false,
-        addressDetailLevel: input.addressDetailLevel ?? "neighborhood",
+        groupLocationVisibility: {},
         email: input.email?.trim().toLowerCase() || undefined,
         phone: input.phone?.trim() || undefined,
         authProvider: input.authProvider ?? "demo",
@@ -233,8 +231,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             province: "Madrid",
             city: input.city?.trim() || "Madrid",
             neighborhood: "Malasaña",
-            shareAddressInGroups: false,
-            addressDetailLevel: "neighborhood" as const,
+            groupLocationVisibility: {},
             email,
             authProvider: "email" as const,
             avatarHue: Math.floor(Math.random() * 360),
@@ -264,8 +261,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             province: "Madrid",
             city: input.city?.trim() || "Madrid",
             neighborhood: "Malasaña",
-            shareAddressInGroups: false,
-            addressDetailLevel: "neighborhood" as const,
+            groupLocationVisibility: {},
             phone,
             authProvider: "phone" as const,
             avatarHue: Math.floor(Math.random() * 360),
@@ -295,8 +291,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             province: "Madrid",
             city: input?.city?.trim() || "Madrid",
             neighborhood: "Malasaña",
-            shareAddressInGroups: false,
-            addressDetailLevel: "neighborhood" as const,
+            groupLocationVisibility: {},
             email: appleKey,
             authProvider: "apple" as const,
             avatarHue: Math.floor(Math.random() * 360),
@@ -324,15 +319,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const id = createId("group");
       setState((prev) => {
         if (!prev.currentUserId) return prev;
+        const uid = prev.currentUserId;
         const group: Group = {
           id,
           name: input.name.trim(),
           kind: input.kind,
           inviteCode: createInviteCode(),
-          memberIds: [prev.currentUserId],
+          memberIds: [uid],
           createdAt: new Date().toISOString(),
         };
-        return { ...prev, groups: [group, ...prev.groups] };
+        return {
+          ...prev,
+          groups: [group, ...prev.groups],
+          users: prev.users.map((u) =>
+            u.id === uid
+              ? {
+                  ...u,
+                  groupLocationVisibility: {
+                    ...u.groupLocationVisibility,
+                    [id]: u.groupLocationVisibility[id] ?? "province",
+                  },
+                }
+              : u,
+          ),
+        };
       });
       return id;
     },
@@ -343,18 +353,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     let joinedId: string | null = null;
     setState((prev) => {
       if (!prev.currentUserId) return prev;
+      const uid = prev.currentUserId;
       const group = prev.groups.find(
         (g) => g.inviteCode.toUpperCase() === code.trim().toUpperCase(),
       );
       if (!group) return prev;
       joinedId = group.id;
-      if (group.memberIds.includes(prev.currentUserId)) return prev;
+      if (group.memberIds.includes(uid)) return prev;
       return {
         ...prev,
         groups: prev.groups.map((g) =>
           g.id === group.id
-            ? { ...g, memberIds: [...g.memberIds, prev.currentUserId!] }
+            ? { ...g, memberIds: [...g.memberIds, uid] }
             : g,
+        ),
+        users: prev.users.map((u) =>
+          u.id === uid
+            ? {
+                ...u,
+                groupLocationVisibility: {
+                  ...u.groupLocationVisibility,
+                  [group.id]: u.groupLocationVisibility[group.id] ?? "province",
+                },
+              }
+            : u,
         ),
       };
     });
@@ -706,8 +728,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       neighborhood?: string;
       addressLine?: string;
       postalCode?: string;
-      shareAddressInGroups: boolean;
-      addressDetailLevel: "neighborhood" | "exact";
     }) => {
       setState((prev) => {
         if (!prev.currentUserId) return prev;
@@ -724,8 +744,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   neighborhood: input.neighborhood?.trim() || undefined,
                   addressLine: input.addressLine?.trim() || undefined,
                   postalCode: input.postalCode?.trim() || undefined,
-                  shareAddressInGroups: input.shareAddressInGroups,
-                  addressDetailLevel: input.addressDetailLevel,
+                }
+              : u,
+          ),
+        };
+      });
+    },
+    [],
+  );
+
+  const setGroupLocationVisibility = useCallback(
+    (groupId: string, level: GroupLocationVisibility) => {
+      setState((prev) => {
+        if (!prev.currentUserId) return prev;
+        return {
+          ...prev,
+          users: prev.users.map((u) =>
+            u.id === prev.currentUserId
+              ? {
+                  ...u,
+                  groupLocationVisibility: {
+                    ...u.groupLocationVisibility,
+                    [groupId]: level,
+                  },
                 }
               : u,
           ),
@@ -760,6 +801,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addReview,
       addExpense,
       updateProfile,
+      setGroupLocationVisibility,
     }),
     [
       ready,
@@ -785,6 +827,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addReview,
       addExpense,
       updateProfile,
+      setGroupLocationVisibility,
     ],
   );
 

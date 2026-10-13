@@ -76,15 +76,28 @@ try {
   await page.waitForTimeout(150);
   await page.locator('#city').selectOption('Sevilla');
   await page.locator('#neighborhood').selectOption('Triana');
-  await page.getByRole('button', { name: /Guardar/i }).click();
+  // Per-group privacy control
+  const groupVis = await page.locator('#vis-group_nos').count();
+  ok('group privacy control', groupVis > 0);
+  if (groupVis > 0) {
+    await page.locator('#vis-group_nos').selectOption('exact');
+    await page.locator('#vis-group_finde').selectOption('country');
+  }
+  await page.getByRole('button', { name: /^Guardar$/i }).click();
   await page.waitForTimeout(500);
-  const sevillaLook = await page.locator('text=/Look Sevilla/i').count();
+  const sevillaLook = await page.locator('text=/Look Sevilla|Sevilla/i').count();
   ok('regional theme sevilla', sevillaLook > 0);
   const barrioSelect = await page.locator('#neighborhood option').count();
   ok('neighborhood options', barrioSelect > 3, `opts=${barrioSelect}`);
 
   await page.screenshot({ path: '/tmp/computer-use/playwright-profile.png', fullPage: true });
   await page.goto(base + '/app/group/group_nos', { waitUntil: 'networkidle' });
+  const exactShown = await page.locator('text=/Espíritu Santo|Pureza/i').count();
+  ok('group shows exact address when allowed', exactShown > 0, `hits=${exactShown}`);
+  await page.goto(base + '/app/group/group_finde', { waitUntil: 'networkidle' });
+  const countryOnly = await page.locator('text=/Solo país|España/i').count();
+  const noStreet = await page.locator('text=/Espíritu Santo/i').count();
+  ok('other group hides street', countryOnly > 0 && noStreet === 0, `country=${countryOnly} street=${noStreet}`);
   await page.screenshot({ path: '/tmp/computer-use/playwright-group.png', fullPage: true });
 } catch (e) {
   ok('exception', false, String(e));

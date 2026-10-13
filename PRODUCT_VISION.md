@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-13 (temas regionales + amigos de experiencia)
+Última actualización: 2026-10-13 (privacidad por grupo + look más natural)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -31,9 +31,9 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Diseño responsive con personalidad
 - [x] README + vision doc vivos
 - [x] Smoke Playwright de flujos core
-- [x] Apariencia adaptativa total por país/provincia (tipografía, color, fondo, botones, paneles)
+- [x] Look regional sobrio (colores por provincia; tipografía única Source Sans)
 - [x] Selects reales país → provincia → ciudad → barrio (sin texto libre)
-- [x] Dirección completa privada + compartir en grupo (barrio o exacta)
+- [x] **Privacidad de ubicación por grupo**: país / provincia / barrio / dirección exacta (independiente en cada grupo)
 - [x] Amigos de experiencia (solo tras completar algo juntos; no follow abierto)
 - [x] Preparado para crecer: `es-ES`, EUR, PWA/móvil más adelante
 

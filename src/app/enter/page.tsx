@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { Apple, Mail, Phone } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
-import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,23 +71,22 @@ export default function EnterPage() {
         <Logo />
       </Link>
 
-      <Reveal className="mt-10">
-        <h1 className="type-display text-3xl font-bold text-[var(--brand-ink)]">
+      <div className="mt-10">
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--ink)]">
           Entrá a tu Juntada
         </h1>
-        <p className="mt-2 text-[var(--brand-mute)]">
-          Correo, teléfono o iCloud/Apple. En local es demo del navegador; el
-          login real llega con el backend.
+        <p className="mt-2 text-[var(--mute)]">
+          Correo, teléfono o Apple. En local es demo del navegador.
         </p>
-      </Reveal>
+      </div>
 
-      <Reveal delayMs={70} className="mt-8">
-        <div className="grid grid-cols-3 gap-2 rounded-2xl bg-white/60 p-1">
+      <div className="mt-8">
+        <div className="flex gap-1 border-b border-[var(--line)]">
           {(
             [
               { id: "email", label: "Correo", icon: Mail },
               { id: "phone", label: "Teléfono", icon: Phone },
-              { id: "apple", label: "iCloud", icon: Apple },
+              { id: "apple", label: "Apple", icon: Apple },
             ] as const
           ).map((item) => (
             <button
@@ -99,10 +97,10 @@ export default function EnterPage() {
                 setError("");
               }}
               className={cn(
-                "inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-semibold transition sm:text-sm",
+                "inline-flex flex-1 items-center justify-center gap-1.5 px-2 py-2.5 text-sm font-semibold",
                 tab === item.id
-                  ? "bg-[var(--brand-ink)] text-white"
-                  : "text-[var(--brand-mute)] hover:text-[var(--brand-ink)]",
+                  ? "border-b-2 border-[var(--ink)] text-[var(--ink)]"
+                  : "text-[var(--mute)]",
               )}
             >
               <item.icon className="size-3.5" />
@@ -111,21 +109,21 @@ export default function EnterPage() {
           ))}
         </div>
 
-        <div className="surface-panel mt-4 space-y-4 rounded-3xl p-5">
-          <div className="space-y-2">
+        <div className="surface-panel mt-4 space-y-4 p-4">
+          <div className="space-y-1.5">
             <Label htmlFor="name">Nombre (opcional la primera vez)</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Cómo te dicen"
-              className="h-11 rounded-xl"
+              className="field-input"
             />
           </div>
 
           {tab === "email" ? (
             <form onSubmit={onEmail} className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="email">Correo</Label>
                 <Input
                   id="email"
@@ -133,16 +131,16 @@ export default function EnterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="vos@email.com"
-                  className="h-11 rounded-xl"
+                  className="field-input"
                   autoComplete="email"
                 />
               </div>
               {error ? (
-                <p className="text-sm text-[var(--brand-pop)]">{error}</p>
+                <p className="text-sm text-[var(--pop)]">{error}</p>
               ) : null}
               <Button
                 type="submit"
-                className="h-11 w-full rounded-xl bg-[var(--brand-ink)]"
+                className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
               >
                 Continuar con correo
               </Button>
@@ -151,7 +149,7 @@ export default function EnterPage() {
 
           {tab === "phone" ? (
             <form onSubmit={onPhone} className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="phone">Número</Label>
                 <Input
                   id="phone"
@@ -159,20 +157,19 @@ export default function EnterPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+34 600 000 000"
-                  className="h-11 rounded-xl"
+                  className="field-input"
                   autoComplete="tel"
                 />
               </div>
-              <p className="text-xs text-[var(--brand-mute)]">
-                Demo local: no mandamos SMS todavía. El número queda en tu
-                navegador.
+              <p className="text-xs text-[var(--mute)]">
+                Demo local: no mandamos SMS. El número queda en tu navegador.
               </p>
               {error ? (
-                <p className="text-sm text-[var(--brand-pop)]">{error}</p>
+                <p className="text-sm text-[var(--pop)]">{error}</p>
               ) : null}
               <Button
                 type="submit"
-                className="h-11 w-full rounded-xl bg-[var(--brand-ink)]"
+                className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
               >
                 Continuar con teléfono
               </Button>
@@ -181,14 +178,14 @@ export default function EnterPage() {
 
           {tab === "apple" ? (
             <div className="space-y-4">
-              <p className="text-sm text-[var(--brand-mute)]">
-                Preparado para Sign in with Apple / iCloud. En local simulamos la
-                sesión; en producción irá el flujo oficial de Apple.
+              <p className="text-sm text-[var(--mute)]">
+                En local simulamos la sesión; en producción irá Sign in with
+                Apple.
               </p>
               <Button
                 type="button"
                 onClick={onApple}
-                className="h-11 w-full rounded-xl bg-black text-white hover:bg-black/90"
+                className="h-10 w-full bg-black text-white hover:bg-black/90"
               >
                 <Apple className="size-4" />
                 Continuar con Apple
@@ -196,13 +193,11 @@ export default function EnterPage() {
             </div>
           ) : null}
         </div>
-      </Reveal>
+      </div>
 
-      <Reveal delayMs={120} className="mt-8 space-y-3">
-        <p className="text-sm font-semibold text-[var(--brand-ink)]">
-          O probar el demo
-        </p>
-        <div className="grid gap-2">
+      <div className="mt-8 space-y-3">
+        <p className="text-sm font-semibold text-[var(--ink)]">O probar el demo</p>
+        <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
           {state.users
             .filter((u) => u.authProvider !== "apple" || u.email?.includes("demo"))
             .slice(0, 3)
@@ -214,24 +209,26 @@ export default function EnterPage() {
                   signInAs(user.id);
                   goApp();
                 }}
-                className="surface-panel flex items-center justify-between rounded-2xl px-3 py-3 text-left transition hover:-translate-y-0.5 hover:shadow-md"
+                className="flex w-full items-center justify-between py-3 text-left hover:bg-white/50"
               >
                 <span className="flex items-center gap-3">
                   <UserAvatar user={user} />
                   <span>
-                    <span className="block font-medium text-[var(--brand-ink)]">
+                    <span className="block font-medium text-[var(--ink)]">
                       {user.name}
                     </span>
-                    <span className="block text-xs text-[var(--brand-mute)]">
+                    <span className="block text-xs text-[var(--mute)]">
                       {user.email ?? user.phone ?? user.city}
                     </span>
                   </span>
                 </span>
-                <span className="text-sm text-[var(--brand-pop)]">Entrar</span>
+                <span className="text-sm font-semibold text-[var(--pop)]">
+                  Entrar
+                </span>
               </button>
             ))}
         </div>
-      </Reveal>
+      </div>
     </main>
   );
 }
