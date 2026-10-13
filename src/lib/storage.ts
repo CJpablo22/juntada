@@ -80,10 +80,13 @@ function migrateFromV1(raw: Record<string, unknown>): AppState {
 }
 
 function normalizeUser(user: Partial<User> & { id: string; name: string }): User {
+  const city = user.city ?? "Madrid";
   return {
     id: user.id,
     name: user.name,
-    city: user.city ?? "Madrid",
+    country: user.country ?? "ES",
+    province: user.province ?? guessProvince(city),
+    city,
     neighborhood: user.neighborhood,
     email: user.email,
     phone: user.phone,
@@ -91,6 +94,20 @@ function normalizeUser(user: Partial<User> & { id: string; name: string }): User
     avatarHue: user.avatarHue ?? 180,
     createdAt: user.createdAt ?? new Date().toISOString(),
   };
+}
+
+function guessProvince(city: string): string {
+  const c = city.toLowerCase();
+  if (c.includes("sevilla")) return "Sevilla";
+  if (c.includes("barcelona")) return "Barcelona";
+  if (c.includes("valencia")) return "Valencia";
+  if (c.includes("bilbao")) return "Bizkaia";
+  if (c.includes("coru") || c.includes("santiago") || c.includes("vigo"))
+    return "A Coruña";
+  if (c.includes("málaga") || c.includes("malaga")) return "Málaga";
+  if (c.includes("zaragoza")) return "Zaragoza";
+  if (c.includes("buenos") || c.includes("palermo")) return "CABA";
+  return "Madrid";
 }
 
 function normalizeIdea(idea: Partial<Idea> & { id: string; title: string }): Idea {

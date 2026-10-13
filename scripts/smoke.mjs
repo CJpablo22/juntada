@@ -67,6 +67,17 @@ try {
   const discover = await page.locator('text=The Bear').count();
   ok('discover public', discover > 0);
 
+  await page.goto(base + '/app/friends', { waitUntil: 'networkidle' });
+  const friends = await page.locator('text=Mateo').count();
+  ok('experience friends', friends > 0);
+
+  await page.goto(base + '/app/profile', { waitUntil: 'networkidle' });
+  await page.locator('#province').selectOption('Sevilla');
+  await page.getByRole('button', { name: /Guardar/i }).click();
+  await page.waitForTimeout(400);
+  const sevillaLook = await page.locator('text=/Look Sevilla/i').count();
+  ok('regional theme sevilla', sevillaLook > 0);
+
   await page.screenshot({ path: '/tmp/computer-use/playwright-profile.png', fullPage: true });
   await page.goto(base + '/app/group/group_nos', { waitUntil: 'networkidle' });
   await page.screenshot({ path: '/tmp/computer-use/playwright-group.png', fullPage: true });

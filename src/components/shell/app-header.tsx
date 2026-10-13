@@ -24,6 +24,12 @@ export function AppHeader() {
               Descubrir
             </Link>
             <Link
+              href="/app/friends"
+              className="hidden text-sm font-medium text-[var(--brand-mute)] transition hover:text-[var(--brand-ink)] md:inline"
+            >
+              Amigos
+            </Link>
+            <Link
               href="/app/profile"
               className="inline-flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-black/5"
             >

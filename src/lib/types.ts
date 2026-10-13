@@ -8,6 +8,9 @@ export type AuthProvider = "demo" | "email" | "phone" | "apple";
 export type User = {
   id: string;
   name: string;
+  /** ISO-ish country code: ES, AR, … */
+  country: string;
+  province: string;
   city: string;
   neighborhood?: string;
   email?: string;

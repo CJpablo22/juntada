@@ -43,6 +43,8 @@ type AppContextValue = {
   signInWithApple: (input?: { name?: string; city?: string }) => string;
   createUser: (input: {
     name: string;
+    country?: string;
+    province?: string;
     city: string;
     neighborhood?: string;
     email?: string;
@@ -90,6 +92,8 @@ type AppContextValue = {
   }) => void;
   updateProfile: (input: {
     name: string;
+    country: string;
+    province: string;
     city: string;
     neighborhood?: string;
   }) => void;
@@ -166,6 +170,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const createUser = useCallback(
     (input: {
       name: string;
+      country?: string;
+      province?: string;
       city: string;
       neighborhood?: string;
       email?: string;
@@ -176,6 +182,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const user: User = {
         id,
         name: input.name.trim(),
+        country: (input.country ?? "ES").trim() || "ES",
+        province: (input.province ?? "").trim() || "Madrid",
         city: input.city.trim(),
         neighborhood: input.neighborhood?.trim() || undefined,
         email: input.email?.trim().toLowerCase() || undefined,
@@ -205,6 +213,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           () => ({
             id: createId("user"),
             name: input.name?.trim() || email.split("@")[0] || "Usuario",
+            country: "ES",
+            province: "Madrid",
             city: input.city?.trim() || "Madrid",
             email,
             authProvider: "email",
@@ -231,6 +241,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           () => ({
             id: createId("user"),
             name: input.name?.trim() || `User ${phone.slice(-4)}`,
+            country: "ES",
+            province: "Madrid",
             city: input.city?.trim() || "Madrid",
             phone,
             authProvider: "phone",
@@ -257,6 +269,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           () => ({
             id: createId("user"),
             name: input?.name?.trim() || "Usuario Apple",
+            country: "ES",
+            province: "Madrid",
             city: input?.city?.trim() || "Madrid",
             email: appleKey,
             authProvider: "apple",
@@ -659,7 +673,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const updateProfile = useCallback(
-    (input: { name: string; city: string; neighborhood?: string }) => {
+    (input: {
+      name: string;
+      country: string;
+      province: string;
+      city: string;
+      neighborhood?: string;
+    }) => {
       setState((prev) => {
         if (!prev.currentUserId) return prev;
         return {
@@ -669,6 +689,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
               ? {
                   ...u,
                   name: input.name.trim(),
+                  country: input.country.trim() || "ES",
+                  province: input.province.trim(),
                   city: input.city.trim(),
                   neighborhood: input.neighborhood?.trim() || undefined,
                 }

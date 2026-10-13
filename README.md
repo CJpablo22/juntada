@@ -18,6 +18,8 @@ Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, va
 - **Descubrir**: opiniones públicas abiertas
 - Gastos del grupo y saldos (EUR)
 - Puntos + badges por grupo
+- Apariencia adaptativa por país/provincia/ciudad (ej. Sevilla vs Madrid)
+- Amigos de experiencia (solo si completaron algo juntos)
 - Diseño responsive, tono divertido ES con toque rioplatense
 
 ## Stack

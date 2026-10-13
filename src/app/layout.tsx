@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import { AppProvider } from "@/components/providers/app-provider";
+import { RegionThemeSync } from "@/components/theme/region-theme";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -44,7 +45,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${display.variable} ${body.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-[family-name:var(--font-body)]">
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+          <RegionThemeSync />
+          {children}
+        </AppProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
@@ -7,15 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserAvatar } from "@/components/ui/user-chip";
+import { getExperienceFriends } from "@/lib/friends";
 import {
   badgeForRank,
   rankMembers,
   totalPointsForUser,
 } from "@/lib/points";
+import { REGION_OPTIONS, resolveRegionTheme } from "@/lib/regions";
 
 export default function ProfilePage() {
   const { currentUser, state, updateProfile, resetDemo, signOut } = useApp();
   const [name, setName] = useState(currentUser?.name ?? "");
+  const [country, setCountry] = useState(currentUser?.country ?? "ES");
+  const [province, setProvince] = useState(currentUser?.province ?? "Madrid");
   const [city, setCity] = useState(currentUser?.city ?? "");
   const [neighborhood, setNeighborhood] = useState(
     currentUser?.neighborhood ?? "",
@@ -25,6 +30,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!currentUser) return;
     setName(currentUser.name);
+    setCountry(currentUser.country || "ES");
+    setProvince(currentUser.province || "Madrid");
     setCity(currentUser.city);
     setNeighborhood(currentUser.neighborhood ?? "");
   }, [currentUser]);
@@ -32,6 +39,18 @@ export default function ProfilePage() {
   const total = currentUser
     ? totalPointsForUser(state.points, currentUser.id)
     : 0;
+
+  const theme = resolveRegionTheme({ country, province, city });
+  const countryBlock = REGION_OPTIONS.find((c) => c.country === country);
+  const provinceBlock = countryBlock?.provinces.find(
+    (p) => p.value === province,
+  );
+
+  const friends = useMemo(
+    () =>
+      currentUser ? getExperienceFriends(state, currentUser.id) : [],
+    [currentUser, state],
+  );
 
   const groupBadges = useMemo(() => {
     if (!currentUser) return [];
@@ -52,9 +71,24 @@ export default function ProfilePage() {
 
   if (!currentUser) return null;
 
+  function onCountryChange(next: string) {
+    setCountry(next);
+    const first = REGION_OPTIONS.find((c) => c.country === next)?.provinces[0];
+    if (first) {
+      setProvince(first.value);
+      setCity(first.cities[0] ?? "");
+    }
+  }
+
+  function onProvinceChange(next: string) {
+    setProvince(next);
+    const block = countryBlock?.provinces.find((p) => p.value === next);
+    if (block?.cities[0]) setCity(block.cities[0]);
+  }
+
   function onSave(e: FormEvent) {
     e.preventDefault();
-    updateProfile({ name, city, neighborhood });
+    updateProfile({ name, country, province, city, neighborhood });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   }
@@ -69,16 +103,52 @@ export default function ProfilePage() {
           </h1>
           <p className="text-[var(--brand-mute)]">
             {currentUser.neighborhood
-              ? `${currentUser.neighborhood}, ${currentUser.city}`
-              : currentUser.city}
+              ? `${currentUser.neighborhood}, `
+              : ""}
+            {currentUser.city}
+            {currentUser.province ? ` · ${currentUser.province}` : ""}
           </p>
-          <p className="mt-1 text-sm font-semibold text-[var(--brand-pop)]">
-            {total} puntos en total
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="region-chip">Look {theme.label}</span>
+            <span className="text-sm font-semibold text-[var(--brand-pop)]">
+              {total} puntos
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-[var(--brand-mute)]">
+            {theme.tagline}
           </p>
         </div>
       </Reveal>
 
-      <Reveal delayMs={70} className="surface-panel rounded-3xl p-5">
+      <Reveal delayMs={60} className="surface-panel rounded-3xl p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="type-display text-xl font-semibold">
+              Amigos de experiencia
+            </p>
+            <p className="mt-1 text-sm text-[var(--brand-mute)]">
+              {friends.length === 0
+                ? "Aún ninguno. Se desbloquean al completar planes juntos."
+                : `${friends.length} persona${friends.length === 1 ? "" : "s"} con las que ya vivieron algo.`}
+            </p>
+          </div>
+          <Link
+            href="/app/friends"
+            className="text-sm font-medium text-[var(--brand-pop)]"
+          >
+            Ver →
+          </Link>
+        </div>
+        {friends.length > 0 ? (
+          <div className="mt-4 flex -space-x-2">
+            {friends.slice(0, 6).map((f) => (
+              <UserAvatar key={f.user.id} user={f.user} size="sm" />
+            ))}
+          </div>
+        ) : null}
+      </Reveal>
+
+      <Reveal delayMs={90} className="surface-panel rounded-3xl p-5">
         <p className="type-display text-xl font-semibold">Tu reputación</p>
         <ul className="mt-4 space-y-3">
           {groupBadges.length === 0 ? (
@@ -97,7 +167,9 @@ export default function ProfilePage() {
                   </span>
                   <span className="block text-xs text-[var(--brand-mute)]">
                     {row.badge}
-                    {row.rank === 0 ? " · beneficio: romper empates con estilo" : ""}
+                    {row.rank === 0
+                      ? " · beneficio: romper empates con estilo"
+                      : ""}
                   </span>
                 </span>
                 <span className="text-sm font-semibold text-[var(--brand-pop)]">
@@ -114,7 +186,13 @@ export default function ProfilePage() {
           onSubmit={onSave}
           className="surface-panel space-y-4 rounded-3xl p-5"
         >
-          <p className="type-display text-xl font-semibold">Editar perfil</p>
+          <p className="type-display text-xl font-semibold">
+            Perfil y apariencia local
+          </p>
+          <p className="text-sm text-[var(--brand-mute)]">
+            Según país y provincia, la app cambia colores y atmósfera. Probá
+            Sevilla vs Madrid y vas a notarlo al toque.
+          </p>
           <div className="space-y-2">
             <Label htmlFor="name">Nombre</Label>
             <Input
@@ -126,13 +204,63 @@ export default function ProfilePage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
+              <Label htmlFor="country">País</Label>
+              <select
+                id="country"
+                value={country}
+                onChange={(e) => onCountryChange(e.target.value)}
+                className="h-11 w-full rounded-xl border border-[var(--brand-line)] bg-white px-3 text-sm"
+              >
+                {REGION_OPTIONS.map((c) => (
+                  <option key={c.country} value={c.country}>
+                    {c.countryLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="province">Provincia</Label>
+              <select
+                id="province"
+                value={province}
+                onChange={(e) => onProvinceChange(e.target.value)}
+                className="h-11 w-full rounded-xl border border-[var(--brand-line)] bg-white px-3 text-sm"
+              >
+                {(countryBlock?.provinces ?? []).map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
               <Label htmlFor="city">Ciudad</Label>
-              <Input
-                id="city"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="h-11 rounded-xl"
-              />
+              {provinceBlock?.cities?.length ? (
+                <select
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-[var(--brand-line)] bg-white px-3 text-sm"
+                >
+                  {provinceBlock.cities.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                  {!provinceBlock.cities.includes(city) && city ? (
+                    <option value={city}>{city}</option>
+                  ) : null}
+                </select>
+              ) : (
+                <Input
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="h-11 rounded-xl"
+                />
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="neighborhood">Barrio</Label>
@@ -144,11 +272,17 @@ export default function ProfilePage() {
               />
             </div>
           </div>
+          <div className="rounded-2xl bg-white/70 px-3 py-3 text-sm">
+            Vista previa:{" "}
+            <strong className="text-[var(--brand-ink)]">{theme.label}</strong>
+            {" — "}
+            <span className="text-[var(--brand-mute)]">{theme.tagline}</span>
+          </div>
           <Button
             type="submit"
             className="h-11 rounded-xl bg-[var(--brand-ink)]"
           >
-            {saved ? "Guardado" : "Guardar"}
+            {saved ? "Guardado · look aplicado" : "Guardar"}
           </Button>
         </form>
       </Reveal>

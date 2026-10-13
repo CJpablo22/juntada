@@ -20,6 +20,7 @@ import {
   type GroupKind,
 } from "@/lib/types";
 import { rankMembers, totalPointsForUser } from "@/lib/points";
+import { resolveRegionTheme } from "@/lib/regions";
 
 export default function AppHomePage() {
   const router = useRouter();
@@ -68,9 +69,21 @@ export default function AppHomePage() {
           ¿Qué hacemos?
         </h1>
         <p className="mt-2 max-w-xl text-[var(--brand-mute)]">
-          Entrá a un grupo, proponé ideas, votá en secreto o dejá que el azar
-          elija. España primero, el mundo después.
+          Entrá a un grupo, guardá en el catálogo o decidí en Pronto. El look
+          se adapta a tu ciudad.
         </p>
+        {currentUser ? (
+          <p className="region-chip mt-3">
+            Look{" "}
+            {
+              resolveRegionTheme({
+                country: currentUser.country,
+                province: currentUser.province,
+                city: currentUser.city,
+              }).label
+            }
+          </p>
+        ) : null}
       </Reveal>
 
       <Reveal delayMs={80} className="flex flex-wrap gap-3">
