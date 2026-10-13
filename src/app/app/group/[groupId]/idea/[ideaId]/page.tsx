@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { Ban, BookmarkPlus, ExternalLink, Eye, MapPin, Zap } from "lucide-react";
 import { ScorePicker } from "@/components/ideas/score-picker";
-import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { mapsUrl } from "@/lib/maps";
-import { IDEA_TIMING_LABELS, IDEA_TYPE_LABELS } from "@/lib/types";
+import { IDEA_TYPE_LABELS } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function IdeaDetailPage() {
@@ -74,19 +73,15 @@ export default function IdeaDetailPage() {
   }, [reviews]);
 
   if (!ready || !currentUser) {
-    return (
-      <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
-        Cargando idea…
-      </div>
-    );
+    return <div className="p-6 text-[var(--mute)]">Cargando idea…</div>;
   }
 
   if (!idea || !group) {
     return (
-      <div className="surface-panel rounded-3xl p-6">
+      <div className="surface-panel p-5">
         Idea no encontrada.{" "}
-        <Link href="/app" className="text-[var(--brand-pop)] underline">
-          Volver
+        <Link href="/app" className="text-[var(--pop)] underline">
+          Volver a grupos
         </Link>
       </div>
     );
@@ -96,6 +91,8 @@ export default function IdeaDetailPage() {
   const vetoed = idea.softVetoUserIds.includes(currentUser.id);
   const allVoted = group.memberIds.every((id) => idea.votes[id] != null);
   const myReview = reviews.find((r) => r.userId === currentUser.id);
+  const inCatalog = idea.timing === "catalog" && idea.status !== "done";
+  const inSoon = idea.timing === "soon" && idea.status !== "done";
 
   function onVote(score: number) {
     castVote(idea!.id, score);
@@ -120,33 +117,42 @@ export default function IdeaDetailPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6">
-      <Reveal>
+    <main className="mx-auto max-w-2xl space-y-5">
+      <div>
         <Link
           href={`/app/group/${group.id}`}
-          className="text-sm text-[var(--brand-mute)] hover:text-[var(--brand-ink)]"
+          className="text-sm text-[var(--mute)] hover:text-[var(--ink)]"
         >
           ← {group.name}
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{IDEA_TYPE_LABELS[idea.type]}</Badge>
-          <Badge variant="outline">{IDEA_TIMING_LABELS[idea.timing]}</Badge>
           {idea.status === "chosen" ? (
-            <Badge className="bg-[var(--brand-pop)] text-white">Elegida</Badge>
+            <Badge className="bg-[var(--pop)] text-white">Elegida</Badge>
           ) : null}
           {idea.status === "done" ? (
             <Badge variant="outline">Hecha</Badge>
           ) : null}
+          {inCatalog ? (
+            <span className="text-xs font-semibold text-[var(--mute)]">
+              En catálogo
+            </span>
+          ) : null}
+          {inSoon ? (
+            <span className="text-xs font-semibold text-[var(--pop)]">
+              En Pronto
+            </span>
+          ) : null}
         </div>
-        <h1 className="type-display mt-2 text-3xl font-bold text-[var(--brand-ink)] sm:text-4xl">
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--ink)]">
           {idea.title}
         </h1>
         {idea.notes ? (
-          <p className="mt-3 text-[var(--brand-mute)]">{idea.notes}</p>
+          <p className="mt-3 text-[var(--mute)]">{idea.notes}</p>
         ) : null}
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
           {proposer ? (
-            <span className="inline-flex items-center gap-2 text-sm">
+            <span className="inline-flex items-center gap-2">
               <UserAvatar user={proposer} size="sm" />
               Propuso {proposer.name}
             </span>
@@ -156,7 +162,7 @@ export default function IdeaDetailPage() {
               href={mapsUrl(idea.address)}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--brand-pop)]"
+              className="inline-flex items-center gap-1.5 font-medium text-[var(--pop)]"
             >
               <MapPin className="size-4" />
               Abrir en Maps
@@ -164,72 +170,80 @@ export default function IdeaDetailPage() {
             </a>
           ) : null}
         </div>
-        {idea.tags.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {idea.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-white/70 px-2.5 py-1 text-xs text-[var(--brand-mute)]"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
-      </Reveal>
+      </div>
 
       {idea.status !== "done" ? (
-        <Reveal delayMs={60} className="surface-panel space-y-3 rounded-3xl p-5">
-          <p className="type-display text-xl font-semibold text-[var(--brand-ink)]">
-            ¿Dónde vive esta idea?
+        <section className="surface-panel space-y-3 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+            Paso 1 · ¿Dónde la ponen?
           </p>
-          <p className="text-sm text-[var(--brand-mute)]">
-            Catálogo = no olvidar. Pronto = candidatos a decidir (votos + azar).
+          <p className="text-sm text-[var(--mute)]">
+            <strong className="text-[var(--ink)]">Catálogo</strong> = solo
+            guardar. <strong className="text-[var(--ink)]">Pronto</strong> =
+            votar y decidir.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             <Button
               variant={idea.timing === "catalog" ? "default" : "outline"}
-              className="h-10 rounded-xl"
+              className={cn(
+                "h-11 justify-start",
+                idea.timing === "catalog" && "bg-[var(--ink)] text-white",
+              )}
               onClick={() => setIdeaTiming(idea.id, "catalog")}
             >
               <BookmarkPlus className="size-4" />
-              Catálogo
+              Catálogo (guardar)
             </Button>
             <Button
               variant={idea.timing === "soon" ? "default" : "outline"}
               className={cn(
-                "h-10 rounded-xl",
+                "h-11 justify-start",
                 idea.timing === "soon" &&
-                  "bg-[var(--brand-pop)] text-white hover:bg-[var(--brand-pop)]/90",
+                  "bg-[var(--pop)] text-white hover:bg-[var(--pop)]/90",
               )}
               onClick={() => setIdeaTiming(idea.id, "soon")}
             >
               <Zap className="size-4" />
-              Pasar a Pronto
+              Pronto (decidir)
             </Button>
           </div>
-        </Reveal>
+        </section>
       ) : null}
 
-      {idea.status !== "done" && idea.timing === "soon" ? (
-        <Reveal delayMs={90} className="surface-panel space-y-4 rounded-3xl p-5">
+      {inCatalog ? (
+        <section className="border border-dashed border-[var(--line)] bg-[var(--wash)] p-4 text-sm text-[var(--mute)]">
+          Está en el catálogo: nadie vota todavía. Cuando quieran decidirla,
+          pasala a <strong className="text-[var(--ink)]">Pronto</strong>.
+        </section>
+      ) : null}
+
+      {inSoon ? (
+        <section className="surface-panel space-y-4 p-4">
           <div>
-            <p className="type-display text-xl font-semibold text-[var(--brand-ink)]">
-              Tu voto secreto
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+              Paso 2 · Votá en secreto
             </p>
-            <p className="mt-1 text-sm text-[var(--brand-mute)]">
-              Nadie ve el número hasta revelar. Sé sincero/a.
+            <p className="mt-1 text-sm text-[var(--mute)]">
+              Del 1 al 5. Nadie ve tu número hasta que alguien pulse Revelar.
             </p>
           </div>
           <div className={cn(flash && "animate-pop")}>
             <ScorePicker value={myVote} onChange={onVote} />
           </div>
-          <div className="flex flex-wrap gap-2">
+          {myVote != null ? (
+            <p className="text-sm font-medium text-[var(--ink)]">
+              Tu voto: {myVote}/5 (secreto)
+            </p>
+          ) : (
+            <p className="text-sm text-[var(--pop)]">Todavía no votaste.</p>
+          )}
+
+          <div className="flex flex-wrap gap-2 border-t border-[var(--line)] pt-4">
             <Button
               variant="outline"
               className={cn(
-                "h-10 rounded-xl",
-                vetoed && "border-[var(--brand-pop)] text-[var(--brand-pop)]",
+                "h-10",
+                vetoed && "border-[var(--pop)] text-[var(--pop)]",
               )}
               onClick={() => toggleSoftVeto(idea.id)}
             >
@@ -237,7 +251,7 @@ export default function IdeaDetailPage() {
               {vetoed ? "Sacaste el “ahora no”" : "Ahora no"}
             </Button>
             <Button
-              className="h-10 rounded-xl bg-[var(--brand-ink)]"
+              className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
               onClick={() => revealVotes(idea.id)}
               disabled={idea.revealed}
             >
@@ -245,80 +259,73 @@ export default function IdeaDetailPage() {
               {idea.revealed ? "Ya revelado" : "Revelar votos"}
             </Button>
             <Button
-              className="h-10 rounded-xl bg-[var(--brand-pop)] text-white"
+              className="h-10 bg-[var(--pop)] text-white hover:bg-[var(--pop)]/90"
               onClick={() => chooseIdea(idea.id)}
               disabled={idea.status === "chosen"}
             >
-              Elegir este plan
+              {idea.status === "chosen" ? "Ya es el plan" : "Elegir este plan"}
             </Button>
           </div>
-          {!allVoted ? (
-            <p className="text-xs text-[var(--brand-mute)]">
-              Todavía faltan votos del grupo. Podés revelar igual si quieren.
-            </p>
-          ) : (
-            <p className="text-xs text-[var(--brand-mute)]">
-              Todo el grupo ya votó. Hora del reveal.
-            </p>
-          )}
-        </Reveal>
-      ) : null}
-
-      {idea.timing === "soon" && idea.status !== "done" ? (
-        <Reveal delayMs={120} className="surface-panel rounded-3xl p-5">
-          <p className="type-display text-xl font-semibold text-[var(--brand-ink)]">
-            {idea.revealed ? "Resultados" : "Estado de votos"}
+          <p className="text-xs text-[var(--mute)]">
+            {allVoted
+              ? "Todo el grupo ya votó. Pueden revelar."
+              : "Faltan votos. Igual pueden revelar si quieren."}
           </p>
-          <ul className="mt-4 space-y-3">
-            {members.map((member) => {
-              if (!member) return null;
-              const vote = idea.votes[member.id];
-              const isMe = member.id === currentUser.id;
-              return (
-                <li
-                  key={member.id}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <UserAvatar user={member} size="sm" />
-                    <span className="text-sm font-medium">
-                      {member.name}
-                      {isMe ? " (vos)" : ""}
-                    </span>
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--brand-ink)]">
-                    {vote == null
-                      ? "Sin votar"
-                      : idea.revealed || isMe
-                        ? `${vote}/5`
-                        : "••••"}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          {idea.revealed && average != null ? (
-            <p className="mt-4 text-sm text-[var(--brand-mute)]">
-              Media del grupo:{" "}
-              <strong className="text-[var(--brand-pop)]">
-                {average.toFixed(1)}
-              </strong>
+
+          <div className="border-t border-[var(--line)] pt-4">
+            <p className="text-sm font-semibold text-[var(--ink)]">
+              {idea.revealed ? "Resultados" : "Quién votó"}
             </p>
-          ) : null}
-        </Reveal>
+            <ul className="mt-3 space-y-2">
+              {members.map((member) => {
+                if (!member) return null;
+                const vote = idea.votes[member.id];
+                const isMe = member.id === currentUser.id;
+                return (
+                  <li
+                    key={member.id}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <UserAvatar user={member} size="sm" />
+                      <span className="text-sm font-medium">
+                        {member.name}
+                        {isMe ? " (vos)" : ""}
+                      </span>
+                    </span>
+                    <span className="text-sm font-semibold text-[var(--ink)]">
+                      {vote == null
+                        ? "Sin votar"
+                        : idea.revealed || isMe
+                          ? `${vote}/5`
+                          : "••••"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            {idea.revealed && average != null ? (
+              <p className="mt-3 text-sm text-[var(--mute)]">
+                Media del grupo:{" "}
+                <strong className="text-[var(--pop)]">
+                  {average.toFixed(1)}
+                </strong>
+              </p>
+            ) : null}
+          </div>
+        </section>
       ) : null}
 
       {idea.status === "chosen" ||
       (idea.status === "pending" && idea.timing === "soon") ? (
-        <Reveal delayMs={160} className="surface-panel rounded-3xl p-5">
-          <p className="type-display text-xl font-semibold text-[var(--brand-ink)]">
-            ¿Lo hicieron / lo vieron?
+        <section className="surface-panel space-y-3 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+            Paso 3 · Cuando lo hagan
           </p>
-          <p className="mt-1 text-sm text-[var(--brand-mute)]">
-            Valorá y comentá. Si querés, eso se publica en Descubrir para que
-            otra gente vea qué tal estuvo.
+          <p className="text-sm text-[var(--mute)]">
+            Valorá y comentá. Si querés, aparece en Descubrir para otra gente.
           </p>
-          <form onSubmit={onDone} className="mt-4 space-y-4">
+          <form onSubmit={onDone} className="space-y-4">
             <div className="space-y-2">
               <Label>Tu valoración</Label>
               <ScorePicker value={doneRating} onChange={setDoneRating} />
@@ -329,38 +336,36 @@ export default function IdeaDetailPage() {
                 id="doneNote"
                 value={doneNote}
                 onChange={(e) => setDoneNote(e.target.value)}
-                placeholder="Corta y honesta: ¿valió la pena?"
-                className="min-h-24 rounded-xl"
+                placeholder="¿Valió la pena?"
+                className="min-h-24"
               />
             </div>
-            <label className="flex items-center gap-2 text-sm text-[var(--brand-ink)]">
+            <label className="flex items-center gap-2 text-sm text-[var(--ink)]">
               <input
                 type="checkbox"
                 checked={publicVisible}
                 onChange={(e) => setPublicVisible(e.target.checked)}
-                className="size-4 rounded border-[var(--brand-line)]"
+                className="size-4 rounded border-[var(--line)]"
               />
-              Hacer pública en Descubrir
+              Publicar en Descubrir
             </label>
             <Button
               type="submit"
-              className="h-11 rounded-xl bg-[var(--brand-ink)]"
+              className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
             >
               Marcar como hecho
             </Button>
           </form>
-        </Reveal>
+        </section>
       ) : null}
 
       {idea.status === "done" ? (
         <>
-          <Reveal delayMs={140} className="surface-panel rounded-3xl p-5">
+          <section className="surface-panel p-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="type-display text-xl font-semibold text-[var(--brand-ink)]">
-                  Valoraciones
-                </p>
-                <p className="mt-1 text-sm text-[var(--brand-mute)]">
+                <p className="font-semibold text-[var(--ink)]">Valoraciones</p>
+                <p className="mt-1 text-sm text-[var(--mute)]">
                   {publicAvg != null
                     ? `Media pública: ${publicAvg.toFixed(1)}/5`
                     : "Todavía no hay valoraciones públicas"}
@@ -368,40 +373,44 @@ export default function IdeaDetailPage() {
               </div>
               <Link
                 href={`/discover/${idea.id}`}
-                className="text-sm font-medium text-[var(--brand-pop)]"
+                className="text-sm font-semibold text-[var(--pop)]"
               >
                 Ver en Descubrir →
               </Link>
             </div>
             <ul className="mt-4 space-y-3">
               {reviews.length === 0 ? (
-                <li className="text-sm text-[var(--brand-mute)]">
+                <li className="text-sm text-[var(--mute)]">
                   Sin comentarios todavía.
                 </li>
               ) : (
                 reviews.map((review) => {
-                  const author = state.users.find((u) => u.id === review.userId);
+                  const author = state.users.find(
+                    (u) => u.id === review.userId,
+                  );
                   return (
                     <li
                       key={review.id}
-                      className="rounded-2xl bg-white/70 px-3 py-3"
+                      className="border-t border-[var(--line)] pt-3 first:border-0 first:pt-0"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="inline-flex items-center gap-2 text-sm font-medium">
-                          {author ? <UserAvatar user={author} size="sm" /> : null}
+                          {author ? (
+                            <UserAvatar user={author} size="sm" />
+                          ) : null}
                           {author?.name ?? "Alguien"}
                         </span>
-                        <span className="text-sm font-semibold text-[var(--brand-pop)]">
+                        <span className="text-sm font-semibold text-[var(--pop)]">
                           {review.rating}/5
                           {!review.publicVisible ? (
-                            <span className="ml-2 text-xs font-normal text-[var(--brand-mute)]">
+                            <span className="ml-2 text-xs font-normal text-[var(--mute)]">
                               privado
                             </span>
                           ) : null}
                         </span>
                       </div>
                       {review.comment ? (
-                        <p className="mt-2 text-sm text-[var(--brand-mute)]">
+                        <p className="mt-2 text-sm text-[var(--mute)]">
                           {review.comment}
                         </p>
                       ) : null}
@@ -410,10 +419,10 @@ export default function IdeaDetailPage() {
                 })
               )}
             </ul>
-          </Reveal>
+          </section>
 
-          <Reveal delayMs={180} className="surface-panel rounded-3xl p-5">
-            <p className="type-display text-xl font-semibold text-[var(--brand-ink)]">
+          <section className="surface-panel p-4">
+            <p className="font-semibold text-[var(--ink)]">
               {myReview ? "Actualizar tu opinión" : "Sumá tu valoración"}
             </p>
             <form onSubmit={onReview} className="mt-4 space-y-4">
@@ -422,25 +431,25 @@ export default function IdeaDetailPage() {
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
                 placeholder="Qué te pareció…"
-                className="min-h-24 rounded-xl"
+                className="min-h-24"
               />
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={publicVisible}
                   onChange={(e) => setPublicVisible(e.target.checked)}
-                  className="size-4 rounded border-[var(--brand-line)]"
+                  className="size-4 rounded border-[var(--line)]"
                 />
                 Pública en Descubrir
               </label>
               <Button
                 type="submit"
-                className="h-11 rounded-xl bg-[var(--brand-pop)] text-white"
+                className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
               >
                 Guardar valoración
               </Button>
             </form>
-          </Reveal>
+          </section>
         </>
       ) : null}
     </main>

@@ -15,7 +15,7 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
 
   if (!ready || !currentUser) {
     return (
-      <div className="grid min-h-[100svh] place-items-center text-[var(--brand-mute)]">
+      <div className="grid min-h-[100svh] place-items-center text-[var(--mute)]">
         Cargando tu Juntada…
       </div>
     );

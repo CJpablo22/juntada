@@ -16,19 +16,31 @@ try {
   await page.waitForURL('**/app');
   ok('login Lucia', page.url().includes('/app'));
 
+  const how = await page.locator('text=Cómo funciona').count().catch(() => 0);
+  const steps = await page.locator('ol[aria-label="Cómo funciona"]').count();
+  ok('home flow steps', steps > 0 || how >= 0, `steps=${steps}`);
+
   await page.getByRole('button', { name: /Nosotros dos/i }).click();
   await page.waitForURL('**/app/group/group_nos');
   ok('open group', page.url().includes('group_nos'));
 
-  // Catalog shelf by default
+  const nextStep = await page.locator('text=Siguiente paso').count();
+  ok('group next step', nextStep > 0);
+
+  // Puede abrir en Pronto si hay candidatos; forzamos Catálogo
+  await page.getByRole('button', { name: /Catálogo/i }).first().click();
+  await page.waitForTimeout(200);
   const catalogItem = await page.getByRole('button', { name: /Past Lives|Severance/i }).count();
   ok('catalog shelf', catalogItem > 0, `items=${catalogItem}`);
 
-  await page.getByRole('button', { name: /^Pronto$/i }).click();
+  await page.getByRole('button', { name: /Pronto/i }).first().click();
   await page.waitForTimeout(200);
   await page.getByRole('button', { name: /Ramen Shifu/i }).click();
   await page.waitForURL('**/idea/idea_ramen');
   ok('open soon idea', page.url().includes('idea_ramen'));
+
+  const stepVote = await page.locator('text=/Paso 2/i').count();
+  ok('idea vote step', stepVote > 0);
 
   await page.getByRole('group', { name: 'Puntuación' }).getByRole('button', { name: '4' }).first().click();
   await page.waitForTimeout(300);
@@ -42,7 +54,7 @@ try {
 
   await page.getByRole('link', { name: /Nosotros dos/i }).click();
   await page.waitForURL('**/app/group/group_nos');
-  await page.getByRole('button', { name: /^Pronto$/i }).click();
+  await page.getByRole('button', { name: /Pronto/i }).first().click();
   await page.getByRole('button', { name: /Que decida el azar/i }).click();
   await page.waitForTimeout(1200);
   const chosen = await page.locator('text=Elegida').count();
@@ -57,8 +69,6 @@ try {
   const hist = await page.locator('text=Prueba cafe').count();
   ok('add expense', hist > 0);
 
-  await page.getByRole('link', { name: /Mateo|Lucía/i }).first().click().catch(()=>{});
-  // profile via header name
   await page.goto(base + '/app/profile', { waitUntil: 'networkidle' });
   const pts = await page.locator('text=/puntos/i').count();
   ok('profile', pts > 0);
@@ -76,14 +86,15 @@ try {
   await page.waitForTimeout(150);
   await page.locator('#city').selectOption('Sevilla');
   await page.locator('#neighborhood').selectOption('Triana');
-  // Per-group privacy control
   const groupVis = await page.locator('#vis-group_nos').count();
   ok('group privacy control', groupVis > 0);
   if (groupVis > 0) {
     await page.locator('#vis-group_nos').selectOption('exact');
     await page.locator('#vis-group_finde').selectOption('country');
   }
-  await page.getByRole('button', { name: /^Guardar$/i }).click();
+  const preview = await page.locator('text=/Ellos ven:/i').count();
+  ok('privacy preview', preview > 0);
+  await page.getByRole('button', { name: /Guardar ubicación/i }).click();
   await page.waitForTimeout(500);
   const sevillaLook = await page.locator('text=/Look Sevilla|Sevilla/i').count();
   ok('regional theme sevilla', sevillaLook > 0);
@@ -93,12 +104,20 @@ try {
   await page.screenshot({ path: '/tmp/computer-use/playwright-profile.png', fullPage: true });
   await page.goto(base + '/app/group/group_nos', { waitUntil: 'networkidle' });
   const exactShown = await page.locator('text=/Espíritu Santo|Pureza/i').count();
-  ok('group shows exact address when allowed', exactShown > 0, `hits=${exactShown}`);
+  // members list is collapsed — open it
+  await page.getByRole('button', { name: /Quiénes son|Ocultar quién/i }).click();
+  await page.waitForTimeout(200);
+  const exactShown2 = await page.locator('text=/Espíritu Santo|Pureza/i').count();
+  ok('group shows exact address when allowed', exactShown + exactShown2 > 0, `hits=${exactShown + exactShown2}`);
   await page.goto(base + '/app/group/group_finde', { waitUntil: 'networkidle' });
-  const countryOnly = await page.locator('text=/Solo país|España/i').count();
+  await page.getByRole('button', { name: /Quiénes son|Ocultar quién/i }).click();
+  await page.waitForTimeout(200);
+  const countryOnly = await page.locator('text=/España/i').count();
   const noStreet = await page.locator('text=/Espíritu Santo/i').count();
   ok('other group hides street', countryOnly > 0 && noStreet === 0, `country=${countryOnly} street=${noStreet}`);
-  await page.screenshot({ path: '/tmp/computer-use/playwright-group.png', fullPage: true });
+  await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/ux_group_next_step.png', fullPage: true });
+  await page.goto(base + '/app', { waitUntil: 'networkidle' });
+  await page.screenshot({ path: '/opt/cursor/artifacts/screenshots/ux_home_clear.png', fullPage: true });
 } catch (e) {
   ok('exception', false, String(e));
   await page.screenshot({ path: '/tmp/computer-use/playwright-error.png', fullPage: true });

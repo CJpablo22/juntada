@@ -134,6 +134,52 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      <form onSubmit={onSave} className="surface-panel space-y-4 p-4">
+        <div>
+          <h2 className="text-base font-semibold">1 · Tu ubicación</h2>
+          <p className="mt-1 text-sm text-[var(--mute)]">
+            Primero cargá dónde estás. Después, en cada grupo, elegís cuánto
+            ven los demás.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="name">Nombre</Label>
+          <Input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="field-input"
+          />
+        </div>
+
+        <LocationFields value={location} onChange={setLocation} />
+
+        {error ? <p className="text-sm text-[var(--pop)]">{error}</p> : null}
+
+        <Button
+          type="submit"
+          className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
+        >
+          {saved ? "Guardado" : "Guardar ubicación"}
+        </Button>
+      </form>
+
+      <section className="surface-panel p-4">
+        <h2 className="text-base font-semibold">2 · Qué ven en cada grupo</h2>
+        <p className="mt-1 text-sm text-[var(--mute)]">
+          Se guarda al instante. En un grupo pueden ver tu calle; en otro solo
+          el barrio, la provincia o el país.
+        </p>
+        <div className="mt-4">
+          <GroupPrivacySettings
+            user={currentUser}
+            groups={state.groups}
+            onChange={setGroupLocationVisibility}
+          />
+        </div>
+      </section>
+
       <section className="surface-panel p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -144,24 +190,12 @@ export default function ProfilePage() {
                 : `${friends.length} con experiencias compartidas.`}
             </p>
           </div>
-          <Link href="/app/friends" className="text-sm font-semibold text-[var(--pop)]">
+          <Link
+            href="/app/friends"
+            className="text-sm font-semibold text-[var(--pop)]"
+          >
             Ver
           </Link>
-        </div>
-      </section>
-
-      <section className="surface-panel p-4">
-        <h2 className="text-base font-semibold">Qué ven en cada grupo</h2>
-        <p className="mt-1 text-sm text-[var(--mute)]">
-          En un grupo pueden ver tu dirección completa; en otro solo el barrio,
-          la provincia o el país.
-        </p>
-        <div className="mt-4">
-          <GroupPrivacySettings
-            user={currentUser}
-            groups={state.groups}
-            onChange={setGroupLocationVisibility}
-          />
         </div>
       </section>
 
@@ -184,37 +218,6 @@ export default function ProfilePage() {
           ))}
         </ul>
       </section>
-
-      <form onSubmit={onSave} className="surface-panel space-y-4 p-4">
-        <div>
-          <h2 className="text-base font-semibold">Perfil y ubicación</h2>
-          <p className="mt-1 text-sm text-[var(--mute)]">
-            País, provincia, ciudad y barrio solo desde listas. La dirección
-            sirve para recomendaciones.
-          </p>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="name">Nombre</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="field-input"
-          />
-        </div>
-
-        <LocationFields value={location} onChange={setLocation} />
-
-        {error ? <p className="text-sm text-[var(--pop)]">{error}</p> : null}
-
-        <Button
-          type="submit"
-          className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
-        >
-          {saved ? "Guardado" : "Guardar"}
-        </Button>
-      </form>
 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={signOut}>
