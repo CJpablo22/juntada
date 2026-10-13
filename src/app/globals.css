@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
-  --font-heading: var(--font-body);
+  --font-heading: var(--font-display);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -25,13 +25,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: 0.15rem;
-  --radius-md: 0.2rem;
-  --radius-lg: 0.25rem;
-  --radius-xl: 0.3rem;
-  --radius-2xl: 0.35rem;
-  --radius-3xl: 0.4rem;
-  --radius-4xl: 0.45rem;
+  --radius-sm: var(--surface-radius, 0.15rem);
+  --radius-md: var(--surface-radius, 0.2rem);
+  --radius-lg: var(--surface-radius, 0.25rem);
+  --radius-xl: var(--surface-radius, 0.3rem);
+  --radius-2xl: var(--surface-radius, 0.35rem);
+  --radius-3xl: var(--surface-radius, 0.4rem);
+  --radius-4xl: var(--surface-radius, 0.45rem);
 }
 
 :root {
@@ -44,6 +44,14 @@
   --wash: #efece6;
   --hero: #1a1a1a;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --btn-radius: 0.15rem;
+  --btn-tracking: -0.01em;
+  --btn-transform: none;
+  --heading-tracking: -0.02em;
+  --heading-weight: 700;
+  --surface-radius: 0.2rem;
+  --font-body: var(--font-es-sans);
+  --font-display: var(--font-es-sans);
 
   --brand-ink: var(--ink);
   --brand-foam: var(--paper);
@@ -71,7 +79,7 @@
   --border: var(--line);
   --input: var(--line);
   --ring: color-mix(in oklab, var(--pop) 35%, var(--ink));
-  --radius: 0.2rem;
+  --radius: var(--surface-radius);
 }
 
 @layer base {
@@ -84,10 +92,9 @@
   }
   body {
     color: var(--ink);
-    background:
-      radial-gradient(ellipse 90% 45% at 8% -8%, color-mix(in oklab, var(--pop) 10%, transparent), transparent),
-      var(--paper);
+    background-color: var(--paper);
     min-height: 100%;
+    transition: background-color 0.25s ease, color 0.2s ease;
   }
   a {
     color: inherit;
@@ -96,25 +103,229 @@
   svg {
     max-width: 100%;
   }
+  h1,
+  h2,
+  .type-display {
+    font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+    font-weight: var(--heading-weight);
+    letter-spacing: var(--heading-tracking);
+  }
+}
+
+/* ——— Fondos por patrón regional (muy visibles) ——— */
+html[data-pattern="plain"] body {
+  background-image: radial-gradient(
+    ellipse 90% 45% at 8% -8%,
+    color-mix(in oklab, var(--pop) 10%, transparent),
+    transparent
+  );
+}
+
+html[data-pattern="grid"] body {
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    radial-gradient(
+      ellipse 70% 40% at 100% 0%,
+      color-mix(in oklab, var(--pop) 12%, transparent),
+      transparent 55%
+    );
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto;
+  background-position:
+    -1px -1px,
+    -1px -1px,
+    0 0;
+}
+
+html[data-pattern="azulejo"] body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(
+      45deg,
+      color-mix(in oklab, var(--pop) 22%, transparent) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      -45deg,
+      color-mix(in oklab, var(--pop) 22%, transparent) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 75%,
+      color-mix(in oklab, var(--pop) 22%, transparent) 75%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 75%,
+      color-mix(in oklab, var(--pop) 22%, transparent) 75%
+    ),
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in oklab, var(--hero) 8%, transparent),
+      transparent 50%
+    );
+  background-size:
+    36px 36px,
+    36px 36px,
+    36px 36px,
+    36px 36px,
+    auto;
+  background-position:
+    0 0,
+    0 18px,
+    18px -18px,
+    -18px 0,
+    0 0;
+}
+
+html[data-pattern="modernista"] body {
+  background-image:
+    radial-gradient(
+      ellipse 80% 55% at 0% 100%,
+      color-mix(in oklab, var(--pop) 16%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 45% at 100% 0%,
+      color-mix(in oklab, var(--ink) 8%, transparent),
+      transparent 55%
+    ),
+    repeating-radial-gradient(
+      circle at 80% 20%,
+      transparent 0,
+      transparent 14px,
+      color-mix(in oklab, var(--line) 80%, transparent) 15px,
+      transparent 16px
+    );
+}
+
+html[data-pattern="niebla"] body {
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--wash) 90%, white) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse 90% 50% at 50% -10%,
+      color-mix(in oklab, var(--pop) 14%, transparent),
+      transparent 55%
+    ),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 18px,
+      color-mix(in oklab, var(--line) 55%, transparent) 18px,
+      color-mix(in oklab, var(--line) 55%, transparent) 19px
+    );
+}
+
+html[data-pattern="sol"] body {
+  background-image:
+    radial-gradient(
+      circle at 85% -5%,
+      color-mix(in oklab, var(--pop) 35%, transparent) 0%,
+      color-mix(in oklab, var(--pop) 12%, transparent) 22%,
+      transparent 48%
+    ),
+    repeating-conic-gradient(
+      from 0deg at 85% -5%,
+      color-mix(in oklab, var(--pop) 8%, transparent) 0deg 8deg,
+      transparent 8deg 16deg
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--wash) 70%, transparent),
+      transparent 35%
+    );
+}
+
+html[data-pattern="rioplata"] body {
+  background-color: var(--paper);
+  background-image:
+    repeating-linear-gradient(
+      -28deg,
+      color-mix(in oklab, var(--pop) 28%, transparent) 0 14px,
+      transparent 14px 28px,
+      color-mix(in oklab, var(--ink) 8%, transparent) 28px 36px,
+      transparent 36px 52px
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--hero) 6%, transparent),
+      transparent 40%
+    );
+}
+
+html[data-pattern="pampa"] body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--pop) 18%, transparent) 0 12%,
+      transparent 12% 38%,
+      color-mix(in oklab, var(--line) 70%, transparent) 38% 39%,
+      transparent 39% 72%,
+      color-mix(in oklab, var(--ink) 7%, transparent) 72% 100%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 48px,
+      color-mix(in oklab, var(--line) 40%, transparent) 48px 49px
+    );
+}
+
+/* País: tipografía y densidad — ES vs AR se siente al instante */
+html[data-country="AR"] body {
+  font-size: 1.02rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-country="AR"] h1,
+html[data-country="AR"] .type-display {
+  text-transform: uppercase;
+  line-height: 1.05;
+}
+
+html[data-country="ES"] h1,
+html[data-country="ES"] .type-display {
+  text-transform: none;
 }
 
 @layer components {
   .surface-panel {
     background: #fff;
     border: 1px solid var(--line);
-    border-radius: 0.2rem;
+    border-radius: var(--surface-radius);
+  }
+
+  html[data-country="AR"] .surface-panel {
+    border-width: 2px;
+    border-color: var(--ink);
+    box-shadow: 4px 4px 0 0 color-mix(in oklab, var(--pop) 55%, transparent);
   }
 
   .field-select,
   .field-input {
     width: 100%;
     min-height: 2.75rem;
-    border-radius: 0.15rem;
+    border-radius: var(--btn-radius);
     border: 1.5px solid var(--line);
     background: #fff;
     padding: 0 0.85rem;
     font-size: 1rem;
     color: var(--ink);
+  }
+
+  html[data-country="AR"] .field-select,
+  html[data-country="AR"] .field-input {
+    border-width: 2px;
+    border-color: var(--ink);
+    border-radius: 0;
   }
 
   @media (min-width: 640px) {
@@ -133,9 +344,24 @@
   }
 
   .region-chip {
-    display: inline-block;
-    font-size: 0.8rem;
-    color: var(--mute);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--line);
+    border-radius: var(--btn-radius);
+    background: color-mix(in oklab, var(--pop-soft) 70%, white);
+    padding: 0.2rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: var(--btn-tracking);
+    text-transform: var(--btn-transform);
+    color: var(--ink);
+  }
+
+  html[data-country="AR"] .region-chip {
+    border-width: 2px;
+    border-color: var(--ink);
+    border-radius: 0;
   }
 
   .hero-block {
@@ -143,23 +369,28 @@
     color: #fafafa;
   }
 
-  /* Botones utilitarios (links/triggers fuera de <Button>) */
-  .btn-primary {
+  /* Botones utilitarios — heredan forma regional */
+  .btn-primary,
+  .btn-ghost {
     display: inline-flex;
     min-height: 2.75rem;
     align-items: center;
     justify-content: center;
     gap: 0.45rem;
     border: 1px solid var(--ink);
-    border-radius: 0.15rem;
-    background: var(--ink);
+    border-radius: var(--btn-radius);
     padding: 0.55rem 1.1rem;
     font-size: 0.925rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: var(--btn-tracking);
+    text-transform: var(--btn-transform);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  }
+
+  .btn-primary {
+    background: var(--ink);
     color: #fff;
     box-shadow: 0 3px 0 0 var(--pop);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   }
 
   .btn-primary:hover {
@@ -173,21 +404,9 @@
   }
 
   .btn-ghost {
-    display: inline-flex;
-    min-height: 2.75rem;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    border: 1px solid var(--ink);
-    border-radius: 0.15rem;
     background: #fff;
-    padding: 0.55rem 1rem;
-    font-size: 0.925rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
     color: var(--ink);
     box-shadow: 0 3px 0 0 var(--line);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
   }
 
   .btn-ghost:hover {
@@ -277,11 +496,99 @@
   }
 }
 
+/* ——— Estilos de botón por región ——— */
+[data-slot="button"] {
+  border-radius: var(--btn-radius) !important;
+  letter-spacing: var(--btn-tracking) !important;
+  text-transform: var(--btn-transform) !important;
+  font-weight: 600 !important;
+}
+
+html[data-btn="block"] [data-slot="button"],
+html[data-btn="block"] .btn-primary,
+html[data-btn="block"] .btn-ghost {
+  border-radius: 0.12rem !important;
+}
+
+html[data-btn="tile"] [data-slot="button"],
+html[data-btn="tile"] .btn-primary,
+html[data-btn="tile"] .btn-ghost {
+  border-radius: 0.05rem !important;
+  border-width: 2px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  box-shadow: 3px 3px 0 0 var(--pop) !important;
+}
+
+html[data-btn="tile"] [data-slot="button"]:active,
+html[data-btn="tile"] .btn-primary:active,
+html[data-btn="tile"] .btn-ghost:active {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0 0 var(--pop) !important;
+}
+
+html[data-btn="soft"] [data-slot="button"],
+html[data-btn="soft"] .btn-primary,
+html[data-btn="soft"] .btn-ghost {
+  border-radius: 999px !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+  box-shadow: 0 4px 0 0 color-mix(in oklab, var(--pop) 55%, var(--line)) !important;
+}
+
+html[data-btn="slab"] [data-slot="button"],
+html[data-btn="slab"] .btn-primary,
+html[data-btn="slab"] .btn-ghost {
+  border-radius: 0 !important;
+  border-width: 2.5px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-weight: 700 !important;
+  box-shadow: 5px 5px 0 0 var(--pop) !important;
+}
+
+html[data-btn="slab"] [data-slot="button"]:hover,
+html[data-btn="slab"] .btn-primary:hover,
+html[data-btn="slab"] .btn-ghost:hover {
+  box-shadow: 3px 3px 0 0 var(--pop) !important;
+}
+
+html[data-btn="slab"] [data-slot="button"]:active,
+html[data-btn="slab"] .btn-primary:active,
+html[data-btn="slab"] .btn-ghost:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: none !important;
+}
+
+html[data-btn="ink"] [data-slot="button"],
+html[data-btn="ink"] .btn-primary,
+html[data-btn="ink"] .btn-ghost {
+  border-radius: 0.2rem !important;
+  border-width: 2px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  font-family: var(--font-norte), var(--font-body), sans-serif !important;
+  box-shadow: none !important;
+}
+
+html[data-btn="ink"] [data-slot="button"][data-variant="default"],
+html[data-btn="ink"] .btn-primary {
+  background: transparent !important;
+  color: var(--ink) !important;
+  border-color: var(--ink) !important;
+}
+
+html[data-btn="ink"] [data-slot="button"][data-variant="default"]:hover,
+html[data-btn="ink"] .btn-primary:hover {
+  background: var(--ink) !important;
+  color: #fff !important;
+}
+
 @layer utilities {
   .type-display {
-    font-family: var(--font-body), system-ui, sans-serif;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+    font-weight: var(--heading-weight);
+    letter-spacing: var(--heading-tracking);
   }
 
   .animate-rise {
@@ -291,11 +598,6 @@
   .pb-safe {
     padding-bottom: calc(0.75rem + var(--safe-bottom));
   }
-}
-
-[data-slot="button"] {
-  border-radius: 0.15rem !important;
-  font-weight: 600 !important;
 }
 
 @keyframes rise {
@@ -335,6 +637,10 @@
   .btn-primary,
   .btn-ghost,
   [data-slot="button"] {
+    transition: none !important;
+  }
+
+  body {
     transition: none !important;
   }
 }

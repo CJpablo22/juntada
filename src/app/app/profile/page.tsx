@@ -19,7 +19,7 @@ import {
   rankMembers,
   totalPointsForUser,
 } from "@/lib/points";
-import { resolveRegionTheme } from "@/lib/regions";
+import { applyRegionTheme, resolveRegionTheme } from "@/lib/regions";
 
 export default function ProfilePage() {
   const {
@@ -55,15 +55,20 @@ export default function ProfilePage() {
     });
   }, [currentUser]);
 
-  const total = currentUser
-    ? totalPointsForUser(state.points, currentUser.id)
-    : 0;
-
   const theme = resolveRegionTheme({
     country: location.country,
     province: location.province,
     city: location.city,
   });
+
+  /* Vista previa al cambiar país/provincia antes de guardar */
+  useEffect(() => {
+    applyRegionTheme(theme);
+  }, [theme]);
+
+  const total = currentUser
+    ? totalPointsForUser(state.points, currentUser.id)
+    : 0;
 
   const friends = useMemo(
     () => (currentUser ? getExperienceFriends(state, currentUser.id) : []),
@@ -121,15 +126,20 @@ export default function ProfilePage() {
       <div className="flex items-center gap-4">
         <UserAvatar user={currentUser} size="lg" />
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--ink)]">
+          <h1 className="type-display text-2xl text-[var(--ink)] sm:text-3xl">
             {currentUser.name}
           </h1>
           <p className="text-sm text-[var(--mute)]">
             {currentUser.neighborhood ? `${currentUser.neighborhood}, ` : ""}
             {currentUser.city} · {currentUser.province}
           </p>
-          <p className="mt-1 text-sm text-[var(--mute)]">
-            Look {theme.label} · {total} puntos
+          <p className="mt-2">
+            <span className="region-chip">
+              Look {theme.label} · {theme.tagline}
+            </span>
+            <span className="ml-2 text-sm text-[var(--mute)]">
+              {total} puntos
+            </span>
           </p>
         </div>
       </div>
@@ -138,8 +148,8 @@ export default function ProfilePage() {
         <div>
           <h2 className="text-base font-semibold">1 · Tu ubicación</h2>
           <p className="mt-1 text-sm text-[var(--mute)]">
-            Primero cargá dónde estás. Después, en cada grupo, elegís cuánto
-            ven los demás.
+            Al cambiar país o provincia, tipografía, botones y fondo se adaptan
+            al momento. Después, en cada grupo, elegís cuánto ven los demás.
           </p>
         </div>
 

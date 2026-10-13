@@ -20,7 +20,7 @@ Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, va
 - **Descubrir**: opiniones públicas abiertas
 - Gastos del grupo y saldos (EUR)
 - Puntos + badges por grupo
-- Look regional sobrio (acentos de color por provincia)
+- Look regional fuerte: tipografía, botones y fondo cambian por país (ES/AR) y provincia
 - País / provincia / ciudad / barrio solo desde listas reales
 - Privacidad de ubicación **por grupo**: solo país, provincia, barrio o dirección completa
 - Amigos de experiencia (solo si completaron algo juntos)
@@ -52,9 +52,9 @@ Abrí [http://127.0.0.1:3456](http://127.0.0.1:3456).
 
 ## Cómo probar rápido
 
-1. Entrá con Lucía, Mateo o Sofía (usuarios demo) o creá el tuyo
-2. Abrí un grupo → proponé / votá / revelá / sorteá
-3. Probá gastos y mirá saldos
-4. Revisá tu perfil y badges
+1. Entrá con Lucía (Madrid), Mateo (Sevilla), Sofía (Barcelona) o Valentina (Buenos Aires) — el look cambia al instante
+2. En Perfil, cambiá país/provincia para previsualizar tipografía, botones y fondo
+3. Abrí un grupo → proponé / votá / revelá / sorteá
+4. Probá gastos y mirá saldos
 
 Los datos viven en este navegador. “Resetear demo local” en el perfil vuelve al seed.

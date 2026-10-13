@@ -60,6 +60,24 @@ export function createSeedState(): AppState {
     avatarHue: 210,
     createdAt: now,
   };
+  const valentina: User = {
+    id: "user_valentina",
+    name: "Valentina",
+    country: "AR",
+    province: "CABA",
+    city: "Buenos Aires",
+    neighborhood: "Palermo",
+    addressLine: "Honduras 4800",
+    postalCode: "C1414",
+    groupLocationVisibility: {
+      group_finde: "neighborhood",
+    },
+    email: "valentina@demo.juntada",
+    phone: "+54 11 5555 7788",
+    authProvider: "email",
+    avatarHue: 28,
+    createdAt: now,
+  };
 
   const couple = {
     id: "group_nos",
@@ -74,14 +92,14 @@ export function createSeedState(): AppState {
     name: "El finde",
     kind: "friends" as const,
     inviteCode: "FINDE1",
-    memberIds: [lucia.id, mateo.id, sofia.id],
+    memberIds: [lucia.id, mateo.id, sofia.id, valentina.id],
     createdAt: now,
   };
 
   return {
     version: 2,
     currentUserId: null,
-    users: [lucia, mateo, sofia],
+    users: [lucia, mateo, sofia, valentina],
     groups: [couple, friends],
     ideas: [
       {

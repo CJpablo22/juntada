@@ -200,7 +200,6 @@ export default function EnterPage() {
         <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
           {state.users
             .filter((u) => u.authProvider !== "apple" || u.email?.includes("demo"))
-            .slice(0, 3)
             .map((user) => (
               <button
                 key={user.id}
@@ -218,7 +217,7 @@ export default function EnterPage() {
                       {user.name}
                     </span>
                     <span className="block text-xs text-[var(--mute)]">
-                      {user.email ?? user.phone ?? user.city}
+                      {user.city}, {user.province} · {user.country}
                     </span>
                   </span>
                 </span>
