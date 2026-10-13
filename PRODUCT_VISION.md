@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-13 (peli≠serie, lugares obligatorios, juegos futuros)
+Última actualización: 2026-10-13 (lanzamiento free: Supabase + correo; ver LAUNCH.md)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -14,11 +14,13 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 
 ## 0. Estado de implementación (actualizar en cada iteración)
 
-### Hecho en el MVP web local
+### Hecho en el MVP web
 - [x] Scaffold Next.js + TypeScript + Tailwind + shadcn/ui
-- [x] Persistencia local (`localStorage` v2) + seed demo (Lucía / Mateo / Sofía)
+- [x] Persistencia local (`localStorage` v2) + seed demo (dev sin Supabase)
 - [x] Landing + entrar
-- [x] Login UI: correo / teléfono / Apple-iCloud (demo local; auth real pendiente de backend)
+- [x] Login UI: correo / teléfono / Apple (tabs); cloud = magic link real; SMS/Apple documentados como pendientes de pago
+- [x] Schema Supabase + middleware de sesión + `/auth/confirm` + cola de notificaciones (email)
+- [x] Guía de lanzamiento gratis: [`LAUNCH.md`](./LAUNCH.md)
 - [x] Grupos: crear, unirse por código, multi-grupo
 - [x] Ideas: película / serie / visitar / comer / plan (peli y serie separados)
 - [x] Lugares obligatorios en visitar/comer/plan (nombre + dirección; plan admite varios) → Maps
@@ -39,21 +41,32 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Amigos de experiencia (solo tras completar algo juntos; no follow abierto)
 - [x] Preparado para crecer: `es-ES`, EUR, PWA/móvil más adelante
 
-### Falta / siguiente en el producto 1
+### Falta / siguiente en el producto 1 (lanzamiento free)
 - [ ] Nombre final de la marca
-- [ ] Auth real (OAuth Apple, SMS/OTP, verificación email) + backend
-- [ ] Más provincias/ciudades en el mapa de temas
+- [ ] Migrar estado de grupos/ideas/votos/gastos de `localStorage` → tablas Supabase (CRUD + RLS)
+- [ ] Crear proyecto Supabase + deploy Vercel (pasos en LAUNCH.md) — requiere cuentas del owner
+- [ ] Avisos email en eventos clave (invite, votar, resultados, gasto) vía Resend free
 - [ ] Unificar títulos iguales en Descubrir (hoy es por idea/grupo)
 - [ ] Gasto ligado a una idea desde UI (modelo ya lo permite)
 - [ ] Foto en recuerdos
 - [ ] Beneficio jugable real del #1 (romper empate con acción)
 - [ ] PWA / instalación móvil
 
-### Explícitamente futuro (no construir aún)
+### Pendiente con coste (no free — no bloquear el lanzamiento &lt;10)
+Ver checklist vivo en [`LAUNCH.md`](./LAUNCH.md):
+- [ ] Login SMS / teléfono (Twilio u otro; € por SMS)
+- [ ] Sign in with Apple / iCloud (Apple Developer ~99 USD/año)
+- [ ] Notificaciones WhatsApp (Meta Business + plantillas)
+- [ ] Push nativo (cuando exista app iOS/Android)
+- [ ] Dominio propio + from de correo `@juntada…`
+- [ ] Planes de pago Vercel/Supabase si se supera el free tier
+
+### Explícitamente futuro (producto, no infra)
 - Red social completa / match por intereses, estudios, cercanía
 - Follow abierto tipo Instagram (explícitamente NO; amigos = experiencias)
 - Marketplace de skills (arreglar PC, etc.)
 - Chat, mapa embebido, IA, multi-moneda
+- **Google OAuth** (gratis de config; opcional además del correo)
 - **Juegos de reunión (presenciales, sin pantallas como tablero):**
   - El impostor
   - Adivinar quién soy

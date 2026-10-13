@@ -6,39 +6,34 @@ Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, va
 
 > Nombre provisional de trabajo. El nombre final se define después.
 
+## Lanzamiento (gratis → público)
+
+Leé **[`LAUNCH.md`](./LAUNCH.md)**: qué va **gratis ahora** (Vercel + Supabase + correo con link mágico), qué queda **pendiente de pago** (SMS, Apple/iCloud, WhatsApp, push), y cómo desplegar sin perder datos al abrir al público.
+
+Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usuarios demo) solo para desarrollo.
+
 ## Qué incluye este MVP
 
-- Login demo: correo / teléfono / Apple-iCloud (+ usuarios demo)
+- Login: correo (magic link en cloud) / teléfono y Apple (UI lista; cloud = pendientes de coste)
 - Grupos + código invite
-- **Catálogo** (guardar para no olvidar) vs **Pronto** (decidir / este finde)
-- Ideas por tipo (película / serie / visitar / comer / plan) + tags
-- Lugares con nombre + dirección obligatorios en visitar/comer/plan (varios en un plan) → Maps
-- Película: cine o casa; en lugares podés elegir la casa de alguien del grupo
-- Voto secreto, reveal, “ahora no”, elegir (en Pronto)
-- **Que decida el azar** entre finalistas de Pronto
-- Valoración + comentario al terminar (opción pública)
-- **Descubrir**: opiniones públicas abiertas
-- Gastos del grupo y saldos (EUR)
-- Puntos + badges por grupo
-- Look regional fuerte: tipografía, botones y fondo cambian por país (ES/AR) y provincia
-- País / provincia / localidad / barrio desde catálogo completo (ES municipios + AR localidades)
-- Calle con búsqueda y sugerencias; CP automático; piso/puerta aparte; guardar solo al confirmar
-- Privacidad de ubicación **por grupo**: solo país, provincia, barrio o dirección completa
-- Amigos de experiencia (solo si completaron algo juntos)
-- Diseño responsive, tono cercano ES con toque rioplatense
+- **Catálogo** vs **Pronto**
+- Ideas: película / serie / visitar / comer / plan + lugares
+- Voto secreto, reveal, azar, gastos, Descubrir, puntos
+- Look regional (ES/AR), catálogo completo de provincias/localidades
+- Dirección con búsqueda + CP + piso/puerta; guardar solo al confirmar
+- Privacidad de ubicación por grupo
 
 ## Stack
 
-- Next.js (App Router) + TypeScript
-- Tailwind CSS + shadcn/ui
-- Persistencia local (`localStorage` v2) para arrancar sin backend
-
-Pensado para crecer: mercado España primero, i18n/monedas después, PWA/app móvil más adelante. La visión completa está en [`PRODUCT_VISION.md`](./PRODUCT_VISION.md).
+- Next.js (App Router) + TypeScript + Tailwind + shadcn/ui
+- Dev: `localStorage` v2
+- Prod (free): Supabase (Postgres + Auth) + Vercel
 
 ## Correr en local
 
 ```bash
 npm install
+cp .env.example .env.local   # opcional: rellenar Supabase
 npm run dev -- --port 3456 --hostname 127.0.0.1
 ```
 
@@ -51,11 +46,10 @@ Abrí [http://127.0.0.1:3456](http://127.0.0.1:3456).
 - `npm run start` — servir build
 - `npm run lint` — ESLint
 
-## Cómo probar rápido
+## Cómo probar rápido (modo local)
 
-1. Entrá con Lucía (Madrid), Mateo (Sevilla), Sofía (Barcelona) o Valentina (Buenos Aires) — el look cambia al instante
-2. En Perfil, cambiá país/provincia para previsualizar tipografía, botones y fondo
-3. Abrí un grupo → proponé / votá / revelá / sorteá
-4. Probá gastos y mirá saldos
+1. Entrá con Lucía / Mateo / Sofía / Valentina
+2. Perfil → ubicación → Guardar
+3. Grupo → votá / sorteá / gastos
 
-Los datos viven en este navegador. “Resetear demo local” en el perfil vuelve al seed.
+Visión de producto: [`PRODUCT_VISION.md`](./PRODUCT_VISION.md).
