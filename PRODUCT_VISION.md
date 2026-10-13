@@ -22,6 +22,7 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Grupos: crear, unirse por código, multi-grupo
 - [x] Ideas: película / serie / visitar / comer / plan (peli y serie separados)
 - [x] Lugares obligatorios en visitar/comer/plan (nombre + dirección; plan admite varios) → Maps
+- [x] Película: cine o casa; lugares pueden ser la casa de alguien del grupo
 - [x] **Catálogo vs Pronto**: guardar para no olvidar ≠ decidir este finde
 - [x] Voto secreto / reveal / “ahora no” / elegir (solo bandeja Pronto)
 - [x] Azar entre finalistas de Pronto

@@ -41,6 +41,12 @@ try {
   const noMovie = await page.getByRole('button', { name: /Past Lives/i }).count();
   ok('series filter works', onlySeries > 0 && noMovie === 0, `series=${onlySeries} movie=${noMovie}`);
   await page.getByRole('button', { name: /^Todos$/i }).click();
+  await page.getByRole('button', { name: /Past Lives/i }).click();
+  await page.waitForURL('**/idea/idea_peli');
+  const homeVenue = await page.locator('text=/En casa|Casa de Lucía/i').count();
+  ok('movie home venue', homeVenue > 0, `hits=${homeVenue}`);
+  await page.getByRole('link', { name: /Nosotros dos/i }).click();
+  await page.waitForURL('**/app/group/group_nos');
 
   await page.getByRole('button', { name: /Pronto/i }).first().click();
   await page.waitForTimeout(200);

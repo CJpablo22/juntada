@@ -90,7 +90,16 @@ export function createSeedState(): AppState {
         type: "movie" as const,
         title: "Past Lives",
         notes: "Para un domingo perezoso en casa. Guardada para no olvidarnos.",
-        places: [],
+        movieVenue: "home" as const,
+        places: [
+          {
+            kind: "member_home" as const,
+            memberId: lucia.id,
+            name: `Casa de ${lucia.name}`,
+            address: "Calle del Espíritu Santo 12, 28004, Malasaña, Madrid, Madrid",
+          },
+        ],
+        address: "Calle del Espíritu Santo 12, 28004, Malasaña, Madrid, Madrid",
         proposedBy: lucia.id,
         status: "pending" as const,
         timing: "catalog" as const,

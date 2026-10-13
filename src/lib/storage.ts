@@ -134,18 +134,32 @@ function normalizeIdea(idea: Partial<Idea> & { id: string; title: string }): Ide
     idea.places && idea.places.length > 0
       ? idea.places
           .map((p) => ({
+            kind: p.kind === "member_home" ? ("member_home" as const) : ("custom" as const),
+            memberId: p.memberId,
             name: (p.name ?? "").trim(),
             address: (p.address ?? "").trim(),
           }))
-          .filter((p) => p.name || p.address)
+          .filter((p) => p.name || p.address || p.memberId)
       : placesFromLegacy(idea.address);
+
+  const type = normalizeIdeaType(idea.type);
+  const movieVenue =
+    type === "movie" &&
+    (idea.movieVenue === "cinema" || idea.movieVenue === "home")
+      ? idea.movieVenue
+      : type === "movie" && places.some((p) => p.kind === "member_home")
+        ? ("home" as const)
+        : type === "movie" && places.length > 0
+          ? ("cinema" as const)
+          : undefined;
 
   return {
     id: idea.id,
     groupId: idea.groupId ?? "",
-    type: normalizeIdeaType(idea.type),
+    type,
     title: idea.title,
     notes: idea.notes ?? "",
+    movieVenue,
     places,
     address: places[0]?.address || idea.address,
     proposedBy: idea.proposedBy ?? "",

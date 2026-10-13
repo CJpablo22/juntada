@@ -23,6 +23,7 @@ import type {
   IdeaPlace,
   IdeaTiming,
   IdeaType,
+  MovieVenue,
   Review,
   User,
 } from "@/lib/types";
@@ -64,6 +65,7 @@ type AppContextValue = {
     type: IdeaType;
     title: string;
     notes: string;
+    movieVenue?: MovieVenue;
     places?: IdeaPlace[];
     address?: string;
     tags: string[];
@@ -391,6 +393,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       type: IdeaType;
       title: string;
       notes: string;
+      movieVenue?: MovieVenue;
       places?: IdeaPlace[];
       address?: string;
       tags: string[];
@@ -401,16 +404,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!prev.currentUserId) return prev;
         const places = (input.places ?? [])
           .map((p) => ({
+            kind: p.kind ?? ("custom" as const),
+            memberId: p.memberId,
             name: p.name.trim(),
             address: p.address.trim(),
           }))
-          .filter((p) => p.name && p.address);
+          .filter((p) =>
+            p.kind === "member_home"
+              ? Boolean(p.memberId && p.name)
+              : Boolean(p.name && p.address),
+          );
         const idea: Idea = {
           id,
           groupId: input.groupId,
           type: input.type,
           title: input.title.trim(),
           notes: input.notes.trim(),
+          movieVenue: input.type === "movie" ? input.movieVenue : undefined,
           places,
           address: places[0]?.address || input.address?.trim() || undefined,
           proposedBy: prev.currentUserId,

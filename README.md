@@ -13,6 +13,7 @@ Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, va
 - **Catálogo** (guardar para no olvidar) vs **Pronto** (decidir / este finde)
 - Ideas por tipo (película / serie / visitar / comer / plan) + tags
 - Lugares con nombre + dirección obligatorios en visitar/comer/plan (varios en un plan) → Maps
+- Película: cine o casa; en lugares podés elegir la casa de alguien del grupo
 - Voto secreto, reveal, “ahora no”, elegir (en Pronto)
 - **Que decida el azar** entre finalistas de Pronto
 - Valoración + comentario al terminar (opción pública)

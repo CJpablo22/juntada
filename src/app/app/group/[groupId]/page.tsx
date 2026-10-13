@@ -8,6 +8,7 @@ import { LotteryButton } from "@/components/ideas/lottery-button";
 import {
   PlaceFields,
   cleanPlaces,
+  ideaNeedsPlaces,
   validatePlaces,
 } from "@/components/ideas/place-fields";
 import { useApp } from "@/components/providers/app-provider";
@@ -29,11 +30,13 @@ import { getVisibleLocationForViewer } from "@/lib/privacy";
 import {
   GROUP_KIND_LABELS,
   IDEA_TYPE_LABELS,
+  MOVIE_VENUE_LABELS,
   formatPlace,
-  ideaNeedsPlaces,
   type IdeaPlace,
   type IdeaTiming,
   type IdeaType,
+  type MovieVenue,
+  type User,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -418,6 +421,7 @@ export default function GroupPage() {
             <NewIdeaDialog
               open={openIdea}
               onOpenChange={setOpenIdea}
+              members={members.filter(Boolean) as User[]}
               defaultTiming={shelf === "soon" ? "soon" : "catalog"}
               onSubmit={(data) => {
                 const id = addIdea({ groupId: group.id, ...data });
@@ -520,6 +524,9 @@ export default function GroupPage() {
                     >
                       <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--mute)]">
                         <span>{IDEA_TYPE_LABELS[idea.type]}</span>
+                        {idea.type === "movie" && idea.movieVenue ? (
+                          <span>· {MOVIE_VENUE_LABELS[idea.movieVenue]}</span>
+                        ) : null}
                         {idea.status === "chosen" ? (
                           <Badge className="bg-[var(--pop)] text-white">
                             Elegida
@@ -619,26 +626,30 @@ function NewIdeaDialog({
   open,
   onOpenChange,
   onSubmit,
+  members,
   defaultTiming = "catalog",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  members: User[];
   defaultTiming?: IdeaTiming;
   onSubmit: (data: {
     type: IdeaType;
     title: string;
     notes: string;
+    movieVenue?: MovieVenue;
     places: IdeaPlace[];
     tags: string[];
     timing: IdeaTiming;
   }) => void;
 }) {
   const [type, setType] = useState<IdeaType>("movie");
+  const [movieVenue, setMovieVenue] = useState<MovieVenue>("home");
   const [timing, setTiming] = useState<IdeaTiming>(defaultTiming);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [places, setPlaces] = useState<IdeaPlace[]>([
-    { name: "", address: "" },
+    { kind: "custom", name: "", address: "" },
   ]);
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
@@ -651,15 +662,24 @@ function NewIdeaDialog({
   }, [open, defaultTiming]);
 
   useEffect(() => {
-    if (!ideaNeedsPlaces(type)) {
-      setPlaces([{ name: "", address: "" }]);
-    } else if (type === "plan" && places.length < 1) {
-      setPlaces([{ name: "", address: "" }]);
-    } else if (type !== "plan" && places.length > 1) {
-      setPlaces([places[0] ?? { name: "", address: "" }]);
+    if (type === "movie") {
+      if (movieVenue === "home") {
+        setPlaces([{ kind: "member_home", name: "", address: "", memberId: undefined }]);
+      } else {
+        setPlaces([{ kind: "custom", name: "", address: "" }]);
+      }
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
+    if (type === "series") {
+      setPlaces([]);
+      return;
+    }
+    if (type === "plan") {
+      setPlaces([{ kind: "custom", name: "", address: "" }]);
+      return;
+    }
+    setPlaces([{ kind: "custom", name: "", address: "" }]);
+  }, [type, movieVenue]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -667,16 +687,22 @@ function NewIdeaDialog({
       setError("Poné un título.");
       return;
     }
-    const placeError = validatePlaces(type, places);
+    if (type === "movie" && !movieVenue) {
+      setError("Elegí si es en cine o en casa.");
+      return;
+    }
+    const placeError = validatePlaces(type, places, movieVenue);
     if (placeError) {
       setError(placeError);
       return;
     }
+    const needs = ideaNeedsPlaces(type, movieVenue);
     onSubmit({
       type,
       title,
       notes,
-      places: ideaNeedsPlaces(type) ? cleanPlaces(places) : [],
+      movieVenue: type === "movie" ? movieVenue : undefined,
+      places: needs ? cleanPlaces(places, members) : [],
       timing,
       tags: tagInput
         .split(",")
@@ -685,11 +711,20 @@ function NewIdeaDialog({
     });
     setTitle("");
     setNotes("");
-    setPlaces([{ name: "", address: "" }]);
+    setPlaces([{ kind: "custom", name: "", address: "" }]);
     setTagInput("");
     setError("");
+    setMovieVenue("home");
     setTiming(defaultTiming);
   }
+
+  const needsPlaces = ideaNeedsPlaces(type, movieVenue);
+  const placeMode =
+    type === "movie" && movieVenue === "home"
+      ? "home"
+      : type === "movie" && movieVenue === "cinema"
+        ? "cinema"
+        : "places";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -753,11 +788,48 @@ function NewIdeaDialog({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-[var(--mute)]">
-              Película y serie son cosas distintas. Visitar, comer y plan
-              piden lugar con dirección.
-            </p>
           </div>
+
+          {type === "movie" ? (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-[var(--ink)]">
+                ¿Dónde la ven? <span className="font-normal text-[var(--pop)]">*</span>
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setMovieVenue("cinema")}
+                  className={cn(
+                    "border px-3 py-3 text-left text-sm",
+                    movieVenue === "cinema"
+                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                      : "border-[var(--line)] bg-white",
+                  )}
+                >
+                  <span className="block font-semibold">En el cine</span>
+                  <span className="mt-1 block text-xs opacity-80">
+                    Hay que poner qué cine
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMovieVenue("home")}
+                  className={cn(
+                    "border px-3 py-3 text-left text-sm",
+                    movieVenue === "home"
+                      ? "border-[var(--pop)] bg-[var(--pop)] text-white"
+                      : "border-[var(--line)] bg-white",
+                  )}
+                >
+                  <span className="block font-semibold">En casa</span>
+                  <span className="mt-1 block text-xs opacity-80">
+                    Casa de alguien del grupo
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="space-y-1.5">
             <Label htmlFor="title">Título</Label>
             <Input
@@ -787,19 +859,20 @@ function NewIdeaDialog({
             />
           </div>
 
-          {ideaNeedsPlaces(type) ? (
+          {needsPlaces ? (
             <PlaceFields
               type={type}
               places={places}
               onChange={setPlaces}
-              error={error && ideaNeedsPlaces(type) ? error : undefined}
+              members={members}
+              mode={placeMode}
+              error={error && needsPlaces ? error : undefined}
             />
-          ) : (
+          ) : type === "series" ? (
             <p className="rounded bg-[var(--wash)] px-3 py-2 text-xs text-[var(--mute)]">
-              Película y serie no llevan dirección (son para ver en casa o
-              donde quieran).
+              Las series no piden lugar (normalmente se ven en casa).
             </p>
-          )}
+          ) : null}
 
           <div className="space-y-1.5">
             <Label htmlFor="tags">Tags (opcional, separados por coma)</Label>
@@ -811,7 +884,7 @@ function NewIdeaDialog({
               className="field-input"
             />
           </div>
-          {error && !ideaNeedsPlaces(type) ? (
+          {error && !needsPlaces ? (
             <p className="text-sm text-[var(--pop)]">{error}</p>
           ) : null}
           <Button

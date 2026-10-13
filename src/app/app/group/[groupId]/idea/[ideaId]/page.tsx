@@ -12,7 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { mapsUrl } from "@/lib/maps";
-import { IDEA_TYPE_LABELS, formatPlace } from "@/lib/types";
+import {
+  IDEA_TYPE_LABELS,
+  MOVIE_VENUE_LABELS,
+  formatPlace,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function IdeaDetailPage() {
@@ -127,6 +131,11 @@ export default function IdeaDetailPage() {
         </Link>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{IDEA_TYPE_LABELS[idea.type]}</Badge>
+          {idea.type === "movie" && idea.movieVenue ? (
+            <Badge variant="outline">
+              {MOVIE_VENUE_LABELS[idea.movieVenue]}
+            </Badge>
+          ) : null}
           {idea.status === "chosen" ? (
             <Badge className="bg-[var(--pop)] text-white">Elegida</Badge>
           ) : null}
@@ -161,7 +170,13 @@ export default function IdeaDetailPage() {
         {idea.places?.length ? (
           <ul className="mt-4 space-y-2 border border-[var(--line)] bg-white p-3">
             <li className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
-              {idea.places.length === 1 ? "Lugar" : "Lugares"}
+              {idea.type === "movie" && idea.movieVenue === "cinema"
+                ? "Cine"
+                : idea.type === "movie" && idea.movieVenue === "home"
+                  ? "Casa"
+                  : idea.places.length === 1
+                    ? "Lugar"
+                    : "Lugares"}
             </li>
             {idea.places.map((place, idx) => (
               <li
@@ -171,6 +186,11 @@ export default function IdeaDetailPage() {
                 <span>
                   <span className="font-medium text-[var(--ink)]">
                     {place.name}
+                    {place.kind === "member_home" ? (
+                      <span className="ml-1 text-xs font-normal text-[var(--mute)]">
+                        (casa del grupo)
+                      </span>
+                    ) : null}
                   </span>
                   <span className="mt-0.5 block text-[var(--mute)]">
                     {place.address}

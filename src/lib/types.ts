@@ -12,10 +12,16 @@ export type GroupLocationVisibility =
   | "neighborhood"
   | "exact";
 
-/** Lugar concreto: nombre del sitio + dirección */
+/** Cine o casa — solo aplica a películas */
+export type MovieVenue = "cinema" | "home";
+
+/** Lugar concreto: sitio libre o casa de un miembro del grupo */
 export type IdeaPlace = {
   name: string;
   address: string;
+  kind?: "custom" | "member_home";
+  /** Si kind = member_home */
+  memberId?: string;
 };
 
 export type User = {
@@ -55,7 +61,9 @@ export type Idea = {
   type: IdeaType;
   title: string;
   notes: string;
-  /** Lugares con nombre + dirección (obligatorio en visitar / comer / plan) */
+  /** Solo películas: ver en cine o en casa */
+  movieVenue?: MovieVenue;
+  /** Lugares: visitar/comer/plan; cine; o casa de alguien */
   places: IdeaPlace[];
   /** Compat: primera dirección (derivada de places) */
   address?: string;
@@ -120,6 +128,11 @@ export const IDEA_TYPE_LABELS: Record<IdeaType, string> = {
   plan: "Plan",
 };
 
+export const MOVIE_VENUE_LABELS: Record<MovieVenue, string> = {
+  cinema: "En el cine",
+  home: "En casa",
+};
+
 export const IDEA_TIMING_LABELS: Record<IdeaTiming, string> = {
   catalog: "Catálogo",
   soon: "Pronto",
@@ -143,11 +156,6 @@ export const GROUP_LOCATION_VISIBILITY_LABELS: Record<
   exact: "Dirección completa",
 };
 
-/** Visitar / comer / plan exigen al menos un lugar con nombre y dirección */
-export function ideaNeedsPlaces(type: IdeaType): boolean {
-  return type === "visit" || type === "food" || type === "plan";
-}
-
 /** Un plan puede (y suele) llevar varios lugares */
 export function ideaAllowsMultiplePlaces(type: IdeaType): boolean {
   return type === "plan";
@@ -156,7 +164,7 @@ export function ideaAllowsMultiplePlaces(type: IdeaType): boolean {
 export function placesFromLegacy(address?: string): IdeaPlace[] {
   const trimmed = address?.trim();
   if (!trimmed) return [];
-  return [{ name: trimmed, address: trimmed }];
+  return [{ kind: "custom", name: trimmed, address: trimmed }];
 }
 
 export function primaryAddress(idea: Pick<Idea, "places" | "address">): string | undefined {
