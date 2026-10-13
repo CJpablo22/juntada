@@ -1,10 +1,10 @@
-import type { AppState } from "@/lib/types";
+import type { AppState, User } from "@/lib/types";
 
 /** Demo seed so the app feels alive on first open. */
 export function createSeedState(): AppState {
   const now = new Date().toISOString();
 
-  const lucia = {
+  const lucia: User = {
     id: "user_lucia",
     name: "Lucía",
     country: "ES",
@@ -19,11 +19,11 @@ export function createSeedState(): AppState {
     },
     email: "lucia@demo.juntada",
     phone: "+34 600 111 222",
-    authProvider: "email" as const,
+    authProvider: "email",
     avatarHue: 12,
     createdAt: now,
   };
-  const mateo = {
+  const mateo: User = {
     id: "user_mateo",
     name: "Mateo",
     country: "ES",
@@ -38,11 +38,11 @@ export function createSeedState(): AppState {
     },
     email: "mateo@demo.juntada",
     phone: "+34 600 333 444",
-    authProvider: "apple" as const,
+    authProvider: "apple",
     avatarHue: 168,
     createdAt: now,
   };
-  const sofia = {
+  const sofia: User = {
     id: "user_sofia",
     name: "Sofía",
     country: "ES",
@@ -56,7 +56,7 @@ export function createSeedState(): AppState {
     },
     email: "sofia@demo.juntada",
     phone: "+34 600 555 666",
-    authProvider: "phone" as const,
+    authProvider: "phone",
     avatarHue: 210,
     createdAt: now,
   };
