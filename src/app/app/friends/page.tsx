@@ -69,13 +69,10 @@ export default function FriendsPage() {
                           {friend.user.name}
                         </span>
                         <span className="block text-xs text-[var(--brand-mute)]">
-                          {friend.user.neighborhood
-                            ? `${friend.user.neighborhood}, `
-                            : ""}
-                          {friend.user.city}
-                          {friend.user.province
-                            ? ` · ${friend.user.province}`
-                            : ""}
+                          {friend.user.city} · {friend.user.province}
+                          <span className="mt-0.5 block text-[10px]">
+                            (dirección oculta fuera del grupo)
+                          </span>
                         </span>
                         <span className="region-chip mt-1.5">
                           Look {theme.label}

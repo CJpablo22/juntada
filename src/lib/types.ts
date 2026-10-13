@@ -4,6 +4,7 @@ export type IdeaStatus = "pending" | "chosen" | "done" | "archived";
 export type IdeaTiming = "catalog" | "soon";
 export type GroupKind = "couple" | "friends" | "siblings" | "study" | "other";
 export type AuthProvider = "demo" | "email" | "phone" | "apple";
+export type AddressDetailLevel = "neighborhood" | "exact";
 
 export type User = {
   id: string;
@@ -13,6 +14,12 @@ export type User = {
   province: string;
   city: string;
   neighborhood?: string;
+  /** Calle y número — solo para recomendaciones; privacidad controlada */
+  addressLine?: string;
+  postalCode?: string;
+  /** Si true, los miembros de tus grupos pueden ver barrio o dirección según detailLevel */
+  shareAddressInGroups: boolean;
+  addressDetailLevel: AddressDetailLevel;
   email?: string;
   phone?: string;
   authProvider: AuthProvider;

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { badgeForRank, rankMembers } from "@/lib/points";
+import { getVisibleLocationForViewer } from "@/lib/privacy";
 import {
   GROUP_KIND_LABELS,
   IDEA_TIMING_LABELS,
@@ -150,22 +151,29 @@ export default function GroupPage() {
               {group.name}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              {members.map((m) =>
-                m ? (
+              {members.map((m) => {
+                if (!m) return null;
+                const visible = getVisibleLocationForViewer(m, {
+                  inSharedGroup: true,
+                });
+                return (
                   <span
                     key={m.id}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2 py-1 text-xs"
+                    className="inline-flex max-w-full items-center gap-1.5 border border-[var(--brand-line)] bg-white/70 px-2 py-1 text-xs"
+                    style={{ borderRadius: "var(--btn-radius)" }}
+                    title={visible.detail ?? "Ubicación pública del grupo"}
                   >
                     <UserAvatar user={m} size="sm" className="size-5 text-[10px]" />
-                    {m.name}
-                    {m.neighborhood ? (
+                    <span className="truncate">
+                      {m.name}
                       <span className="text-[var(--brand-mute)]">
-                        · {m.neighborhood}
+                        {" "}
+                        · {visible.label}
                       </span>
-                    ) : null}
+                    </span>
                   </span>
-                ) : null,
-              )}
+                );
+              })}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

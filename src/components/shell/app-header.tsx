@@ -10,7 +10,7 @@ export function AppHeader() {
   const { currentUser, signOut } = useApp();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--brand-line)]/70 bg-[color-mix(in_oklab,var(--brand-foam)_82%,transparent)] backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-[var(--brand-line)] bg-[color-mix(in_oklab,var(--brand-foam)_90%,transparent)] backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         <Link href={currentUser ? "/app" : "/"} className="shrink-0">
           <Logo />

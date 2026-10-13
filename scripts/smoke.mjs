@@ -73,10 +73,15 @@ try {
 
   await page.goto(base + '/app/profile', { waitUntil: 'networkidle' });
   await page.locator('#province').selectOption('Sevilla');
+  await page.waitForTimeout(150);
+  await page.locator('#city').selectOption('Sevilla');
+  await page.locator('#neighborhood').selectOption('Triana');
   await page.getByRole('button', { name: /Guardar/i }).click();
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(500);
   const sevillaLook = await page.locator('text=/Look Sevilla/i').count();
   ok('regional theme sevilla', sevillaLook > 0);
+  const barrioSelect = await page.locator('#neighborhood option').count();
+  ok('neighborhood options', barrioSelect > 3, `opts=${barrioSelect}`);
 
   await page.screenshot({ path: '/tmp/computer-use/playwright-profile.png', fullPage: true });
   await page.goto(base + '/app/group/group_nos', { waitUntil: 'networkidle' });

@@ -7,9 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-body);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-display);
+  --font-sans: var(--font-body-active);
+  --font-heading: var(--font-display-active);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,63 +38,69 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: calc(var(--panel-radius) * 0.7);
+  --radius-md: var(--panel-radius);
+  --radius-lg: calc(var(--panel-radius) * 1.2);
+  --radius-xl: calc(var(--panel-radius) * 1.5);
+  --radius-2xl: calc(var(--panel-radius) * 1.8);
+  --radius-3xl: calc(var(--panel-radius) * 2.1);
+  --radius-4xl: calc(var(--panel-radius) * 2.4);
 }
 
 :root {
-  /* Default + overridable by regional theme (data-region / inline vars) */
-  --brand-ink: #0c3029;
-  --brand-foam: #f4f7f2;
-  --brand-mist: #d9ebe3;
-  --brand-sun: #f3c16b;
-  --brand-pop: #e23e57;
-  --brand-mute: #5b6b64;
-  --brand-line: #c9d8d0;
-  --brand-panel: rgba(255, 255, 255, 0.72);
-  --bg-a: #ffe8b5;
-  --bg-b: #b8e0d2;
-  --bg-c: #f7c4cb;
-  --bg-base-1: #f7faf6;
-  --bg-base-2: #eef5f0;
-  --bg-base-3: #f6f1ea;
-  --hero-ink: 12, 48, 41;
-  --pattern-opacity: 0.06;
+  --font-display-active: var(--font-literata), Georgia, serif;
+  --font-body-active: var(--font-source-sans), "Segoe UI", sans-serif;
+
+  --brand-ink: #1e2a24;
+  --brand-foam: #f5f2eb;
+  --brand-mist: #d7d2c6;
+  --brand-sun: #c9a66b;
+  --brand-pop: #a33b45;
+  --brand-mute: #5d635e;
+  --brand-line: #cfc8bb;
+  --brand-panel: rgba(255, 252, 246, 0.92);
+  --bg-a: #e4d7b8;
+  --bg-b: #c5d5cb;
+  --bg-c: #e0c4c4;
+  --bg-base-1: #f5f2eb;
+  --bg-base-2: #ebe6dc;
+  --bg-base-3: #e4dfd5;
+  --hero-ink: 30, 42, 36;
+  --pattern-opacity: 0.08;
+  --btn-radius: 0.35rem;
+  --panel-radius: 0.55rem;
+  --ornament: double;
+  --surface-shadow: 0 1px 0 rgba(30, 42, 36, 0.09);
 
   --background: var(--brand-foam);
   --foreground: var(--brand-ink);
-  --card: #ffffff;
+  --card: #fffdf8;
   --card-foreground: var(--brand-ink);
-  --popover: #ffffff;
+  --popover: #fffdf8;
   --popover-foreground: var(--brand-ink);
   --primary: var(--brand-ink);
   --primary-foreground: var(--brand-foam);
-  --secondary: color-mix(in oklab, var(--brand-mist) 70%, white);
+  --secondary: color-mix(in oklab, var(--brand-mist) 65%, white);
   --secondary-foreground: var(--brand-ink);
-  --muted: color-mix(in oklab, var(--brand-mist) 70%, white);
+  --muted: color-mix(in oklab, var(--brand-mist) 65%, white);
   --muted-foreground: var(--brand-mute);
-  --accent: color-mix(in oklab, var(--brand-sun) 55%, white);
+  --accent: color-mix(in oklab, var(--brand-sun) 45%, white);
   --accent-foreground: var(--brand-ink);
-  --destructive: #c62828;
+  --destructive: #8b1e1e;
   --border: var(--brand-line);
-  --input: color-mix(in oklab, var(--brand-line) 80%, white);
-  --ring: color-mix(in oklab, var(--brand-pop) 55%, var(--brand-ink));
+  --input: color-mix(in oklab, var(--brand-line) 75%, white);
+  --ring: color-mix(in oklab, var(--brand-pop) 45%, var(--brand-ink));
   --chart-1: var(--brand-pop);
   --chart-2: var(--brand-ink);
   --chart-3: var(--brand-sun);
-  --chart-4: #3d7a6c;
-  --chart-5: #8aa89c;
-  --radius: 0.9rem;
+  --chart-4: #3d5a4c;
+  --chart-5: #8a9a8c;
+  --radius: var(--panel-radius);
   --sidebar: var(--brand-foam);
   --sidebar-foreground: var(--brand-ink);
   --sidebar-primary: var(--brand-ink);
   --sidebar-primary-foreground: var(--brand-foam);
-  --sidebar-accent: color-mix(in oklab, var(--brand-mist) 70%, white);
+  --sidebar-accent: color-mix(in oklab, var(--brand-mist) 65%, white);
   --sidebar-accent-foreground: var(--brand-ink);
   --sidebar-border: var(--brand-line);
   --sidebar-ring: var(--ring);
@@ -106,63 +111,71 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-body-active);
   }
   body {
-    @apply text-foreground;
-    background:
-      radial-gradient(1200px 600px at 10% -10%, var(--bg-a) 0%, transparent 55%),
-      radial-gradient(900px 500px at 95% 5%, var(--bg-b) 0%, transparent 50%),
-      radial-gradient(700px 400px at 50% 100%, var(--bg-c) 0%, transparent 45%),
-      linear-gradient(180deg, var(--bg-base-1) 0%, var(--bg-base-2) 45%, var(--bg-base-3) 100%);
+    color: var(--brand-ink);
+    background-color: var(--bg-base-1);
+    background-image:
+      radial-gradient(1100px 520px at 8% -8%, var(--bg-a) 0%, transparent 58%),
+      radial-gradient(900px 480px at 96% 0%, var(--bg-b) 0%, transparent 55%),
+      radial-gradient(700px 380px at 50% 110%, var(--bg-c) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-base-1), var(--bg-base-2) 48%, var(--bg-base-3));
     min-height: 100%;
-    transition: background 0.45s ease;
+    transition:
+      background 0.5s ease,
+      color 0.35s ease;
+  }
+  h1,
+  h2,
+  h3,
+  .type-display {
+    font-family: var(--font-display-active);
+    letter-spacing: -0.01em;
   }
 }
 
-@layer utilities {
+@layer components {
   .surface-panel {
     background: var(--brand-panel);
-    border: 1px solid color-mix(in oklab, var(--brand-line) 80%, white);
-    backdrop-filter: blur(10px);
+    border: 1px solid var(--brand-line);
+    border-style: var(--ornament);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--surface-shadow);
+    backdrop-filter: blur(6px);
   }
 
-  .hero-atmosphere {
-    background:
-      linear-gradient(
-        120deg,
-        rgba(var(--hero-ink), 0.9),
-        rgba(var(--hero-ink), 0.55)
-      ),
-      radial-gradient(
-        800px 400px at 20% 20%,
-        color-mix(in oklab, var(--brand-sun) 55%, transparent),
-        transparent 60%
-      ),
-      radial-gradient(
-        700px 380px at 80% 30%,
-        color-mix(in oklab, var(--brand-pop) 45%, transparent),
-        transparent 55%
-      ),
-      linear-gradient(
-        135deg,
-        color-mix(in oklab, var(--brand-ink) 12%, transparent) 0%,
-        transparent 40%
-      );
-    background-size: cover;
-    position: relative;
+  .field-select,
+  .field-input {
+    width: 100%;
+    height: 2.75rem;
+    border-radius: var(--btn-radius);
+    border: 1px solid var(--brand-line);
+    background: #fffdf8;
+    padding: 0 0.85rem;
+    font-size: 0.925rem;
+    color: var(--brand-ink);
   }
 
-  .hero-atmosphere::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: var(--pattern-opacity);
-    background-image:
-      radial-gradient(circle at 20% 20%, white 1px, transparent 1px),
-      radial-gradient(circle at 80% 40%, white 1px, transparent 1px);
-    background-size: 28px 28px, 42px 42px;
+  .field-select:focus,
+  .field-input:focus {
+    outline: 2px solid color-mix(in oklab, var(--brand-pop) 35%, transparent);
+    outline-offset: 1px;
+  }
+
+  .choice-card {
+    border: 1px solid var(--brand-line);
+    border-radius: var(--btn-radius);
+    background: #fffdf8;
+    padding: 0.85rem;
+    text-align: left;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .choice-card-active {
+    border-color: var(--brand-ink);
+    background: color-mix(in oklab, var(--brand-sun) 22%, white);
   }
 
   .region-chip {
@@ -170,15 +183,98 @@
     align-items: center;
     gap: 0.35rem;
     border-radius: 999px;
-    background: color-mix(in oklab, var(--brand-sun) 28%, white);
+    border: 1px solid var(--brand-line);
+    background: color-mix(in oklab, var(--brand-sun) 24%, white);
     color: var(--brand-ink);
-    padding: 0.25rem 0.7rem;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
 
+  .hero-atmosphere {
+    position: relative;
+    color: var(--brand-foam);
+    background:
+      linear-gradient(
+        125deg,
+        rgba(var(--hero-ink), 0.92) 0%,
+        rgba(var(--hero-ink), 0.72) 48%,
+        rgba(var(--hero-ink), 0.85) 100%
+      ),
+      radial-gradient(
+        900px 420px at 18% 20%,
+        color-mix(in oklab, var(--brand-sun) 50%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        700px 380px at 85% 25%,
+        color-mix(in oklab, var(--brand-pop) 40%, transparent),
+        transparent 58%
+      );
+  }
+
+  .hero-atmosphere::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: var(--pattern-opacity);
+    background-image:
+      linear-gradient(
+        0deg,
+        transparent 24%,
+        rgba(255, 255, 255, 0.45) 25%,
+        rgba(255, 255, 255, 0.45) 26%,
+        transparent 27%,
+        transparent 74%,
+        rgba(255, 255, 255, 0.35) 75%,
+        rgba(255, 255, 255, 0.35) 76%,
+        transparent 77%
+      ),
+      linear-gradient(
+        90deg,
+        transparent 24%,
+        rgba(255, 255, 255, 0.45) 25%,
+        rgba(255, 255, 255, 0.45) 26%,
+        transparent 27%,
+        transparent 74%,
+        rgba(255, 255, 255, 0.35) 75%,
+        rgba(255, 255, 255, 0.35) 76%,
+        transparent 77%
+      );
+    background-size: 56px 56px;
+  }
+
+  /* Traditional regional ornaments */
+  html[data-region="sevilla"] .hero-atmosphere::after,
+  html[data-region="granada"] .hero-atmosphere::after,
+  html[data-region="malaga"] .hero-atmosphere::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.08;
+    background-image: radial-gradient(
+      circle at center,
+      transparent 42%,
+      rgba(255, 255, 255, 0.8) 43%,
+      transparent 44%
+    );
+    background-size: 28px 28px;
+  }
+
+  html[data-region="madrid"] .surface-panel,
+  html[data-region="zaragoza"] .surface-panel {
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+  }
+}
+
+@layer utilities {
   .type-display {
-    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-display-active);
   }
 
   .animate-rise {
@@ -194,10 +290,17 @@
   }
 }
 
+/* Make shadcn buttons inherit regional radius */
+[data-slot="button"] {
+  border-radius: var(--btn-radius) !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -208,27 +311,21 @@
 @keyframes shake {
   0%,
   100% {
-    transform: translateX(0) rotate(0);
+    transform: translateX(0);
   }
-  20% {
-    transform: translateX(-3px) rotate(-1deg);
+  25% {
+    transform: translateX(-2px);
   }
-  40% {
-    transform: translateX(3px) rotate(1deg);
-  }
-  60% {
-    transform: translateX(-2px) rotate(-0.5deg);
-  }
-  80% {
-    transform: translateX(2px) rotate(0.5deg);
+  75% {
+    transform: translateX(2px);
   }
 }
 
 @keyframes pop {
-  0% {
-    transform: scale(0.92);
+  from {
+    transform: scale(0.94);
   }
-  100% {
+  to {
     transform: scale(1);
   }
 }

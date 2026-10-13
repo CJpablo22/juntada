@@ -47,6 +47,10 @@ type AppContextValue = {
     province?: string;
     city: string;
     neighborhood?: string;
+    addressLine?: string;
+    postalCode?: string;
+    shareAddressInGroups?: boolean;
+    addressDetailLevel?: "neighborhood" | "exact";
     email?: string;
     phone?: string;
     authProvider?: AuthProvider;
@@ -96,6 +100,10 @@ type AppContextValue = {
     province: string;
     city: string;
     neighborhood?: string;
+    addressLine?: string;
+    postalCode?: string;
+    shareAddressInGroups: boolean;
+    addressDetailLevel: "neighborhood" | "exact";
   }) => void;
 };
 
@@ -174,6 +182,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       province?: string;
       city: string;
       neighborhood?: string;
+      addressLine?: string;
+      postalCode?: string;
+      shareAddressInGroups?: boolean;
+      addressDetailLevel?: "neighborhood" | "exact";
       email?: string;
       phone?: string;
       authProvider?: AuthProvider;
@@ -186,6 +198,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         province: (input.province ?? "").trim() || "Madrid",
         city: input.city.trim(),
         neighborhood: input.neighborhood?.trim() || undefined,
+        addressLine: input.addressLine?.trim() || undefined,
+        postalCode: input.postalCode?.trim() || undefined,
+        shareAddressInGroups: input.shareAddressInGroups ?? false,
+        addressDetailLevel: input.addressDetailLevel ?? "neighborhood",
         email: input.email?.trim().toLowerCase() || undefined,
         phone: input.phone?.trim() || undefined,
         authProvider: input.authProvider ?? "demo",
@@ -216,8 +232,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             country: "ES",
             province: "Madrid",
             city: input.city?.trim() || "Madrid",
+            neighborhood: "Malasaña",
+            shareAddressInGroups: false,
+            addressDetailLevel: "neighborhood" as const,
             email,
-            authProvider: "email",
+            authProvider: "email" as const,
             avatarHue: Math.floor(Math.random() * 360),
             createdAt: new Date().toISOString(),
           }),
@@ -244,8 +263,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             country: "ES",
             province: "Madrid",
             city: input.city?.trim() || "Madrid",
+            neighborhood: "Malasaña",
+            shareAddressInGroups: false,
+            addressDetailLevel: "neighborhood" as const,
             phone,
-            authProvider: "phone",
+            authProvider: "phone" as const,
             avatarHue: Math.floor(Math.random() * 360),
             createdAt: new Date().toISOString(),
           }),
@@ -272,8 +294,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             country: "ES",
             province: "Madrid",
             city: input?.city?.trim() || "Madrid",
+            neighborhood: "Malasaña",
+            shareAddressInGroups: false,
+            addressDetailLevel: "neighborhood" as const,
             email: appleKey,
-            authProvider: "apple",
+            authProvider: "apple" as const,
             avatarHue: Math.floor(Math.random() * 360),
             createdAt: new Date().toISOString(),
           }),
@@ -679,6 +704,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       province: string;
       city: string;
       neighborhood?: string;
+      addressLine?: string;
+      postalCode?: string;
+      shareAddressInGroups: boolean;
+      addressDetailLevel: "neighborhood" | "exact";
     }) => {
       setState((prev) => {
         if (!prev.currentUserId) return prev;
@@ -693,6 +722,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   province: input.province.trim(),
                   city: input.city.trim(),
                   neighborhood: input.neighborhood?.trim() || undefined,
+                  addressLine: input.addressLine?.trim() || undefined,
+                  postalCode: input.postalCode?.trim() || undefined,
+                  shareAddressInGroups: input.shareAddressInGroups,
+                  addressDetailLevel: input.addressDetailLevel,
                 }
               : u,
           ),

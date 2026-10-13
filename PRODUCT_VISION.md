@@ -31,7 +31,9 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Diseño responsive con personalidad
 - [x] README + vision doc vivos
 - [x] Smoke Playwright de flujos core
-- [x] Apariencia adaptativa por país/provincia/ciudad (Madrid, Sevilla, Barcelona, Valencia, Bilbao, Galicia, Málaga, Zaragoza, Buenos Aires…)
+- [x] Apariencia adaptativa total por país/provincia (tipografía, color, fondo, botones, paneles)
+- [x] Selects reales país → provincia → ciudad → barrio (sin texto libre)
+- [x] Dirección completa privada + compartir en grupo (barrio o exacta)
 - [x] Amigos de experiencia (solo tras completar algo juntos; no follow abierto)
 - [x] Preparado para crecer: `es-ES`, EUR, PWA/móvil más adelante
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ArrowRight, Dices, LockKeyhole, Wallet } from "lucide-react";
+import { ArrowRight, BookmarkPlus, LockKeyhole, MapPinned } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
@@ -19,91 +19,94 @@ export default function LandingPage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <section className="hero-atmosphere relative min-h-[100svh] overflow-hidden text-[var(--brand-foam)]">
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute -left-24 top-24 size-72 rounded-full bg-[var(--brand-sun)] blur-3xl" />
-          <div className="absolute -right-16 bottom-10 size-80 rounded-full bg-[var(--brand-pop)] blur-3xl" />
-        </div>
-
-        <div className="relative mx-auto flex min-h-[100svh] max-w-5xl flex-col px-4 pb-10 pt-6">
-          <header className="flex items-center justify-between">
-            <Logo className="[&_span:last-child]:text-[var(--brand-foam)] [&_span:first-child]:bg-white/15 [&_span:first-child]:text-[var(--brand-foam)]" />
-            <Link
-              href="/enter"
-              className="text-sm font-medium text-white/85 transition hover:text-white"
-            >
-              Entrar
-            </Link>
+      <section className="hero-atmosphere relative min-h-[100svh] overflow-hidden">
+        <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-5xl flex-col px-4 pb-10 pt-6">
+          <header className="flex items-center justify-between border-b border-white/20 pb-4">
+            <Logo invert />
+            <div className="flex items-center gap-4 text-sm">
+              <Link href="/discover" className="text-white/80 hover:text-white">
+                Descubrir
+              </Link>
+              <Link href="/enter" className="text-white/90 hover:text-white">
+                Entrar
+              </Link>
+            </div>
           </header>
 
-          <div className="flex flex-1 flex-col justify-center py-16 md:py-20">
+          <div className="flex flex-1 flex-col justify-center py-16 md:max-w-2xl md:py-20">
             <Reveal>
-              <p className="type-display mb-4 text-5xl font-extrabold tracking-tight sm:text-6xl md:text-7xl">
+              <p className="region-chip mb-5 border-white/30 bg-white/15 text-white">
+                Tradición local · planes en grupo
+              </p>
+            </Reveal>
+            <Reveal delayMs={60}>
+              <p className="type-display text-5xl font-semibold leading-[1.05] text-white sm:text-6xl md:text-7xl">
                 Juntada
               </p>
             </Reveal>
-            <Reveal delayMs={80}>
-              <h1 className="max-w-xl text-2xl font-semibold leading-snug text-white/95 sm:text-3xl">
-                Decidí planes con tu gente sin 40 mensajes de ida y vuelta.
+            <Reveal delayMs={120}>
+              <h1 className="mt-5 max-w-xl text-xl font-medium leading-snug text-white/92 sm:text-2xl">
+                El catálogo de lo que quieren ver y hacer — con el carácter de
+                tu ciudad.
               </h1>
             </Reveal>
-            <Reveal delayMs={140}>
-              <p className="mt-4 max-w-lg text-base leading-relaxed text-white/75 sm:text-lg">
-                Guardá un catálogo para no olvidar. Cuando quieran, pasalo a
-                Pronto, votá en secreto o que decida el azar. Después, cuentas
-                claras en euros.
+            <Reveal delayMs={180}>
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-white/75">
+                Guardá series y sitios para no olvidar. Cuando toque, pasalos a
+                Pronto, votá en secreto o dejá que el azar decida. La apariencia
+                cambia si estás en Sevilla, Madrid, Barcelona…
               </p>
             </Reveal>
-            <Reveal delayMs={200}>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Reveal delayMs={240}>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button
                   size="lg"
-                  className="h-12 rounded-2xl bg-[var(--brand-pop)] px-5 text-base text-white hover:bg-[var(--brand-pop)]/90"
+                  className="h-12 bg-[var(--brand-pop)] px-5 text-base text-white hover:bg-[var(--brand-pop)]/90"
                   onClick={() => router.push("/enter")}
                 >
-                  Empezar ahora
+                  Empezar
                   <ArrowRight data-icon="inline-end" />
                 </Button>
                 <Button
                   size="lg"
-                  variant="ghost"
-                  className="h-12 rounded-2xl text-white hover:bg-white/10 hover:text-white"
+                  variant="outline"
+                  className="h-12 border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
                   onClick={() => router.push("/discover")}
                 >
                   Ver Descubrir
                 </Button>
               </div>
-              <p className="mt-3 text-sm text-white/65">
-                Demo local · España · EUR · correo / teléfono / Apple
-              </p>
             </Reveal>
           </div>
 
-          <Reveal delayMs={260}>
-            <ul className="grid gap-3 sm:grid-cols-3">
+          <Reveal delayMs={300}>
+            <ul className="grid gap-3 border-t border-white/20 pt-6 sm:grid-cols-3">
               {[
                 {
+                  icon: BookmarkPlus,
+                  title: "Catálogo vivo",
+                  text: "Guardá para más adelante, no solo para este finde.",
+                },
+                {
                   icon: LockKeyhole,
-                  title: "Voto secreto",
-                  text: "Nadie se copia. Se revela cuando toca.",
+                  title: "Dirección privada",
+                  text: "Vos elegís qué ven del grupo: nada, barrio o exacta.",
                 },
                 {
-                  icon: Dices,
-                  title: "Azar con criterio",
-                  text: "Sortea entre los finalistas, no a ciegas.",
-                },
-                {
-                  icon: Wallet,
-                  title: "Cuentas claras",
-                  text: "Quién pagó, quién debe, sin Excel.",
+                  icon: MapPinned,
+                  title: "Look local",
+                  text: "Tipografía, color y fondo según tu provincia.",
                 },
               ].map((item) => (
                 <li
                   key={item.title}
-                  className="rounded-2xl border border-white/15 bg-white/8 px-4 py-3 backdrop-blur-sm"
+                  className="border border-white/20 bg-white/8 px-4 py-3"
+                  style={{ borderRadius: "var(--panel-radius)" }}
                 >
                   <item.icon className="mb-2 size-4 text-[var(--brand-sun)]" />
-                  <p className="text-sm font-semibold">{item.title}</p>
+                  <p className="type-display text-lg font-semibold text-white">
+                    {item.title}
+                  </p>
                   <p className="mt-1 text-xs leading-relaxed text-white/70">
                     {item.text}
                   </p>
