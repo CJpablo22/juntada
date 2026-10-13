@@ -384,33 +384,67 @@ const THEMES: Record<RegionThemeId, RegionTheme> = {
   },
 };
 
-/** Claves ya normalizadas (minúsculas, sin tildes) */
-const PROVINCE_THEME: Record<string, RegionThemeId> = {
+/** Claves ya normalizadas (minúsculas, sin tildes) — España */
+const ES_PROVINCE_THEME: Record<string, RegionThemeId> = {
   madrid: "madrid",
+  avila: "madrid",
+  segovia: "madrid",
+  toledo: "madrid",
+  guadalajara: "madrid",
+  cuenca: "madrid",
+  "ciudad real": "madrid",
+  palencia: "madrid",
+  burgos: "madrid",
+  valladolid: "madrid",
+  zamora: "madrid",
+  salamanca: "madrid",
   sevilla: "sevilla",
+  cadiz: "sevilla",
+  huelva: "sevilla",
+  cordoba: "sevilla",
+  badajoz: "sevilla",
+  caceres: "sevilla",
+  jaen: "granada",
+  granada: "granada",
+  almeria: "malaga",
+  malaga: "malaga",
+  "las palmas": "malaga",
+  "santa cruz de tenerife": "malaga",
+  ceuta: "malaga",
+  melilla: "malaga",
   barcelona: "barcelona",
+  girona: "barcelona",
+  lleida: "barcelona",
+  tarragona: "barcelona",
+  "illes balears": "barcelona",
   valencia: "valencia",
+  castellon: "valencia",
+  alicante: "valencia",
+  murcia: "valencia",
+  albacete: "valencia",
   bizkaia: "bilbao",
+  gipuzkoa: "bilbao",
+  alava: "bilbao",
+  navarra: "bilbao",
+  "la rioja": "bilbao",
+  cantabria: "asturias",
+  asturias: "asturias",
+  leon: "asturias",
   "a coruna": "galicia",
   pontevedra: "galicia",
   lugo: "galicia",
   ourense: "galicia",
-  malaga: "malaga",
   zaragoza: "zaragoza",
-  granada: "granada",
-  asturias: "asturias",
-  alicante: "valencia",
-  murcia: "valencia",
-  "illes balears": "barcelona",
-  "las palmas": "malaga",
+  huesca: "zaragoza",
+  teruel: "zaragoza",
+  soria: "zaragoza",
+};
+
+/** Argentina: CABA/AMBA vs interior */
+const AR_PROVINCE_THEME: Record<string, RegionThemeId> = {
   caba: "buenos_aires",
   "ciudad autonoma de buenos aires": "buenos_aires",
   "buenos aires": "buenos_aires",
-  cordoba: "ar_interior",
-  "santa fe": "ar_interior",
-  mendoza: "ar_interior",
-  tucuman: "ar_interior",
-  salta: "ar_interior",
 };
 
 function norm(value: string): string {
@@ -419,6 +453,18 @@ function norm(value: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{M}/gu, "");
+}
+
+function matchTheme(
+  map: Record<string, RegionThemeId>,
+  province: string,
+  city: string,
+): RegionThemeId | null {
+  if (province && map[province]) return map[province];
+  for (const [key, id] of Object.entries(map)) {
+    if (province.includes(key) || city.includes(key)) return id;
+  }
+  return null;
 }
 
 export function getRegionTheme(id: RegionThemeId): RegionTheme {
@@ -434,16 +480,13 @@ export function resolveRegionTheme(input: {
   const city = norm(input.city ?? "");
   const country = (input.country ?? "ES").toUpperCase();
 
-  if (province && PROVINCE_THEME[province]) {
-    return getRegionTheme(PROVINCE_THEME[province]);
+  if (country === "AR") {
+    const id = matchTheme(AR_PROVINCE_THEME, province, city);
+    return getRegionTheme(id ?? "ar_interior");
   }
-  for (const [key, id] of Object.entries(PROVINCE_THEME)) {
-    if (province.includes(key) || city.includes(key)) {
-      return getRegionTheme(id);
-    }
-  }
-  if (country === "AR") return getRegionTheme("buenos_aires");
-  return getRegionTheme("default");
+
+  const id = matchTheme(ES_PROVINCE_THEME, province, city);
+  return getRegionTheme(id ?? "default");
 }
 
 export function applyRegionTheme(theme: RegionTheme): void {

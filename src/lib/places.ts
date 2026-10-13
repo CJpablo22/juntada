@@ -4,6 +4,7 @@ import type { IdeaPlace, IdeaType, MovieVenue, User } from "@/lib/types";
 export function memberHomeAddress(user: User): string {
   const parts = [
     user.addressLine,
+    user.floorUnit,
     user.postalCode,
     user.neighborhood,
     user.city,

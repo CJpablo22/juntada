@@ -12,6 +12,7 @@ export function createSeedState(): AppState {
     city: "Madrid",
     neighborhood: "Malasaña",
     addressLine: "Calle del Espíritu Santo 12",
+    floorUnit: "2º A",
     postalCode: "28004",
     groupLocationVisibility: {
       group_nos: "neighborhood",
@@ -31,6 +32,7 @@ export function createSeedState(): AppState {
     city: "Sevilla",
     neighborhood: "Triana",
     addressLine: "Calle Pureza 45",
+    floorUnit: "Bajo",
     postalCode: "41010",
     groupLocationVisibility: {
       group_nos: "exact",
@@ -50,6 +52,7 @@ export function createSeedState(): AppState {
     city: "Barcelona",
     neighborhood: "Gràcia",
     addressLine: "Carrer de Verdi 28",
+    floorUnit: "3º 2ª",
     postalCode: "08012",
     groupLocationVisibility: {
       group_finde: "country",
@@ -68,7 +71,8 @@ export function createSeedState(): AppState {
     city: "Buenos Aires",
     neighborhood: "Palermo",
     addressLine: "Honduras 4800",
-    postalCode: "C1414",
+    floorUnit: "Piso 5 Dpto B",
+    postalCode: "C1414BHN",
     groupLocationVisibility: {
       group_finde: "neighborhood",
     },

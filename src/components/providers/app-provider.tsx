@@ -51,6 +51,7 @@ type AppContextValue = {
     city: string;
     neighborhood?: string;
     addressLine?: string;
+    floorUnit?: string;
     postalCode?: string;
     email?: string;
     phone?: string;
@@ -104,6 +105,7 @@ type AppContextValue = {
     city: string;
     neighborhood?: string;
     addressLine?: string;
+    floorUnit?: string;
     postalCode?: string;
   }) => void;
   setGroupLocationVisibility: (
@@ -188,6 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       city: string;
       neighborhood?: string;
       addressLine?: string;
+      floorUnit?: string;
       postalCode?: string;
       email?: string;
       phone?: string;
@@ -202,6 +205,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         city: input.city.trim(),
         neighborhood: input.neighborhood?.trim() || undefined,
         addressLine: input.addressLine?.trim() || undefined,
+        floorUnit: input.floorUnit?.trim() || undefined,
         postalCode: input.postalCode?.trim() || undefined,
         groupLocationVisibility: {},
         email: input.email?.trim().toLowerCase() || undefined,
@@ -747,6 +751,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       city: string;
       neighborhood?: string;
       addressLine?: string;
+      floorUnit?: string;
       postalCode?: string;
     }) => {
       setState((prev) => {
@@ -763,6 +768,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   city: input.city.trim(),
                   neighborhood: input.neighborhood?.trim() || undefined,
                   addressLine: input.addressLine?.trim() || undefined,
+                  floorUnit: input.floorUnit?.trim() || undefined,
                   postalCode: input.postalCode?.trim() || undefined,
                 }
               : u,

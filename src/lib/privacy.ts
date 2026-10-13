@@ -55,6 +55,7 @@ export function getVisibleLocationForViewer(
     case "exact": {
       const exact = [
         owner.addressLine,
+        owner.floorUnit,
         owner.postalCode,
         owner.neighborhood,
         owner.city,

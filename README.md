@@ -21,7 +21,8 @@ Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, va
 - Gastos del grupo y saldos (EUR)
 - Puntos + badges por grupo
 - Look regional fuerte: tipografía, botones y fondo cambian por país (ES/AR) y provincia
-- País / provincia / ciudad / barrio solo desde listas reales
+- País / provincia / localidad / barrio desde catálogo completo (ES municipios + AR localidades)
+- Calle con búsqueda y sugerencias; CP automático; piso/puerta aparte; guardar solo al confirmar
 - Privacidad de ubicación **por grupo**: solo país, provincia, barrio o dirección completa
 - Amigos de experiencia (solo si completaron algo juntos)
 - Diseño responsive, tono cercano ES con toque rioplatense

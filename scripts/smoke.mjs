@@ -97,10 +97,24 @@ try {
   ok('experience friends', friends > 0);
 
   await page.goto(base + '/app/profile', { waitUntil: 'networkidle' });
+  const provinceCount = await page.locator('#province option').count();
+  ok('all ES provinces listed', provinceCount >= 50, `provinces=${provinceCount}`);
+  const floorUnit = await page.locator('#floorUnit').count();
+  ok('floor unit field', floorUnit > 0);
   await page.locator('#province').selectOption('Sevilla');
-  await page.waitForTimeout(150);
-  await page.locator('#city').selectOption('Sevilla');
+  await page.waitForTimeout(200);
+  // Antes de guardar, el look sigue siendo el de la cuenta (Madrid)
+  const regionBefore = await page.evaluate(() => document.documentElement.dataset.region);
+  ok('theme not applied before save', regionBefore === 'madrid', `region=${regionBefore}`);
+  await page.locator('#city-search').click();
+  await page.locator('#city-search').fill('');
+  await page.locator('#city-search').type('Sevilla', { delay: 15 });
+  await page.waitForTimeout(300);
+  await page.locator('[role="listbox"] button', { hasText: /^Sevilla$/ }).first().click();
+  await page.waitForTimeout(200);
   await page.locator('#neighborhood').selectOption('Triana');
+  await page.locator('#floorUnit').fill('1º C');
+  await page.waitForTimeout(100);
   const groupVis = await page.locator('#vis-group_nos').count();
   ok('group privacy control', groupVis > 0);
   if (groupVis > 0) {
@@ -111,10 +125,19 @@ try {
   ok('privacy preview', preview > 0);
   await page.getByRole('button', { name: /Guardar ubicación/i }).click();
   await page.waitForTimeout(500);
-  const sevillaLook = await page.locator('text=/Look Sevilla|Sevilla/i').count();
-  ok('regional theme sevilla', sevillaLook > 0);
+  const regionAfter = await page.evaluate(() => document.documentElement.dataset.region);
+  ok('regional theme sevilla after save', regionAfter === 'sevilla', `region=${regionAfter}`);
   const barrioSelect = await page.locator('#neighborhood option').count();
   ok('neighborhood options', barrioSelect > 3, `opts=${barrioSelect}`);
+  // AR has many provinces too
+  await page.locator('#country').selectOption('AR');
+  await page.waitForTimeout(150);
+  const arProvinces = await page.locator('#province option').count();
+  ok('all AR provinces listed', arProvinces >= 23, `provinces=${arProvinces}`);
+  // No guardar AR: volver a Sevilla guardada recargando
+  await page.goto(base + '/app/profile', { waitUntil: 'networkidle' });
+  const stillSevilla = await page.evaluate(() => document.documentElement.dataset.region);
+  ok('unsaved AR change discarded', stillSevilla === 'sevilla', `region=${stillSevilla}`);
 
   await page.screenshot({ path: '/tmp/computer-use/playwright-profile.png', fullPage: true });
   await page.goto(base + '/app/group/group_nos', { waitUntil: 'networkidle' });

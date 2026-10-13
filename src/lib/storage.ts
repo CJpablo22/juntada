@@ -90,6 +90,7 @@ function normalizeUser(user: Partial<User> & { id: string; name: string }): User
     city,
     neighborhood: user.neighborhood,
     addressLine: user.addressLine,
+    floorUnit: user.floorUnit,
     postalCode: user.postalCode,
     groupLocationVisibility: user.groupLocationVisibility ?? {},
     email: user.email,

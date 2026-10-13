@@ -33,6 +33,8 @@ export type User = {
   neighborhood?: string;
   /** Calle y número — para recomendaciones; se revela solo si el grupo tiene nivel "exact" */
   addressLine?: string;
+  /** Piso, puerta, letra, depto — aparte de la calle */
+  floorUnit?: string;
   postalCode?: string;
   /**
    * Privacidad por grupo: groupId → nivel visible.

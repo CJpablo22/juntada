@@ -19,7 +19,7 @@ import {
   rankMembers,
   totalPointsForUser,
 } from "@/lib/points";
-import { applyRegionTheme, resolveRegionTheme } from "@/lib/regions";
+import { resolveRegionTheme } from "@/lib/regions";
 
 export default function ProfilePage() {
   const {
@@ -37,11 +37,13 @@ export default function ProfilePage() {
     city: "Madrid",
     neighborhood: "Malasaña",
     addressLine: "",
+    floorUnit: "",
     postalCode: "",
   });
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
 
+  /* Solo sincroniza desde lo guardado; no pisa el borrador al tocar privacidad u otros campos */
   useEffect(() => {
     if (!currentUser) return;
     setName(currentUser.name);
@@ -51,20 +53,27 @@ export default function ProfilePage() {
       city: currentUser.city,
       neighborhood: currentUser.neighborhood ?? "",
       addressLine: currentUser.addressLine ?? "",
+      floorUnit: currentUser.floorUnit ?? "",
       postalCode: currentUser.postalCode ?? "",
     });
-  }, [currentUser]);
+  }, [
+    currentUser?.id,
+    currentUser?.name,
+    currentUser?.country,
+    currentUser?.province,
+    currentUser?.city,
+    currentUser?.neighborhood,
+    currentUser?.addressLine,
+    currentUser?.floorUnit,
+    currentUser?.postalCode,
+  ]);
 
+  /* Look solo con lo guardado — no al editar el formulario */
   const theme = resolveRegionTheme({
-    country: location.country,
-    province: location.province,
-    city: location.city,
+    country: currentUser?.country,
+    province: currentUser?.province,
+    city: currentUser?.city,
   });
-
-  /* Vista previa al cambiar país/provincia antes de guardar */
-  useEffect(() => {
-    applyRegionTheme(theme);
-  }, [theme]);
 
   const total = currentUser
     ? totalPointsForUser(state.points, currentUser.id)
@@ -114,6 +123,7 @@ export default function ProfilePage() {
       city: location.city,
       neighborhood: location.neighborhood,
       addressLine: location.addressLine,
+      floorUnit: location.floorUnit,
       postalCode: location.postalCode,
     });
     setError("");
@@ -148,8 +158,9 @@ export default function ProfilePage() {
         <div>
           <h2 className="text-base font-semibold">1 · Tu ubicación</h2>
           <p className="mt-1 text-sm text-[var(--mute)]">
-            Al cambiar país o provincia, tipografía, botones y fondo se adaptan
-            al momento. Después, en cada grupo, elegís cuánto ven los demás.
+            Editá sin miedo: solo se guarda al pulsar Guardar. El look de la app
+            también cambia solo entonces. En cada grupo elegís cuánto ven los
+            demás.
           </p>
         </div>
 
