@@ -66,16 +66,16 @@ export default function EnterPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-[100svh] w-full max-w-lg flex-col px-4 py-8">
+    <main className="mx-auto flex min-h-[100svh] w-full max-w-lg flex-col px-4 py-6 sm:px-5 sm:py-8">
       <Link href="/" className="w-fit">
         <Logo />
       </Link>
 
-      <div className="mt-10">
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--ink)]">
+      <div className="mt-8 sm:mt-10">
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
           Entrá a tu Juntada
         </h1>
-        <p className="mt-2 text-[var(--mute)]">
+        <p className="mt-2 text-[15px] leading-relaxed text-[var(--mute)] sm:text-base">
           Correo, teléfono o Apple. En local es demo del navegador.
         </p>
       </div>

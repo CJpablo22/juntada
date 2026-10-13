@@ -32,10 +32,7 @@ export function LotteryButton({
         size="lg"
         disabled={disabled || spinning}
         onClick={handleClick}
-        className={cn(
-          "h-11 w-full gap-2 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90",
-          spinning && "animate-shake",
-        )}
+        className={cn("w-full", spinning && "animate-shake")}
       >
         <Dices className={cn("size-5", spinning && "animate-spin")} />
         {spinning ? "Sorteando…" : "Que decida el azar"}

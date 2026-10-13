@@ -159,7 +159,7 @@ export default function ProfilePage() {
 
         <Button
           type="submit"
-          className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
+          className="w-full sm:w-auto"
         >
           {saved ? "Guardado" : "Guardar ubicación"}
         </Button>

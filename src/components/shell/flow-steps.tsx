@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 
 const STEPS = [
   { n: 1, title: "Grupo", blurb: "Entrá al de tu gente" },
-  { n: 2, title: "Catálogo", blurb: "Guardá ideas para no olvidar" },
-  { n: 3, title: "Pronto", blurb: "Votá o tiren el azar" },
+  { n: 2, title: "Catálogo", blurb: "Guardá ideas" },
+  { n: 3, title: "Pronto", blurb: "Votá o azar" },
 ] as const;
 
 export function FlowSteps({
@@ -15,10 +15,7 @@ export function FlowSteps({
 }) {
   return (
     <ol
-      className={cn(
-        "grid gap-2 sm:grid-cols-3",
-        className,
-      )}
+      className={cn("h-scroll sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible", className)}
       aria-label="Cómo funciona"
     >
       {STEPS.map((step) => {
@@ -27,8 +24,8 @@ export function FlowSteps({
           <li
             key={step.n}
             className={cn(
-              "flex items-start gap-2 border border-[var(--line)] bg-white px-3 py-2.5",
-              on && "border-[var(--ink)]",
+              "flex min-w-[9.5rem] items-start gap-2 border bg-white px-3 py-2.5 sm:min-w-0",
+              on ? "border-[var(--ink)] shadow-[0_2px_0_0_var(--pop)]" : "border-[var(--line)]",
             )}
           >
             <span

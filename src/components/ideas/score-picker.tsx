@@ -12,7 +12,11 @@ export function ScorePicker({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Puntuación">
+    <div
+      className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap"
+      role="group"
+      aria-label="Puntuación"
+    >
       {[1, 2, 3, 4, 5].map((score) => {
         const active = value === score;
         return (
@@ -22,11 +26,10 @@ export function ScorePicker({
             disabled={disabled}
             onClick={() => onChange(score)}
             className={cn(
-              "score-dot size-11 rounded-2xl border text-sm font-semibold transition",
-              "disabled:cursor-not-allowed disabled:opacity-50",
+              "min-h-12 border text-sm font-semibold transition-[transform,box-shadow,background-color] disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-11 sm:min-w-11 sm:px-0",
               active
-                ? "border-transparent bg-[var(--brand-pop)] text-white scale-105"
-                : "border-[var(--brand-line)] bg-white/70 text-[var(--brand-ink)] hover:border-[var(--brand-ink)]/30 hover:-translate-y-0.5",
+                ? "border-[var(--ink)] bg-[var(--ink)] text-white shadow-[0_3px_0_0_var(--pop)]"
+                : "border-[var(--ink)] bg-white text-[var(--ink)] shadow-[0_3px_0_0_var(--line)] hover:bg-[var(--wash)] active:translate-y-px active:shadow-none",
             )}
           >
             {score}

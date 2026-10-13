@@ -240,22 +240,15 @@ export default function IdeaDetailPage() {
           <div className="grid gap-2 sm:grid-cols-2">
             <Button
               variant={idea.timing === "catalog" ? "default" : "outline"}
-              className={cn(
-                "h-11 justify-start",
-                idea.timing === "catalog" && "bg-[var(--ink)] text-white",
-              )}
+              className="justify-start"
               onClick={() => setIdeaTiming(idea.id, "catalog")}
             >
               <BookmarkPlus className="size-4" />
               Catálogo (guardar)
             </Button>
             <Button
-              variant={idea.timing === "soon" ? "default" : "outline"}
-              className={cn(
-                "h-11 justify-start",
-                idea.timing === "soon" &&
-                  "bg-[var(--pop)] text-white hover:bg-[var(--pop)]/90",
-              )}
+              variant={idea.timing === "soon" ? "secondary" : "outline"}
+              className="justify-start"
               onClick={() => setIdeaTiming(idea.id, "soon")}
             >
               <Zap className="size-4" />
@@ -293,20 +286,15 @@ export default function IdeaDetailPage() {
             <p className="text-sm text-[var(--pop)]">Todavía no votaste.</p>
           )}
 
-          <div className="flex flex-wrap gap-2 border-t border-[var(--line)] pt-4">
+          <div className="btn-stack border-t border-[var(--line)] pt-4">
             <Button
-              variant="outline"
-              className={cn(
-                "h-10",
-                vetoed && "border-[var(--pop)] text-[var(--pop)]",
-              )}
+              variant={vetoed ? "secondary" : "outline"}
               onClick={() => toggleSoftVeto(idea.id)}
             >
               <Ban className="size-4" />
               {vetoed ? "Sacaste el “ahora no”" : "Ahora no"}
             </Button>
             <Button
-              className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
               onClick={() => revealVotes(idea.id)}
               disabled={idea.revealed}
             >
@@ -314,7 +302,7 @@ export default function IdeaDetailPage() {
               {idea.revealed ? "Ya revelado" : "Revelar votos"}
             </Button>
             <Button
-              className="h-10 bg-[var(--pop)] text-white hover:bg-[var(--pop)]/90"
+              variant="secondary"
               onClick={() => chooseIdea(idea.id)}
               disabled={idea.status === "chosen"}
             >
@@ -406,7 +394,7 @@ export default function IdeaDetailPage() {
             </label>
             <Button
               type="submit"
-              className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
+              className="w-full sm:w-auto"
             >
               Marcar como hecho
             </Button>
@@ -499,7 +487,7 @@ export default function IdeaDetailPage() {
               </label>
               <Button
                 type="submit"
-                className="h-10 bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
+                className="w-full sm:w-auto"
               >
                 Guardar valoración
               </Button>

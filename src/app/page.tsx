@@ -17,44 +17,47 @@ export default function LandingPage() {
 
   return (
     <main className="min-h-[100svh]">
-      <header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5">
+      <header className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-5 sm:py-5">
         <Logo />
-        <nav className="flex items-center gap-5 text-sm">
-          <Link href="/discover" className="text-[var(--mute)] hover:text-[var(--ink)]">
+        <nav className="flex items-center gap-3 text-sm sm:gap-5">
+          <Link
+            href="/discover"
+            className="text-[var(--mute)] hover:text-[var(--ink)]"
+          >
             Descubrir
           </Link>
-          <Link href="/enter" className="font-semibold underline decoration-[var(--pop)] underline-offset-4">
+          <Link
+            href="/enter"
+            className="border-b-2 border-[var(--pop)] font-semibold text-[var(--ink)]"
+          >
             Entrar
           </Link>
         </nav>
       </header>
 
-      <section className="mx-auto max-w-3xl px-4 pb-20 pt-12 sm:pt-20">
-        <p className="text-[15px] text-[var(--mute)]">Juntada</p>
-        <h1 className="mt-3 max-w-xl text-[2.4rem] font-bold leading-[1.12] tracking-tight text-[var(--ink)] sm:text-5xl">
+      <section className="mx-auto max-w-3xl px-4 pb-16 pt-8 sm:px-5 sm:pb-20 sm:pt-16">
+        <p className="text-sm text-[var(--mute)] sm:text-[15px]">Juntada</p>
+        <h1 className="mt-3 max-w-xl text-[2rem] font-bold leading-[1.12] tracking-tight text-[var(--ink)] sm:text-5xl">
           Los planes del grupo, sin el hilo eterno de WhatsApp.
         </h1>
-        <p className="mt-5 max-w-md text-[17px] leading-relaxed text-[var(--mute)]">
+        <p className="mt-4 max-w-md text-[16px] leading-relaxed text-[var(--mute)] sm:mt-5 sm:text-[17px]">
           Guardás pelis, sitios y salidas. Cuando toque, votan en secreto o
           tiran el azar. Cada grupo ve de tu ubicación solo lo que vos marques.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button
-            className="h-11 bg-[var(--ink)] px-5 text-white hover:bg-[var(--ink)]/90"
-            onClick={() => router.push("/enter")}
-          >
+        <div className="btn-stack mt-7 sm:mt-8">
+          <Button size="lg" onClick={() => router.push("/enter")}>
             Empezar
           </Button>
           <Button
+            size="lg"
             variant="outline"
-            className="h-11 border-[var(--line)] bg-white"
             onClick={() => router.push("/discover")}
           >
             Ver Descubrir
           </Button>
         </div>
 
-        <div className="mt-16 grid gap-8 border-t border-[var(--line)] pt-10 sm:grid-cols-3">
+        <div className="mt-12 grid gap-6 border-t border-[var(--line)] pt-8 sm:mt-16 sm:grid-cols-3 sm:gap-8 sm:pt-10">
           <div>
             <p className="font-semibold">Catálogo y Pronto</p>
             <p className="mt-1.5 text-sm leading-relaxed text-[var(--mute)]">

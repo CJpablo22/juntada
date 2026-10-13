@@ -15,7 +15,7 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
 
   if (!ready || !currentUser) {
     return (
-      <div className="grid min-h-[100svh] place-items-center text-[var(--mute)]">
+      <div className="grid min-h-[100svh] place-items-center px-4 text-[var(--mute)]">
         Cargando tu Juntada…
       </div>
     );
@@ -24,7 +24,7 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-[100svh] flex-col">
       <AppHeader />
-      <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</div>
+      <div className="page-shell flex-1">{children}</div>
     </div>
   );
 }

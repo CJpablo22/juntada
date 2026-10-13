@@ -194,7 +194,7 @@ export default function GroupPage() {
             };
 
   return (
-    <main className="space-y-6">
+    <main className="space-y-5 sm:space-y-6">
       <div>
         <Link
           href="/app"
@@ -202,27 +202,22 @@ export default function GroupPage() {
         >
           ← Grupos
         </Link>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <p className="text-sm text-[var(--mute)]">
               {GROUP_KIND_LABELS[group.kind]} · {members.length} personas
             </p>
-            <h1 className="mt-0.5 text-3xl font-bold tracking-tight text-[var(--ink)]">
+            <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
               {group.name}
             </h1>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              className="h-10 border-[var(--line)]"
-              onClick={copyInvite}
-            >
+          <div className="btn-stack sm:shrink-0">
+            <Button variant="outline" onClick={copyInvite}>
               <Copy className="size-4" />
               {copied ? "Código copiado" : `Invitar · ${group.inviteCode}`}
             </Button>
             <Button
               variant="outline"
-              className="h-10 border-[var(--line)]"
               onClick={() => router.push(`/app/group/${group.id}/expenses`)}
             >
               <Wallet className="size-4" />
@@ -290,8 +285,8 @@ export default function GroupPage() {
 
 
       {nextStep ? (
-        <section className="surface-panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <section className="surface-panel flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
               Siguiente paso
             </p>
@@ -299,14 +294,14 @@ export default function GroupPage() {
             <p className="mt-1 text-sm text-[var(--mute)]">{nextStep.hint}</p>
           </div>
           {"href" in nextStep && nextStep.href ? (
-            <Link href={nextStep.href} className="btn-primary shrink-0">
+            <Link href={nextStep.href} className="btn-primary w-full sm:w-auto sm:shrink-0">
               {nextStep.action}
               <ArrowRight className="size-4" />
             </Link>
           ) : (
             <button
               type="button"
-              className="btn-primary shrink-0"
+              className="btn-primary w-full sm:w-auto sm:shrink-0"
               onClick={nextStep.onClick}
             >
               {nextStep.action}
@@ -316,26 +311,26 @@ export default function GroupPage() {
         </section>
       ) : null}
 
-      <section className="grid gap-2 sm:grid-cols-3">
+      <section className="h-scroll sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible">
         {(
           [
             {
               id: "catalog" as const,
               label: "1 · Catálogo",
               count: catalogCount,
-              blurb: "Guardar para no olvidar. Acá no se vota.",
+              blurb: "Guardar para no olvidar.",
             },
             {
               id: "soon" as const,
               label: "2 · Pronto",
               count: soonCount,
-              blurb: "Candidatos de este finde. Votos y azar.",
+              blurb: "Votos y azar.",
             },
             {
               id: "done" as const,
               label: "Hechas",
               count: doneCount,
-              blurb: "Lo que ya hicieron juntos.",
+              blurb: "Ya lo hicieron.",
             },
           ] as const
         ).map((tab) => (
@@ -344,9 +339,9 @@ export default function GroupPage() {
             type="button"
             onClick={() => setShelf(tab.id)}
             className={cn(
-              "border px-3 py-3 text-left",
+              "min-w-[9.75rem] border px-3 py-3 text-left sm:min-w-0",
               shelf === tab.id
-                ? "border-[var(--ink)] bg-white"
+                ? "border-[var(--ink)] bg-white shadow-[0_2px_0_0_var(--pop)]"
                 : "border-[var(--line)] bg-transparent hover:bg-white/60",
             )}
           >
@@ -480,7 +475,7 @@ export default function GroupPage() {
             </p>
             {shelf !== "done" ? (
               <Button
-                className="h-10 bg-[var(--ink)] text-white"
+                className="w-full"
                 onClick={() => setOpenIdea(true)}
               >
                 <Plus className="size-4" />
@@ -889,7 +884,7 @@ function NewIdeaDialog({
           ) : null}
           <Button
             type="submit"
-            className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
+            className="w-full"
           >
             {timing === "catalog" ? "Guardar en catálogo" : "Meter en Pronto"}
           </Button>

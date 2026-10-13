@@ -62,12 +62,12 @@ export default function AppHomePage() {
   }
 
   return (
-    <main className="space-y-8">
+    <main className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--ink)]">
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
           Hola, {currentUser?.name}
         </h1>
-        <p className="mt-2 max-w-xl text-[var(--mute)]">
+        <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-[var(--mute)] sm:text-base">
           Elegí un grupo para guardar planes o decidir qué hacen.
         </p>
       </div>
@@ -75,11 +75,11 @@ export default function AppHomePage() {
       <FlowSteps active={1} />
 
       <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-[var(--ink)]">
             Tus grupos
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="btn-stack">
             <Dialog open={openJoin} onOpenChange={setOpenJoin}>
               <DialogTrigger className="btn-ghost">
                 Unirme con código
@@ -108,10 +108,7 @@ export default function AppHomePage() {
                   {joinError ? (
                     <p className="text-sm text-[var(--pop)]">{joinError}</p>
                   ) : null}
-                  <Button
-                    type="submit"
-                    className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
-                  >
+                  <Button type="submit" className="w-full">
                     Entrar al grupo
                   </Button>
                 </form>
@@ -158,10 +155,7 @@ export default function AppHomePage() {
                       )}
                     </select>
                   </div>
-                  <Button
-                    type="submit"
-                    className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"
-                  >
+                  <Button type="submit" className="w-full">
                     Crear y abrir
                   </Button>
                 </form>
@@ -178,18 +172,11 @@ export default function AppHomePage() {
             <p className="text-sm text-[var(--mute)]">
               Creá uno para tu pareja o amigos, o pedí un código e ingresá.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                className="h-10 bg-[var(--ink)] text-white"
-                onClick={() => setOpenCreate(true)}
-              >
+            <div className="btn-stack">
+              <Button onClick={() => setOpenCreate(true)}>
                 Crear mi primer grupo
               </Button>
-              <Button
-                variant="outline"
-                className="h-10 border-[var(--line)]"
-                onClick={() => setOpenJoin(true)}
-              >
+              <Button variant="outline" onClick={() => setOpenJoin(true)}>
                 Tengo un código
               </Button>
             </div>
@@ -233,11 +220,11 @@ export default function AppHomePage() {
                   <button
                     type="button"
                     onClick={() => router.push(`/app/group/${group.id}`)}
-                    className="surface-panel flex w-full items-center gap-3 p-4 text-left transition hover:border-[var(--ink)]"
+                    className="surface-panel flex w-full items-center gap-3 p-3.5 text-left transition hover:border-[var(--ink)] hover:shadow-[0_2px_0_0_var(--pop)] sm:p-4"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-lg font-semibold text-[var(--ink)]">
+                        <p className="text-base font-semibold text-[var(--ink)] sm:text-lg">
                           {group.name}
                         </p>
                         <span className="text-xs text-[var(--mute)]">
