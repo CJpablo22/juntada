@@ -224,10 +224,11 @@ export default function GroupPage() {
         <div className="mt-3">
           <button
             type="button"
+            id="toggle-members"
             onClick={() => setShowMembers((v) => !v)}
             className="flex items-center gap-2 text-sm text-[var(--mute)] hover:text-[var(--ink)]"
           >
-            <span className="flex -space-x-1.5">
+            <span className="flex -space-x-1.5" aria-hidden>
               {members.slice(0, 4).map((m) =>
                 m ? (
                   <UserAvatar
@@ -239,7 +240,11 @@ export default function GroupPage() {
                 ) : null,
               )}
             </span>
-            {showMembers ? "Ocultar quién está" : "Quiénes están y qué ven de mí"}
+            <span>
+              {showMembers
+                ? "Ocultar quién está"
+                : "Quiénes están y qué ven de mí"}
+            </span>
           </button>
           {showMembers ? (
             <ul className="mt-3 space-y-2 border border-[var(--line)] bg-white p-3">

@@ -103,14 +103,12 @@ try {
 
   await page.screenshot({ path: '/tmp/computer-use/playwright-profile.png', fullPage: true });
   await page.goto(base + '/app/group/group_nos', { waitUntil: 'networkidle' });
-  const exactShown = await page.locator('text=/Espíritu Santo|Pureza/i').count();
-  // members list is collapsed — open it
-  await page.getByRole('button', { name: /Quiénes son|Ocultar quién/i }).click();
+  await page.locator('#toggle-members').click();
   await page.waitForTimeout(200);
   const exactShown2 = await page.locator('text=/Espíritu Santo|Pureza/i').count();
-  ok('group shows exact address when allowed', exactShown + exactShown2 > 0, `hits=${exactShown + exactShown2}`);
+  ok('group shows exact address when allowed', exactShown2 > 0, `hits=${exactShown2}`);
   await page.goto(base + '/app/group/group_finde', { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: /Quiénes son|Ocultar quién/i }).click();
+  await page.locator('#toggle-members').click();
   await page.waitForTimeout(200);
   const countryOnly = await page.locator('text=/España/i').count();
   const noStreet = await page.locator('text=/Espíritu Santo/i').count();
