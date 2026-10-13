@@ -29,18 +29,20 @@ import { UserAvatar } from "@/components/ui/user-chip";
 import { badgeForRank, rankMembers } from "@/lib/points";
 import {
   GROUP_KIND_LABELS,
+  IDEA_TIMING_LABELS,
   IDEA_TYPE_LABELS,
+  type IdeaTiming,
   type IdeaType,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const FILTERS: Array<"all" | IdeaType | "done"> = [
-  "all",
-  "movie",
-  "food",
-  "visit",
-  "plan",
-  "done",
+type ShelfFilter = "catalog" | "soon" | "done" | "all";
+
+const SHELVES: { id: ShelfFilter; label: string }[] = [
+  { id: "catalog", label: "Catálogo" },
+  { id: "soon", label: "Pronto" },
+  { id: "done", label: "Hechas" },
+  { id: "all", label: "Todo" },
 ];
 
 export default function GroupPage() {
@@ -53,7 +55,8 @@ export default function GroupPage() {
     addIdea,
     pickRandomIdea,
   } = useApp();
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+  const [shelf, setShelf] = useState<ShelfFilter>("catalog");
+  const [typeFilter, setTypeFilter] = useState<"all" | IdeaType>("all");
   const [openIdea, setOpenIdea] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -72,15 +75,36 @@ export default function GroupPage() {
     if (!group) return [];
     return state.ideas
       .filter((i) => i.groupId === group.id)
+      .filter((i) => i.status !== "archived")
       .filter((i) => {
-        if (filter === "all") return i.status !== "archived";
-        if (filter === "done") return i.status === "done";
-        return i.type === filter && i.status !== "done" && i.status !== "archived";
-      });
-  }, [state.ideas, group, filter]);
+        if (shelf === "catalog")
+          return i.timing === "catalog" && i.status !== "done";
+        if (shelf === "soon")
+          return i.timing === "soon" && i.status !== "done";
+        if (shelf === "done") return i.status === "done";
+        return true;
+      })
+      .filter((i) => (typeFilter === "all" ? true : i.type === typeFilter));
+  }, [state.ideas, group, shelf, typeFilter]);
+
+  const catalogCount = state.ideas.filter(
+    (i) =>
+      i.groupId === group?.id &&
+      i.timing === "catalog" &&
+      i.status !== "done" &&
+      i.status !== "archived",
+  ).length;
+  const soonCount = state.ideas.filter(
+    (i) =>
+      i.groupId === group?.id &&
+      i.timing === "soon" &&
+      i.status !== "done" &&
+      i.status !== "archived",
+  ).length;
 
   const chosen = state.ideas.find(
-    (i) => i.groupId === group?.id && i.status === "chosen",
+    (i) =>
+      i.groupId === group?.id && i.status === "chosen" && i.timing === "soon",
   );
 
   const ranking = group
@@ -182,7 +206,9 @@ export default function GroupPage() {
           </p>
         ) : (
           <p className="mt-2 text-sm text-[var(--brand-mute)]">
-            No hay plan elegido todavía. Votá o tirále al azar.
+            El azar solo mira la bandeja <strong>Pronto</strong> (
+            {soonCount}). El <strong>Catálogo</strong> ({catalogCount}) es para
+            no olvidar.
           </p>
         )}
         <div className="mt-4 max-w-md">
@@ -192,6 +218,7 @@ export default function GroupPage() {
               !state.ideas.some(
                 (i) =>
                   i.groupId === group.id &&
+                  i.timing === "soon" &&
                   (i.status === "pending" || i.status === "chosen") &&
                   i.softVetoUserIds.length === 0,
               )
@@ -204,29 +231,26 @@ export default function GroupPage() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
-              {FILTERS.map((f) => (
+              {SHELVES.map((f) => (
                 <button
-                  key={f}
+                  key={f.id}
                   type="button"
-                  onClick={() => setFilter(f)}
+                  onClick={() => setShelf(f.id)}
                   className={cn(
                     "rounded-full px-3 py-1.5 text-xs font-semibold transition",
-                    filter === f
+                    shelf === f.id
                       ? "bg-[var(--brand-ink)] text-white"
                       : "bg-white/70 text-[var(--brand-mute)] hover:text-[var(--brand-ink)]",
                   )}
                 >
-                  {f === "all"
-                    ? "Todas"
-                    : f === "done"
-                      ? "Hechas"
-                      : IDEA_TYPE_LABELS[f]}
+                  {f.label}
                 </button>
               ))}
             </div>
             <NewIdeaDialog
               open={openIdea}
               onOpenChange={setOpenIdea}
+              defaultTiming={shelf === "soon" ? "soon" : "catalog"}
               onSubmit={(data) => {
                 const id = addIdea({ groupId: group.id, ...data });
                 setOpenIdea(false);
@@ -234,10 +258,43 @@ export default function GroupPage() {
               }}
             />
           </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setTypeFilter("all")}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                typeFilter === "all"
+                  ? "bg-[var(--brand-pop)]/15 text-[var(--brand-pop)]"
+                  : "text-[var(--brand-mute)]",
+              )}
+            >
+              Todos los tipos
+            </button>
+            {(Object.keys(IDEA_TYPE_LABELS) as IdeaType[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTypeFilter(t)}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                  typeFilter === t
+                    ? "bg-[var(--brand-pop)]/15 text-[var(--brand-pop)]"
+                    : "text-[var(--brand-mute)]",
+                )}
+              >
+                {IDEA_TYPE_LABELS[t]}
+              </button>
+            ))}
+          </div>
 
           {ideas.length === 0 ? (
             <div className="surface-panel rounded-3xl p-6 text-[var(--brand-mute)]">
-              No hay ideas acá todavía. Proponé la primera.
+              {shelf === "catalog"
+                ? "Catálogo vacío. Guardá series, sitios y planes para no olvidarlos."
+                : shelf === "soon"
+                  ? "Nada en Pronto. Pasá algo del catálogo acá cuando quieran decidir."
+                  : "No hay ideas acá todavía."}
             </div>
           ) : (
             <ul className="space-y-3">
@@ -266,6 +323,9 @@ export default function GroupPage() {
                             <Badge variant="secondary">
                               {IDEA_TYPE_LABELS[idea.type]}
                             </Badge>
+                            <Badge variant="outline">
+                              {IDEA_TIMING_LABELS[idea.timing]}
+                            </Badge>
                             {idea.status === "chosen" ? (
                               <Badge className="bg-[var(--brand-pop)] text-white">
                                 Elegida
@@ -293,13 +353,17 @@ export default function GroupPage() {
                             {idea.address}
                           </span>
                         ) : null}
-                        <span>
-                          {idea.revealed
-                            ? `${voteCount} votos revelados`
-                            : myVote
-                              ? `Tu voto: ${myVote} · secreto`
-                              : `${voteCount} votos secretos`}
-                        </span>
+                        {idea.timing === "soon" && idea.status !== "done" ? (
+                          <span>
+                            {idea.revealed
+                              ? `${voteCount} votos revelados`
+                              : myVote
+                                ? `Tu voto: ${myVote} · secreto`
+                                : `${voteCount} votos secretos`}
+                          </span>
+                        ) : idea.timing === "catalog" ? (
+                          <span>Guardada para más adelante</span>
+                        ) : null}
                       </div>
                     </button>
                   </Reveal>
@@ -355,18 +419,22 @@ function NewIdeaDialog({
   open,
   onOpenChange,
   onSubmit,
+  defaultTiming = "catalog",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultTiming?: IdeaTiming;
   onSubmit: (data: {
     type: IdeaType;
     title: string;
     notes: string;
     address?: string;
     tags: string[];
+    timing: IdeaTiming;
   }) => void;
 }) {
-  const [type, setType] = useState<IdeaType>("plan");
+  const [type, setType] = useState<IdeaType>("movie");
+  const [timing, setTiming] = useState<IdeaTiming>(defaultTiming);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [address, setAddress] = useState("");
@@ -380,6 +448,7 @@ function NewIdeaDialog({
       title,
       notes,
       address,
+      timing,
       tags: tagInput
         .split(",")
         .map((t) => t.trim())
@@ -389,13 +458,14 @@ function NewIdeaDialog({
     setNotes("");
     setAddress("");
     setTagInput("");
+    setTiming(defaultTiming);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-ink)] px-3 text-sm font-medium text-white">
         <Plus className="size-4" />
-        Proponer
+        Guardar
       </DialogTrigger>
       <DialogContent className="rounded-3xl sm:max-w-lg">
         <DialogHeader>
@@ -404,6 +474,38 @@ function NewIdeaDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setTiming("catalog")}
+              className={cn(
+                "rounded-2xl border px-3 py-3 text-left text-sm transition",
+                timing === "catalog"
+                  ? "border-[var(--brand-ink)] bg-[var(--brand-ink)] text-white"
+                  : "border-[var(--brand-line)] bg-white",
+              )}
+            >
+              <span className="block font-semibold">Catálogo</span>
+              <span className="mt-1 block text-xs opacity-80">
+                Guardar para no olvidar
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTiming("soon")}
+              className={cn(
+                "rounded-2xl border px-3 py-3 text-left text-sm transition",
+                timing === "soon"
+                  ? "border-[var(--brand-pop)] bg-[var(--brand-pop)] text-white"
+                  : "border-[var(--brand-line)] bg-white",
+              )}
+            >
+              <span className="block font-semibold">Pronto</span>
+              <span className="mt-1 block text-xs opacity-80">
+                Para decidir / este finde
+              </span>
+            </button>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="type">Tipo</Label>
             <select
@@ -425,7 +527,7 @@ function NewIdeaDialog({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ej. Brunch en Lavapiés"
+              placeholder="Ej. Severance, brunch en Lavapiés…"
               className="h-11 rounded-xl"
             />
           </div>
@@ -435,7 +537,7 @@ function NewIdeaDialog({
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Por qué pinta bien…"
+              placeholder="Por qué la quieren guardar…"
               className="min-h-24 rounded-xl"
             />
           </div>
@@ -455,7 +557,7 @@ function NewIdeaDialog({
               id="tags"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
-              placeholder="barato, noche, cerca"
+              placeholder="serie, noche, cerca"
               className="h-11 rounded-xl"
             />
           </div>
@@ -463,7 +565,7 @@ function NewIdeaDialog({
             type="submit"
             className="h-11 w-full rounded-xl bg-[var(--brand-pop)] text-white"
           >
-            Guardar idea
+            {timing === "catalog" ? "Guardar en catálogo" : "Meter en Pronto"}
           </Button>
         </form>
       </DialogContent>

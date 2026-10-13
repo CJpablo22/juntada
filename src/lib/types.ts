@@ -1,12 +1,18 @@
 export type IdeaType = "movie" | "visit" | "food" | "plan";
 export type IdeaStatus = "pending" | "chosen" | "done" | "archived";
+/** catalog = guardado para no olvidar; soon = candidatos a decidir/hacer pronto */
+export type IdeaTiming = "catalog" | "soon";
 export type GroupKind = "couple" | "friends" | "siblings" | "study" | "other";
+export type AuthProvider = "demo" | "email" | "phone" | "apple";
 
 export type User = {
   id: string;
   name: string;
   city: string;
   neighborhood?: string;
+  email?: string;
+  phone?: string;
+  authProvider: AuthProvider;
   avatarHue: number;
   createdAt: string;
 };
@@ -29,13 +35,25 @@ export type Idea = {
   address?: string;
   proposedBy: string;
   status: IdeaStatus;
+  timing: IdeaTiming;
   tags: string[];
-  /** userId -> score 1-5, hidden until revealed */
+  /** userId -> score 1-5, hidden until revealed (solo aplica a "soon") */
   votes: Record<string, number>;
   revealed: boolean;
   softVetoUserIds: string[];
   doneRating?: number;
   doneNote?: string;
+  createdAt: string;
+};
+
+export type Review = {
+  id: string;
+  ideaId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  /** Visible en el catálogo público para gente de fuera del grupo */
+  publicVisible: boolean;
   createdAt: string;
 };
 
@@ -60,11 +78,12 @@ export type PointEvent = {
 };
 
 export type AppState = {
-  version: 1;
+  version: 2;
   currentUserId: string | null;
   users: User[];
   groups: Group[];
   ideas: Idea[];
+  reviews: Review[];
   expenses: Expense[];
   points: PointEvent[];
 };
@@ -74,6 +93,11 @@ export const IDEA_TYPE_LABELS: Record<IdeaType, string> = {
   visit: "Visitar",
   food: "Comer",
   plan: "Plan",
+};
+
+export const IDEA_TIMING_LABELS: Record<IdeaTiming, string> = {
+  catalog: "Catálogo",
+  soon: "Pronto",
 };
 
 export const GROUP_KIND_LABELS: Record<GroupKind, string> = {

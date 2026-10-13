@@ -1,28 +1,30 @@
 # Juntada
 
-Web app para **decidir planes en grupo**: pareja, amigos, hermanos o estudio.
+Web app para **guardar y decidir planes en grupo**: pareja, amigos, hermanos o estudio.
 
-Proponés ideas (pelis, sitios, comida, planes), votás en secreto, revelás, sorteás con azar entre finalistas, marcás lo hecho y liquidás gastos en **EUR**.
+Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, valoraciones públicas en Descubrir y gastos en **EUR**.
 
 > Nombre provisional de trabajo. El nombre final se define después.
 
 ## Qué incluye este MVP
 
-- Usuarios locales (demo en el navegador) con ciudad/barrio
+- Login demo: correo / teléfono / Apple-iCloud (+ usuarios demo)
 - Grupos + código invite
-- Ideas por tipo + tags + dirección con enlace a Google Maps
-- Voto secreto, reveal, “ahora no”, elegir plan
-- Botón **Que decida el azar** (top finalistas)
-- Recuerdo post-plan (rating + nota)
-- Gastos del grupo (sueltos o asociados) y quién le debe a quién
+- **Catálogo** (guardar para no olvidar) vs **Pronto** (decidir / este finde)
+- Ideas por tipo + tags + dirección → Google Maps
+- Voto secreto, reveal, “ahora no”, elegir (en Pronto)
+- **Que decida el azar** entre finalistas de Pronto
+- Valoración + comentario al terminar (opción pública)
+- **Descubrir**: opiniones públicas abiertas
+- Gastos del grupo y saldos (EUR)
 - Puntos + badges por grupo
-- Diseño responsive, tono divertido ES con toque rioplatense en el copy
+- Diseño responsive, tono divertido ES con toque rioplatense
 
 ## Stack
 
 - Next.js (App Router) + TypeScript
 - Tailwind CSS + shadcn/ui
-- Persistencia local (`localStorage`) para arrancar sin backend
+- Persistencia local (`localStorage` v2) para arrancar sin backend
 
 Pensado para crecer: mercado España primero, i18n/monedas después, PWA/app móvil más adelante. La visión completa está en [`PRODUCT_VISION.md`](./PRODUCT_VISION.md).
 

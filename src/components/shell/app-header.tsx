@@ -18,6 +18,12 @@ export function AppHeader() {
         {currentUser ? (
           <div className="flex items-center gap-2">
             <Link
+              href="/discover"
+              className="hidden text-sm font-medium text-[var(--brand-mute)] transition hover:text-[var(--brand-ink)] sm:inline"
+            >
+              Descubrir
+            </Link>
+            <Link
               href="/app/profile"
               className="inline-flex items-center gap-2 rounded-full px-2 py-1 transition hover:bg-black/5"
             >

@@ -14,11 +14,14 @@ import { POINT_REASONS } from "@/lib/points";
 import { loadState, resetState, saveState } from "@/lib/storage";
 import type {
   AppState,
+  AuthProvider,
   Expense,
   Group,
   GroupKind,
   Idea,
+  IdeaTiming,
   IdeaType,
+  Review,
   User,
 } from "@/lib/types";
 
@@ -27,10 +30,24 @@ type AppContextValue = {
   state: AppState;
   currentUser: User | null;
   signInAs: (userId: string) => void;
+  signInWithEmail: (input: {
+    email: string;
+    name?: string;
+    city?: string;
+  }) => string;
+  signInWithPhone: (input: {
+    phone: string;
+    name?: string;
+    city?: string;
+  }) => string;
+  signInWithApple: (input?: { name?: string; city?: string }) => string;
   createUser: (input: {
     name: string;
     city: string;
     neighborhood?: string;
+    email?: string;
+    phone?: string;
+    authProvider?: AuthProvider;
   }) => string;
   signOut: () => void;
   resetDemo: () => void;
@@ -43,13 +60,26 @@ type AppContextValue = {
     notes: string;
     address?: string;
     tags: string[];
+    timing: IdeaTiming;
   }) => string;
+  setIdeaTiming: (ideaId: string, timing: IdeaTiming) => void;
   castVote: (ideaId: string, score: number) => void;
   toggleSoftVeto: (ideaId: string) => void;
   revealVotes: (ideaId: string) => void;
   chooseIdea: (ideaId: string) => void;
   pickRandomIdea: (groupId: string) => string | null;
-  markDone: (ideaId: string, rating: number, note: string) => void;
+  markDone: (
+    ideaId: string,
+    rating: number,
+    note: string,
+    publicVisible?: boolean,
+  ) => void;
+  addReview: (input: {
+    ideaId: string;
+    rating: number;
+    comment: string;
+    publicVisible?: boolean;
+  }) => void;
   addExpense: (input: {
     groupId: string;
     ideaId?: string;
@@ -87,6 +117,29 @@ function addPoints(
   };
 }
 
+function upsertUser(
+  prev: AppState,
+  match: (u: User) => boolean,
+  create: () => User,
+): { state: AppState; userId: string } {
+  const existing = prev.users.find(match);
+  if (existing) {
+    return {
+      state: { ...prev, currentUserId: existing.id },
+      userId: existing.id,
+    };
+  }
+  const user = create();
+  return {
+    state: {
+      ...prev,
+      users: [...prev.users, user],
+      currentUserId: user.id,
+    },
+    userId: user.id,
+  };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(() => createEmpty());
   const [ready, setReady] = useState(false);
@@ -111,13 +164,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const createUser = useCallback(
-    (input: { name: string; city: string; neighborhood?: string }) => {
+    (input: {
+      name: string;
+      city: string;
+      neighborhood?: string;
+      email?: string;
+      phone?: string;
+      authProvider?: AuthProvider;
+    }) => {
       const id = createId("user");
       const user: User = {
         id,
         name: input.name.trim(),
         city: input.city.trim(),
         neighborhood: input.neighborhood?.trim() || undefined,
+        email: input.email?.trim().toLowerCase() || undefined,
+        phone: input.phone?.trim() || undefined,
+        authProvider: input.authProvider ?? "demo",
         avatarHue: Math.floor(Math.random() * 360),
         createdAt: new Date().toISOString(),
       };
@@ -127,6 +190,84 @@ export function AppProvider({ children }: { children: ReactNode }) {
         currentUserId: id,
       }));
       return id;
+    },
+    [],
+  );
+
+  const signInWithEmail = useCallback(
+    (input: { email: string; name?: string; city?: string }) => {
+      const email = input.email.trim().toLowerCase();
+      let userId = "";
+      setState((prev) => {
+        const result = upsertUser(
+          prev,
+          (u) => (u.email ?? "").toLowerCase() === email,
+          () => ({
+            id: createId("user"),
+            name: input.name?.trim() || email.split("@")[0] || "Usuario",
+            city: input.city?.trim() || "Madrid",
+            email,
+            authProvider: "email",
+            avatarHue: Math.floor(Math.random() * 360),
+            createdAt: new Date().toISOString(),
+          }),
+        );
+        userId = result.userId;
+        return result.state;
+      });
+      return userId;
+    },
+    [],
+  );
+
+  const signInWithPhone = useCallback(
+    (input: { phone: string; name?: string; city?: string }) => {
+      const phone = input.phone.trim();
+      let userId = "";
+      setState((prev) => {
+        const result = upsertUser(
+          prev,
+          (u) => (u.phone ?? "").replace(/\s/g, "") === phone.replace(/\s/g, ""),
+          () => ({
+            id: createId("user"),
+            name: input.name?.trim() || `User ${phone.slice(-4)}`,
+            city: input.city?.trim() || "Madrid",
+            phone,
+            authProvider: "phone",
+            avatarHue: Math.floor(Math.random() * 360),
+            createdAt: new Date().toISOString(),
+          }),
+        );
+        userId = result.userId;
+        return result.state;
+      });
+      return userId;
+    },
+    [],
+  );
+
+  const signInWithApple = useCallback(
+    (input?: { name?: string; city?: string }) => {
+      let userId = "";
+      setState((prev) => {
+        const appleKey = "apple.demo.local";
+        const result = upsertUser(
+          prev,
+          (u) => u.authProvider === "apple" && u.email === appleKey,
+          () => ({
+            id: createId("user"),
+            name: input?.name?.trim() || "Usuario Apple",
+            city: input?.city?.trim() || "Madrid",
+            email: appleKey,
+            authProvider: "apple",
+            avatarHue: Math.floor(Math.random() * 360),
+            createdAt: new Date().toISOString(),
+          }),
+        );
+        userId = result.userId;
+        return result.state;
+      });
+      return userId;
     },
     [],
   );
@@ -189,6 +330,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notes: string;
       address?: string;
       tags: string[];
+      timing: IdeaTiming;
     }) => {
       const id = createId("idea");
       setState((prev) => {
@@ -202,6 +344,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           address: input.address?.trim() || undefined,
           proposedBy: prev.currentUserId,
           status: "pending",
+          timing: input.timing,
           tags: input.tags,
           votes: {},
           revealed: false,
@@ -222,11 +365,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const setIdeaTiming = useCallback((ideaId: string, timing: IdeaTiming) => {
+    setState((prev) => ({
+      ...prev,
+      ideas: prev.ideas.map((i) =>
+        i.id === ideaId
+          ? {
+              ...i,
+              timing,
+              // al pasar a catálogo, deja de ser "elegida"
+              status:
+                timing === "catalog" && i.status === "chosen"
+                  ? "pending"
+                  : i.status,
+            }
+          : i,
+      ),
+    }));
+  }, []);
+
   const castVote = useCallback((ideaId: string, score: number) => {
     setState((prev) => {
       if (!prev.currentUserId) return prev;
       const idea = prev.ideas.find((i) => i.id === ideaId);
-      if (!idea || idea.status === "done" || idea.status === "archived") {
+      if (
+        !idea ||
+        idea.status === "done" ||
+        idea.status === "archived" ||
+        idea.timing !== "soon"
+      ) {
         return prev;
       }
       const already = idea.votes[prev.currentUserId] != null;
@@ -289,7 +456,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...prev,
         ideas: prev.ideas.map((i) => {
           if (i.groupId !== idea.groupId) return i;
-          if (i.id === ideaId) return { ...i, status: "chosen", revealed: true };
+          if (i.id === ideaId)
+            return {
+              ...i,
+              status: "chosen",
+              revealed: true,
+              timing: "soon",
+            };
           if (i.status === "chosen") return { ...i, status: "pending" };
           return i;
         }),
@@ -309,6 +482,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setState((prev) => {
       const candidates = prev.ideas.filter((i) => {
         if (i.groupId !== groupId) return false;
+        if (i.timing !== "soon") return false;
         if (i.status !== "pending" && i.status !== "chosen") return false;
         if (i.softVetoUserIds.length > 0) return false;
         return true;
@@ -333,7 +507,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ideas: prev.ideas.map((i) => {
           if (i.groupId !== groupId) return i;
           if (i.id === winner.id)
-            return { ...i, status: "chosen", revealed: true };
+            return { ...i, status: "chosen", revealed: true, timing: "soon" };
           if (i.status === "chosen") return { ...i, status: "pending" };
           return i;
         }),
@@ -350,10 +524,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const markDone = useCallback(
-    (ideaId: string, rating: number, note: string) => {
+    (
+      ideaId: string,
+      rating: number,
+      note: string,
+      publicVisible = true,
+    ) => {
       setState((prev) => {
         const idea = prev.ideas.find((i) => i.id === ideaId);
         if (!idea || !prev.currentUserId) return prev;
+        const review: Review = {
+          id: createId("rev"),
+          ideaId,
+          userId: prev.currentUserId,
+          rating,
+          comment: note.trim(),
+          publicVisible,
+          createdAt: new Date().toISOString(),
+        };
         let next: AppState = {
           ...prev,
           ideas: prev.ideas.map((i) =>
@@ -367,6 +555,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 }
               : i,
           ),
+          reviews: [
+            ...prev.reviews.filter(
+              (r) =>
+                !(r.ideaId === ideaId && r.userId === prev.currentUserId),
+            ),
+            review,
+          ],
         };
         next = addPoints(next, {
           groupId: idea.groupId,
@@ -383,6 +578,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
           });
         }
         return next;
+      });
+    },
+    [],
+  );
+
+  const addReview = useCallback(
+    (input: {
+      ideaId: string;
+      rating: number;
+      comment: string;
+      publicVisible?: boolean;
+    }) => {
+      setState((prev) => {
+        if (!prev.currentUserId) return prev;
+        const idea = prev.ideas.find((i) => i.id === input.ideaId);
+        if (!idea || idea.status !== "done") return prev;
+        const review: Review = {
+          id: createId("rev"),
+          ideaId: input.ideaId,
+          userId: prev.currentUserId,
+          rating: input.rating,
+          comment: input.comment.trim(),
+          publicVisible: input.publicVisible ?? true,
+          createdAt: new Date().toISOString(),
+        };
+        return {
+          ...prev,
+          reviews: [
+            ...prev.reviews.filter(
+              (r) =>
+                !(
+                  r.ideaId === input.ideaId &&
+                  r.userId === prev.currentUserId
+                ),
+            ),
+            review,
+          ],
+        };
       });
     },
     [],
@@ -453,18 +686,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       signInAs,
+      signInWithEmail,
+      signInWithPhone,
+      signInWithApple,
       createUser,
       signOut,
       resetDemo,
       createGroup,
       joinGroupByCode,
       addIdea,
+      setIdeaTiming,
       castVote,
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
       pickRandomIdea,
       markDone,
+      addReview,
       addExpense,
       updateProfile,
     }),
@@ -473,18 +711,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       state,
       currentUser,
       signInAs,
+      signInWithEmail,
+      signInWithPhone,
+      signInWithApple,
       createUser,
       signOut,
       resetDemo,
       createGroup,
       joinGroupByCode,
       addIdea,
+      setIdeaTiming,
       castVote,
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
       pickRandomIdea,
       markDone,
+      addReview,
       addExpense,
       updateProfile,
     ],
@@ -495,11 +738,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 function createEmpty(): AppState {
   return {
-    version: 1,
+    version: 2,
     currentUserId: null,
     users: [],
     groups: [],
     ideas: [],
+    reviews: [],
     expenses: [],
     points: [],
   };

@@ -49,8 +49,9 @@ export default function LandingPage() {
             </Reveal>
             <Reveal delayMs={140}>
               <p className="mt-4 max-w-lg text-base leading-relaxed text-white/75 sm:text-lg">
-                Proponé pelis, sitios y salidas. Votá en secreto. Si hay duda,
-                que decida el azar. Después, cuentas claras en euros.
+                Guardá un catálogo para no olvidar. Cuando quieran, pasalo a
+                Pronto, votá en secreto o que decida el azar. Después, cuentas
+                claras en euros.
               </p>
             </Reveal>
             <Reveal delayMs={200}>
@@ -63,10 +64,18 @@ export default function LandingPage() {
                   Empezar ahora
                   <ArrowRight data-icon="inline-end" />
                 </Button>
-                <p className="text-sm text-white/65">
-                  Demo local · España · EUR
-                </p>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="h-12 rounded-2xl text-white hover:bg-white/10 hover:text-white"
+                  onClick={() => router.push("/discover")}
+                >
+                  Ver Descubrir
+                </Button>
               </div>
+              <p className="mt-3 text-sm text-white/65">
+                Demo local · España · EUR · correo / teléfono / Apple
+              </p>
             </Reveal>
           </div>
 

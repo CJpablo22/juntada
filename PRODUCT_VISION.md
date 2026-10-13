@@ -3,10 +3,10 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-12
+Última actualización: 2026-10-13
 
-**Producto en construcción ahora:** solo el **#1** (planes en grupo privados).  
-Productos #2 (red social) y #3 (marketplace skills) quedan en backlog.
+**Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
+Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 
 **Nombre provisional de trabajo:** Juntada (final pendiente).
 
@@ -16,31 +16,34 @@ Productos #2 (red social) y #3 (marketplace skills) quedan en backlog.
 
 ### Hecho en el MVP web local
 - [x] Scaffold Next.js + TypeScript + Tailwind + shadcn/ui
-- [x] Persistencia local (`localStorage`) + seed demo (Lucía / Mateo / Sofía)
-- [x] Landing + entrar / crear usuario (ciudad + barrio)
+- [x] Persistencia local (`localStorage` v2) + seed demo (Lucía / Mateo / Sofía)
+- [x] Landing + entrar
+- [x] Login UI: correo / teléfono / Apple-iCloud (demo local; auth real pendiente de backend)
 - [x] Grupos: crear, unirse por código, multi-grupo
 - [x] Ideas: peli / visitar / comer / plan + tags + dirección → Maps
-- [x] Voto secreto, revelar, “ahora no”, elegir plan
-- [x] Azar entre finalistas (top 3 / sin veto)
-- [x] Marcar hecho + rating + recuerdo
+- [x] **Catálogo vs Pronto**: guardar para no olvidar ≠ decidir este finde
+- [x] Voto secreto / reveal / “ahora no” / elegir (solo bandeja Pronto)
+- [x] Azar entre finalistas de Pronto
+- [x] Marcar hecho + valoración + comentario (+ opción pública)
+- [x] **Descubrir**: catálogo público de cosas hechas con ratings/comentarios
 - [x] Gastos EUR sueltos + saldos + “quién le debe a quién”
 - [x] Puntos + ranking + badges en grupo/perfil
-- [x] Diseño responsive con personalidad (no look genérico)
+- [x] Diseño responsive con personalidad
 - [x] README + vision doc vivos
-- [x] Preparado para crecer: `es-ES`, EUR, copy listo para i18n futuro / PWA-móvil
+- [x] Smoke Playwright de flujos core
+- [x] Preparado para crecer: `es-ES`, EUR, PWA/móvil más adelante
 
 ### Falta / siguiente en el producto 1
 - [ ] Nombre final de la marca
-- [ ] Auth real + backend (hoy es demo local)
+- [ ] Auth real (OAuth Apple, SMS/OTP, verificación email) + backend
+- [ ] Unificar títulos iguales en Descubrir (hoy es por idea/grupo)
 - [ ] Gasto ligado a una idea desde UI (modelo ya lo permite)
 - [ ] Foto en recuerdos
 - [ ] Beneficio jugable real del #1 (romper empate con acción)
 - [ ] PWA / instalación móvil
-- [ ] Tests automatizados
 
 ### Explícitamente futuro (no construir aún)
-- Red social / descubrimiento por intereses, estudios, cercanía
-- Ratings públicos comunitarios
+- Red social completa / match por intereses, estudios, cercanía
 - Marketplace de skills (arreglar PC, etc.)
 - Chat, mapa embebido, IA, multi-moneda
 
@@ -50,11 +53,11 @@ Productos #2 (red social) y #3 (marketplace skills) quedan en backlog.
 
 App divertida y amistosa para **parejas, amigos, hermanos y grupos chicos** que ayuda a:
 
-> Proponer planes → votar en secreto → decidir (ranking o azar) → hacerlo → recordar → liquidar gastos.
+> Guardar catálogo (para no olvidar) → pasar a Pronto → votar en secreto → decidir (ranking o azar) → hacerlo → valorar/comentar (opcional público) → liquidar gastos.
 
 Posicionamiento corto:
 
-> La app para decidir planes en grupo sin 40 mensajes de WhatsApp.
+> La app para no olvidar planes y decidirlos en grupo sin 40 mensajes de WhatsApp.
 
 Mercado inicial: **España**, moneda **EUR**.  
 Tono: divertido, amistoso, cercano; con toque argentino en el copy (vos/tú adaptable por locale más adelante).
@@ -155,9 +158,10 @@ Beneficios simbólicos del #1 del grupo:
 - Perfiles más ricos (intereses, universidad, zona)
 
 ### 4.2 Contenido público y opiniones
-- Puntuar lugares, películas, experiencias de forma visible
-- Otras personas con el mismo interés pueden ver y opinar
-- Rankings comunitarios (“mejores cenas en X”, “pelis para finde”)
+- [x] Primer slice: Descubrir con valoraciones/comentarios públicos post-hecho
+- Rankings comunitarios más ricos (“mejores cenas en X”, “pelis para finde”)
+- Merge de la misma peli/serie entre grupos
+- Que gente externa pueda opinar sin estar en el grupo original
 
 ### 4.3 Inteligencia de planes
 - Mood filters avanzados
