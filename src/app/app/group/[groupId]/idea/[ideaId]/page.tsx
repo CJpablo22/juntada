@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { mapsUrl } from "@/lib/maps";
-import { IDEA_TYPE_LABELS } from "@/lib/types";
+import { IDEA_TYPE_LABELS, formatPlace } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export default function IdeaDetailPage() {
@@ -157,19 +157,54 @@ export default function IdeaDetailPage() {
               Propuso {proposer.name}
             </span>
           ) : null}
-          {idea.address ? (
-            <a
-              href={mapsUrl(idea.address)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 font-medium text-[var(--pop)]"
-            >
-              <MapPin className="size-4" />
-              Abrir en Maps
-              <ExternalLink className="size-3.5" />
-            </a>
-          ) : null}
         </div>
+        {idea.places?.length ? (
+          <ul className="mt-4 space-y-2 border border-[var(--line)] bg-white p-3">
+            <li className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+              {idea.places.length === 1 ? "Lugar" : "Lugares"}
+            </li>
+            {idea.places.map((place, idx) => (
+              <li
+                key={`${place.name}-${idx}`}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
+                <span>
+                  <span className="font-medium text-[var(--ink)]">
+                    {place.name}
+                  </span>
+                  <span className="mt-0.5 block text-[var(--mute)]">
+                    {place.address}
+                  </span>
+                </span>
+                <a
+                  href={mapsUrl(
+                    place.name !== place.address
+                      ? `${place.name}, ${place.address}`
+                      : place.address,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-medium text-[var(--pop)]"
+                >
+                  <MapPin className="size-4" />
+                  Maps
+                  <ExternalLink className="size-3.5" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : idea.address ? (
+          <a
+            href={mapsUrl(idea.address)}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--pop)]"
+          >
+            <MapPin className="size-4" />
+            {formatPlace({ name: idea.address, address: idea.address })}
+            <ExternalLink className="size-3.5" />
+          </a>
+        ) : null}
       </div>
 
       {idea.status !== "done" ? (

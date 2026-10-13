@@ -1,4 +1,4 @@
-export type IdeaType = "movie" | "visit" | "food" | "plan";
+export type IdeaType = "movie" | "series" | "visit" | "food" | "plan";
 export type IdeaStatus = "pending" | "chosen" | "done" | "archived";
 /** catalog = guardado para no olvidar; soon = candidatos a decidir/hacer pronto */
 export type IdeaTiming = "catalog" | "soon";
@@ -11,6 +11,12 @@ export type GroupLocationVisibility =
   | "province"
   | "neighborhood"
   | "exact";
+
+/** Lugar concreto: nombre del sitio + dirección */
+export type IdeaPlace = {
+  name: string;
+  address: string;
+};
 
 export type User = {
   id: string;
@@ -49,6 +55,9 @@ export type Idea = {
   type: IdeaType;
   title: string;
   notes: string;
+  /** Lugares con nombre + dirección (obligatorio en visitar / comer / plan) */
+  places: IdeaPlace[];
+  /** Compat: primera dirección (derivada de places) */
   address?: string;
   proposedBy: string;
   status: IdeaStatus;
@@ -104,7 +113,8 @@ export type AppState = {
 };
 
 export const IDEA_TYPE_LABELS: Record<IdeaType, string> = {
-  movie: "Peli / serie",
+  movie: "Película",
+  series: "Serie",
   visit: "Visitar",
   food: "Comer",
   plan: "Plan",
@@ -132,3 +142,30 @@ export const GROUP_LOCATION_VISIBILITY_LABELS: Record<
   neighborhood: "Barrio",
   exact: "Dirección completa",
 };
+
+/** Visitar / comer / plan exigen al menos un lugar con nombre y dirección */
+export function ideaNeedsPlaces(type: IdeaType): boolean {
+  return type === "visit" || type === "food" || type === "plan";
+}
+
+/** Un plan puede (y suele) llevar varios lugares */
+export function ideaAllowsMultiplePlaces(type: IdeaType): boolean {
+  return type === "plan";
+}
+
+export function placesFromLegacy(address?: string): IdeaPlace[] {
+  const trimmed = address?.trim();
+  if (!trimmed) return [];
+  return [{ name: trimmed, address: trimmed }];
+}
+
+export function primaryAddress(idea: Pick<Idea, "places" | "address">): string | undefined {
+  return idea.places?.[0]?.address || idea.address || undefined;
+}
+
+export function formatPlace(place: IdeaPlace): string {
+  if (place.name && place.address && place.name !== place.address) {
+    return `${place.name} · ${place.address}`;
+  }
+  return place.name || place.address;
+}

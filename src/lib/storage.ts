@@ -1,5 +1,6 @@
 import { createSeedState } from "@/lib/seed";
-import type { AppState, Idea, Review, User } from "@/lib/types";
+import type { AppState, Idea, IdeaType, Review, User } from "@/lib/types";
+import { placesFromLegacy } from "@/lib/types";
 
 export const STORAGE_KEY = "juntada.app.v2";
 const LEGACY_KEY = "juntada.app.v1";
@@ -113,14 +114,40 @@ function guessProvince(city: string): string {
   return "Madrid";
 }
 
+const VALID_TYPES: IdeaType[] = [
+  "movie",
+  "series",
+  "visit",
+  "food",
+  "plan",
+];
+
+function normalizeIdeaType(type: unknown): IdeaType {
+  if (typeof type === "string" && VALID_TYPES.includes(type as IdeaType)) {
+    return type as IdeaType;
+  }
+  return "plan";
+}
+
 function normalizeIdea(idea: Partial<Idea> & { id: string; title: string }): Idea {
+  const places =
+    idea.places && idea.places.length > 0
+      ? idea.places
+          .map((p) => ({
+            name: (p.name ?? "").trim(),
+            address: (p.address ?? "").trim(),
+          }))
+          .filter((p) => p.name || p.address)
+      : placesFromLegacy(idea.address);
+
   return {
     id: idea.id,
     groupId: idea.groupId ?? "",
-    type: idea.type ?? "plan",
+    type: normalizeIdeaType(idea.type),
     title: idea.title,
     notes: idea.notes ?? "",
-    address: idea.address,
+    places,
+    address: places[0]?.address || idea.address,
     proposedBy: idea.proposedBy ?? "",
     status: idea.status ?? "pending",
     timing: idea.timing ?? "catalog",

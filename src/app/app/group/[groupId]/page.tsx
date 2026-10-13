@@ -5,6 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ArrowRight, Copy, MapPin, Plus, Wallet } from "lucide-react";
 import { LotteryButton } from "@/components/ideas/lottery-button";
+import {
+  PlaceFields,
+  cleanPlaces,
+  validatePlaces,
+} from "@/components/ideas/place-fields";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +29,9 @@ import { getVisibleLocationForViewer } from "@/lib/privacy";
 import {
   GROUP_KIND_LABELS,
   IDEA_TYPE_LABELS,
+  formatPlace,
+  ideaNeedsPlaces,
+  type IdeaPlace,
   type IdeaTiming,
   type IdeaType,
 } from "@/lib/types";
@@ -528,7 +536,14 @@ export default function GroupPage() {
                       ) : null}
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--mute)]">
                         {proposer ? <span>Por {proposer.name}</span> : null}
-                        {idea.address ? (
+                        {idea.places?.length ? (
+                          <span className="inline-flex items-center gap-1">
+                            <MapPin className="size-3.5" />
+                            {idea.places.length === 1
+                              ? formatPlace(idea.places[0])
+                              : `${idea.places.length} lugares`}
+                          </span>
+                        ) : idea.address ? (
                           <span className="inline-flex items-center gap-1">
                             <MapPin className="size-3.5" />
                             {idea.address}
@@ -613,7 +628,7 @@ function NewIdeaDialog({
     type: IdeaType;
     title: string;
     notes: string;
-    address?: string;
+    places: IdeaPlace[];
     tags: string[];
     timing: IdeaTiming;
   }) => void;
@@ -622,21 +637,46 @@ function NewIdeaDialog({
   const [timing, setTiming] = useState<IdeaTiming>(defaultTiming);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
-  const [address, setAddress] = useState("");
+  const [places, setPlaces] = useState<IdeaPlace[]>([
+    { name: "", address: "" },
+  ]);
   const [tagInput, setTagInput] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (open) setTiming(defaultTiming);
+    if (open) {
+      setTiming(defaultTiming);
+      setError("");
+    }
   }, [open, defaultTiming]);
+
+  useEffect(() => {
+    if (!ideaNeedsPlaces(type)) {
+      setPlaces([{ name: "", address: "" }]);
+    } else if (type === "plan" && places.length < 1) {
+      setPlaces([{ name: "", address: "" }]);
+    } else if (type !== "plan" && places.length > 1) {
+      setPlaces([places[0] ?? { name: "", address: "" }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setError("Poné un título.");
+      return;
+    }
+    const placeError = validatePlaces(type, places);
+    if (placeError) {
+      setError(placeError);
+      return;
+    }
     onSubmit({
       type,
       title,
       notes,
-      address,
+      places: ideaNeedsPlaces(type) ? cleanPlaces(places) : [],
       timing,
       tags: tagInput
         .split(",")
@@ -645,8 +685,9 @@ function NewIdeaDialog({
     });
     setTitle("");
     setNotes("");
-    setAddress("");
+    setPlaces([{ name: "", address: "" }]);
     setTagInput("");
+    setError("");
     setTiming(defaultTiming);
   }
 
@@ -656,7 +697,7 @@ function NewIdeaDialog({
         <Plus className="size-4" />
         Proponer idea
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Nueva idea</DialogTitle>
         </DialogHeader>
@@ -712,6 +753,10 @@ function NewIdeaDialog({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-[var(--mute)]">
+              Película y serie son cosas distintas. Visitar, comer y plan
+              piden lugar con dirección.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="title">Título</Label>
@@ -719,7 +764,15 @@ function NewIdeaDialog({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ej. Severance, brunch en Lavapiés…"
+              placeholder={
+                type === "series"
+                  ? "Ej. Severance"
+                  : type === "movie"
+                    ? "Ej. Past Lives"
+                    : type === "food"
+                      ? "Ej. Ramen en Malasaña"
+                      : "Ej. Escape + cañas"
+              }
               className="field-input"
             />
           </div>
@@ -733,26 +786,34 @@ function NewIdeaDialog({
               className="min-h-20"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="address">Dirección (opcional)</Label>
-            <Input
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Calle, ciudad"
-              className="field-input"
+
+          {ideaNeedsPlaces(type) ? (
+            <PlaceFields
+              type={type}
+              places={places}
+              onChange={setPlaces}
+              error={error && ideaNeedsPlaces(type) ? error : undefined}
             />
-          </div>
+          ) : (
+            <p className="rounded bg-[var(--wash)] px-3 py-2 text-xs text-[var(--mute)]">
+              Película y serie no llevan dirección (son para ver en casa o
+              donde quieran).
+            </p>
+          )}
+
           <div className="space-y-1.5">
             <Label htmlFor="tags">Tags (opcional, separados por coma)</Label>
             <Input
               id="tags"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
-              placeholder="serie, noche, cerca"
+              placeholder="noche, cerca, barato"
               className="field-input"
             />
           </div>
+          {error && !ideaNeedsPlaces(type) ? (
+            <p className="text-sm text-[var(--pop)]">{error}</p>
+          ) : null}
           <Button
             type="submit"
             className="h-10 w-full bg-[var(--ink)] text-white hover:bg-[var(--ink)]/90"

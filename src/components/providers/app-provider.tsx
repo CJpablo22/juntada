@@ -20,6 +20,7 @@ import type {
   GroupKind,
   GroupLocationVisibility,
   Idea,
+  IdeaPlace,
   IdeaTiming,
   IdeaType,
   Review,
@@ -63,6 +64,7 @@ type AppContextValue = {
     type: IdeaType;
     title: string;
     notes: string;
+    places?: IdeaPlace[];
     address?: string;
     tags: string[];
     timing: IdeaTiming;
@@ -389,6 +391,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       type: IdeaType;
       title: string;
       notes: string;
+      places?: IdeaPlace[];
       address?: string;
       tags: string[];
       timing: IdeaTiming;
@@ -396,13 +399,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const id = createId("idea");
       setState((prev) => {
         if (!prev.currentUserId) return prev;
+        const places = (input.places ?? [])
+          .map((p) => ({
+            name: p.name.trim(),
+            address: p.address.trim(),
+          }))
+          .filter((p) => p.name && p.address);
         const idea: Idea = {
           id,
           groupId: input.groupId,
           type: input.type,
           title: input.title.trim(),
           notes: input.notes.trim(),
-          address: input.address?.trim() || undefined,
+          places,
+          address: places[0]?.address || input.address?.trim() || undefined,
           proposedBy: prev.currentUserId,
           status: "pending",
           timing: input.timing,

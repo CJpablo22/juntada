@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-13 (privacidad por grupo + look más natural)
+Última actualización: 2026-10-13 (peli≠serie, lugares obligatorios, juegos futuros)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -20,7 +20,8 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Landing + entrar
 - [x] Login UI: correo / teléfono / Apple-iCloud (demo local; auth real pendiente de backend)
 - [x] Grupos: crear, unirse por código, multi-grupo
-- [x] Ideas: peli / visitar / comer / plan + tags + dirección → Maps
+- [x] Ideas: película / serie / visitar / comer / plan (peli y serie separados)
+- [x] Lugares obligatorios en visitar/comer/plan (nombre + dirección; plan admite varios) → Maps
 - [x] **Catálogo vs Pronto**: guardar para no olvidar ≠ decidir este finde
 - [x] Voto secreto / reveal / “ahora no” / elegir (solo bandeja Pronto)
 - [x] Azar entre finalistas de Pronto
@@ -52,6 +53,12 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - Follow abierto tipo Instagram (explícitamente NO; amigos = experiencias)
 - Marketplace de skills (arreglar PC, etc.)
 - Chat, mapa embebido, IA, multi-moneda
+- **Juegos de reunión (presenciales, sin pantallas como tablero):**
+  - El impostor
+  - Adivinar quién soy
+  - Qué edad tengo / quién soy yo
+  - Otros icebreakers / party games sencillos para cuando el grupo ya está junto
+  - La app solo reparte roles / prompts; se juega mirando a la gente, no al móvil
 
 ---
 

@@ -32,6 +32,15 @@ try {
   await page.waitForTimeout(200);
   const catalogItem = await page.getByRole('button', { name: /Past Lives|Severance/i }).count();
   ok('catalog shelf', catalogItem > 0, `items=${catalogItem}`);
+  const movieFilter = await page.getByRole('button', { name: /^Película$/i }).count();
+  const seriesFilter = await page.getByRole('button', { name: /^Serie$/i }).count();
+  ok('movie and series split', movieFilter > 0 && seriesFilter > 0, `movie=${movieFilter} series=${seriesFilter}`);
+  await page.getByRole('button', { name: /^Serie$/i }).click();
+  await page.waitForTimeout(150);
+  const onlySeries = await page.getByRole('button', { name: /Severance/i }).count();
+  const noMovie = await page.getByRole('button', { name: /Past Lives/i }).count();
+  ok('series filter works', onlySeries > 0 && noMovie === 0, `series=${onlySeries} movie=${noMovie}`);
+  await page.getByRole('button', { name: /^Todos$/i }).click();
 
   await page.getByRole('button', { name: /Pronto/i }).first().click();
   await page.waitForTimeout(200);

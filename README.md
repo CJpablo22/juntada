@@ -11,7 +11,8 @@ Catálogo para no olvidar, bandeja Pronto para decidir, votos secretos, azar, va
 - Login demo: correo / teléfono / Apple-iCloud (+ usuarios demo)
 - Grupos + código invite
 - **Catálogo** (guardar para no olvidar) vs **Pronto** (decidir / este finde)
-- Ideas por tipo + tags + dirección → Google Maps
+- Ideas por tipo (película / serie / visitar / comer / plan) + tags
+- Lugares con nombre + dirección obligatorios en visitar/comer/plan (varios en un plan) → Maps
 - Voto secreto, reveal, “ahora no”, elegir (en Pronto)
 - **Que decida el azar** entre finalistas de Pronto
 - Valoración + comentario al terminar (opción pública)
