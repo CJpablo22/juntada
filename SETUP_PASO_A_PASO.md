@@ -61,11 +61,15 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 4. **Seleccioná TODO el contenido** (Ctrl+A) y copialo.  
 5. Pegalo en el editor SQL de Supabase.  
 6. Click **Run** (o Ctrl+Enter).  
-7. Abajo debería decir algo como **Success**. Si hay error en rojo, copiá el mensaje y mandámelo.
+7. Abajo debería decir algo como **Success**. Si hay error en rojo, copiá el mensaje y mandámelo.  
+8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
+   `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
+   Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.
 
 Comprobación:
 1. Menú izquierdo → **Table Editor**.  
-2. Tenés que ver tablas: `profiles`, `groups`, `group_members`, `ideas`, `reviews`, `expenses`, `point_events`, `notification_events`.
+2. Tenés que ver tablas: `profiles`, `groups`, `group_members`, `ideas`, `reviews`, `expenses`, `point_events`, `notification_events`.  
+3. En `profiles` las columnas `email`, `phone` y `auth_provider` se rellenan al hacer login.
 
 ### 1.4 Copiar las claves del proyecto
 1. Menú izquierdo → **Project Settings** (engranaje).  

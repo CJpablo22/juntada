@@ -109,22 +109,53 @@ create index if not exists ideas_group_id_idx on public.ideas (group_id);
 create index if not exists expenses_group_id_idx on public.expenses (group_id);
 create index if not exists notification_events_status_idx on public.notification_events (status);
 
--- Perfil automático al registrarse
+-- Perfil automático al registrarse (email / teléfono / Apple)
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  provider text;
+  display_name text;
 begin
-  insert into public.profiles (id, name, email, auth_provider)
+  provider := coalesce(
+    nullif(new.raw_app_meta_data->>'provider', ''),
+    case
+      when new.phone is not null and (new.email is null or new.email = '') then 'phone'
+      else 'email'
+    end
+  );
+  if provider = 'apple' then
+    provider := 'apple';
+  elsif provider in ('phone', 'sms') then
+    provider := 'phone';
+  else
+    provider := 'email';
+  end if;
+
+  display_name := coalesce(
+    nullif(new.raw_user_meta_data->>'name', ''),
+    nullif(new.raw_user_meta_data->>'full_name', ''),
+    nullif(split_part(coalesce(new.email, ''), '@', 1), ''),
+    case when new.phone is not null then 'User ' || right(regexp_replace(new.phone, '\D', '', 'g'), 4) end,
+    'Alguien'
+  );
+
+  insert into public.profiles (id, name, email, phone, auth_provider)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1), 'Alguien'),
-    new.email,
-    coalesce(new.raw_user_meta_data->>'provider', 'email')
+    display_name,
+    nullif(lower(new.email), ''),
+    nullif(new.phone, ''),
+    provider
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update set
+    email = coalesce(excluded.email, public.profiles.email),
+    phone = coalesce(excluded.phone, public.profiles.phone),
+    auth_provider = excluded.auth_provider,
+    updated_at = now();
   return new;
 end;
 $$;
@@ -146,6 +177,9 @@ alter table public.notification_events enable row level security;
 -- Policies básicas: miembro del grupo ve/escribe lo del grupo; cada uno su perfil
 create policy "profiles_select_authenticated"
   on public.profiles for select to authenticated using (true);
+create policy "profiles_insert_own"
+  on public.profiles for insert to authenticated
+  with check (id = auth.uid());
 create policy "profiles_update_own"
   on public.profiles for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());

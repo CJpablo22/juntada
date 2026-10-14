@@ -48,14 +48,14 @@ export default function AppHomePage() {
     router.push(`/app/group/${id}`);
   }
 
-  function onJoin(e: FormEvent) {
+  async function onJoin(e: FormEvent) {
     e.preventDefault();
-    const id = joinGroupByCode(joinCode);
+    setJoinError("");
+    const id = await joinGroupByCode(joinCode);
     if (!id) {
       setJoinError("No encontramos ese código. Pedíselo a alguien del grupo.");
       return;
     }
-    setJoinError("");
     setOpenJoin(false);
     setJoinCode("");
     router.push(`/app/group/${id}`);

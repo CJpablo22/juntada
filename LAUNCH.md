@@ -64,7 +64,7 @@ Ver también `PRODUCT_VISION.md`: juegos de reunión, Descubrir unificado, fotos
 ## Qué tenés que crear vos (cuentas gratis)
 
 1. [ ] Cuenta en [supabase.com](https://supabase.com) → New project.  
-2. [ ] En el SQL Editor, pegar y ejecutar `supabase/migrations/001_init.sql`.  
+2. [ ] En el SQL Editor, pegar y ejecutar `supabase/migrations/001_init.sql`. Si el proyecto ya existía, ejecutá también `002_profile_identity.sql` (guarda mail/teléfono/Apple en el perfil).  
 3. [ ] Auth → URL configuration: Site URL = tu URL de Vercel (y `http://127.0.0.1:3456` en local).  
 4. [ ] Auth → Email templates → Magic Link: usar  
    `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/app`  

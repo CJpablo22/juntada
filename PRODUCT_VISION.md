@@ -20,6 +20,8 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Landing + entrar
 - [x] Login UI: correo / teléfono / Apple (tabs); cloud = magic link real; SMS/Apple documentados como pendientes de pago
 - [x] Schema Supabase + middleware de sesión + `/auth/confirm` + cola de notificaciones (email)
+- [x] Perfil guarda email / teléfono / Apple (auth_provider) al ingresar + UI de cuenta
+- [x] Persistencia cloud: perfiles + grupos/ideas/votos/gastos/puntos (dual-write)
 - [x] Guía de lanzamiento gratis: [`LAUNCH.md`](./LAUNCH.md)
 - [x] Grupos: crear, unirse por código, multi-grupo
 - [x] Ideas: película / serie / visitar / comer / plan (peli y serie separados)

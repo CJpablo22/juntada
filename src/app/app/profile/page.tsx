@@ -20,6 +20,7 @@ import {
   totalPointsForUser,
 } from "@/lib/points";
 import { resolveRegionTheme } from "@/lib/regions";
+import { authMethodLabel } from "@/lib/supabase/profile";
 
 export default function ProfilePage() {
   const {
@@ -153,6 +154,48 @@ export default function ProfilePage() {
           </p>
         </div>
       </div>
+
+      <section className="surface-panel space-y-3 p-4">
+        <div>
+          <h2 className="text-base font-semibold">Cuenta de acceso</h2>
+          <p className="mt-1 text-sm text-[var(--mute)]">
+            Queda guardado en tu perfil el medio con el que entrás. No se edita
+            acá: cambia solo si iniciás sesión con otro canal.
+          </p>
+        </div>
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-[var(--mute)]">Método</dt>
+            <dd className="mt-0.5 font-medium text-[var(--ink)]">
+              {authMethodLabel(currentUser.authProvider)}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[var(--mute)]">Correo</dt>
+            <dd className="mt-0.5 font-medium text-[var(--ink)] break-all">
+              {currentUser.email && !currentUser.email.includes("demo")
+                ? currentUser.email
+                : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[var(--mute)]">Teléfono</dt>
+            <dd className="mt-0.5 font-medium text-[var(--ink)]">
+              {currentUser.phone || "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[var(--mute)]">Apple / iCloud</dt>
+            <dd className="mt-0.5 font-medium text-[var(--ink)]">
+              {currentUser.authProvider === "apple"
+                ? currentUser.email && !currentUser.email.includes("demo")
+                  ? currentUser.email
+                  : "Vinculado"
+                : "Pendiente de activar"}
+            </dd>
+          </div>
+        </dl>
+      </section>
 
       <form onSubmit={onSave} className="surface-panel space-y-4 p-4">
         <div>

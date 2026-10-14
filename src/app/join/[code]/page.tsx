@@ -15,9 +15,16 @@ export default function JoinPage() {
       router.replace(`/enter?next=/join/${params.code}`);
       return;
     }
-    const id = joinGroupByCode(params.code);
-    if (id) router.replace(`/app/group/${id}`);
-    else router.replace("/app");
+    let cancelled = false;
+    void (async () => {
+      const id = await joinGroupByCode(params.code);
+      if (cancelled) return;
+      if (id) router.replace(`/app/group/${id}`);
+      else router.replace("/app");
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [ready, currentUser, params.code, joinGroupByCode, router]);
 
   return (
