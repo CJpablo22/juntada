@@ -12,6 +12,7 @@ import {
 import { createId, createInviteCode } from "@/lib/id";
 import { POINT_REASONS } from "@/lib/points";
 import { loadState, resetState, saveState } from "@/lib/storage";
+import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type {
   AppState,
   AuthProvider,
@@ -27,6 +28,38 @@ import type {
   Review,
   User,
 } from "@/lib/types";
+
+const cloudConfigured = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+);
+
+function userFromAuth(authUser: {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown>;
+}): User {
+  const metaName = authUser.user_metadata?.name;
+  const name =
+    (typeof metaName === "string" && metaName.trim()) ||
+    authUser.email?.split("@")[0] ||
+    "Alguien";
+  return {
+    id: authUser.id,
+    name,
+    country: "ES",
+    province: "Madrid",
+    city: "Madrid",
+    neighborhood: "Malasaña",
+    groupLocationVisibility: {},
+    email: authUser.email ?? undefined,
+    authProvider: "email",
+    avatarHue: Math.abs(
+      [...authUser.id].reduce((acc, ch) => acc + ch.charCodeAt(0), 0),
+    ) % 360,
+    createdAt: new Date().toISOString(),
+  };
+}
 
 type AppContextValue = {
   ready: boolean;
@@ -164,8 +197,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setState(loadState());
-    setReady(true);
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    async function boot() {
+      const local = loadState();
+
+      if (!cloudConfigured) {
+        if (!cancelled) {
+          setState(local);
+          setReady(true);
+        }
+        return;
+      }
+
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+
+        if (cancelled) return;
+
+        if (!authUser) {
+          setState({ ...local, currentUserId: null });
+          setReady(true);
+        } else {
+          const existing = local.users.find((u) => u.id === authUser.id);
+          const profile = existing ?? userFromAuth(authUser);
+          const users = existing
+            ? local.users
+            : [...local.users.filter((u) => u.id !== authUser.id), profile];
+
+          setState({
+            ...local,
+            users,
+            currentUserId: authUser.id,
+          });
+          setReady(true);
+        }
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!session?.user) {
+            setState((prev) => ({ ...prev, currentUserId: null }));
+            return;
+          }
+          const auth = session.user;
+          setState((prev) => {
+            const found = prev.users.find((u) => u.id === auth.id);
+            if (found) return { ...prev, currentUserId: auth.id };
+            return {
+              ...prev,
+              users: [...prev.users, userFromAuth(auth)],
+              currentUserId: auth.id,
+            };
+          });
+        });
+        unsubscribe = () => subscription.unsubscribe();
+      } catch {
+        if (!cancelled) {
+          setState({ ...local, currentUserId: null });
+          setReady(true);
+        }
+      }
+    }
+
+    void boot();
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -316,6 +419,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(() => {
     setState((prev) => ({ ...prev, currentUserId: null }));
+    if (cloudConfigured) {
+      void createSupabaseBrowserClient().auth.signOut();
+    }
   }, []);
 
   const resetDemo = useCallback(() => {

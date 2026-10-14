@@ -1,22 +1,49 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
 
-export async function GET(request: Request) {
+/**
+ * Canjea el magic link (token_hash PKCE) y escribe la sesión en cookies
+ * sobre la respuesta de redirect (patrón recomendado @supabase/ssr).
+ */
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/app";
+  const nextPath = searchParams.get("next") ?? "/app";
+  const next = nextPath.startsWith("/") ? nextPath : "/app";
 
-  if (token_hash && type) {
-    const supabase = await createClient();
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-    if (!error) {
-      return NextResponse.redirect(new URL(next, origin));
-    }
+  const success = NextResponse.redirect(new URL(next, origin));
+  const failure = NextResponse.redirect(new URL("/enter?error=auth", origin));
+
+  if (!token_hash || !type) {
+    return failure;
   }
 
-  return NextResponse.redirect(
-    new URL("/enter?error=auth", origin),
-  );
+  const supabase = createServerClient(supabaseUrl(), supabaseAnonKey(), {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet, headers) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          success.cookies.set(name, value, options);
+          failure.cookies.set(name, value, options);
+        });
+        Object.entries(headers).forEach(([key, value]) => {
+          success.headers.set(key, value);
+          failure.headers.set(key, value);
+        });
+      },
+    },
+  });
+
+  const { error } = await supabase.auth.verifyOtp({ type, token_hash });
+  if (error) {
+    failure.headers.set("x-juntada-auth-error", error.message.slice(0, 120));
+    return failure;
+  }
+
+  return success;
 }

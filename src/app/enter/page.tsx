@@ -42,7 +42,9 @@ function EnterForm() {
 
   useEffect(() => {
     if (searchParams.get("error") === "auth") {
-      setError("El enlace no es válido o expiró. Pedí uno nuevo.");
+      setError(
+        "No se pudo validar el enlace. Pedí uno nuevo y abrilo en el mismo navegador donde pediste el mail (no lo reenvíes a otro dispositivo).",
+      );
     }
   }, [searchParams]);
 

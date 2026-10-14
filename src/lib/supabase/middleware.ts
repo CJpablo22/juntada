@@ -47,6 +47,7 @@ export async function updateSession(request: NextRequest) {
   if (user && path === "/enter") {
     const url = request.nextUrl.clone();
     url.pathname = "/app";
+    url.search = ""; // no arrastrar ?error=auth
     return NextResponse.redirect(url);
   }
 
