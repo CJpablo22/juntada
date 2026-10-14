@@ -95,10 +95,49 @@ Comprobación:
 > - Redirect: `https://TU-APP.vercel.app/auth/confirm`  
 > - Redirect: `https://TU-APP.vercel.app/**`
 
-### 2.2 Plantilla del mail “Magic Link”
-1. **Authentication** → **Email Templates**.  
-2. Elegí **Magic Link**.  
-3. En el cuerpo del mail, aseguráte de que el enlace sea exactamente (o equivalente):
+### 2.2 SMTP gratis + plantilla Magic Link
+
+En el plan Free, Supabase muestra *“Set up custom SMTP to edit templates”* y **bloquea** editar el mail.  
+Sin cambiar la plantilla, el login de Juntada (SSR) no queda bien. Solución gratis: **Resend** como SMTP.
+
+#### 2.2.a Cuenta Resend
+1. https://resend.com/signup → creá cuenta (GitHub o correo).  
+2. Confirmá el email si te lo pide.
+
+#### 2.2.b API Key
+1. Resend → **API Keys** → **Create API Key**.  
+2. Name: `juntada-smtp` · Permission: **Sending access**.  
+3. **Add** → copiá `re_...` y guardala (solo se ve una vez).
+
+#### 2.2.c Dominio (para mandar a los amigos)
+1. Resend → **Domains** → **Add Domain** si tenés dominio.  
+2. Si **no** tenés dominio todavía:
+   - Podés probar el login **solo a tu propio correo** con el sender de prueba.
+   - Para los 10 amigos hará falta un dominio barato verificado en Resend (más adelante; documentado en `LAUNCH.md`).
+
+#### 2.2.d Activar SMTP en Supabase
+1. En la pantalla del Magic Link, click **Set up SMTP**  
+   (o **Project Settings** → **Authentication** → Custom SMTP).  
+2. Activá **Enable custom SMTP**.  
+3. Completá:
+
+| Campo | Valor |
+|--------|--------|
+| Sender email | Con dominio verificado: `noreply@tudominio.com`. Sin dominio: el que Resend te indique para tests (a menudo ligado a tu cuenta). |
+| Sender name | `Juntada` |
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | tu API key `re_...` |
+
+4. **Save**.  
+5. Volvé a **Authentication** → **Emails** → **Magic link or OTP**.  
+6. El aviso amarillo debería desaparecer y Subject/Body se pueden editar.
+
+#### 2.2.e Editar la plantilla
+1. Desactivá solo **Preview** si hace falta, para ver el HTML/Source.  
+2. **Subject:** `Entrá a Juntada`  
+3. **Body** (el `href` tiene que llevar `token_hash`):
 
 ```html
 <h2>Entrá a Juntada</h2>
@@ -110,25 +149,19 @@ Comprobación:
 </p>
 ```
 
-4. **Save**.
+4. **Save changes**.
 
 ### 2.3 Proveedor Email activado
 1. **Authentication** → **Providers**.  
 2. **Email** → que esté **Enabled**.  
-3. Para el free tier está bien dejar “Confirm email” según el default de Supabase; con magic link normalmente entras al tocar el enlace.  
-4. **Save** si cambiaste algo.
+3. **Save** si cambiaste algo.
 
 ---
 
-## Paso 3 — (Opcional ahora) Resend para avisos
+## Paso 3 — Misma key de Resend para avisos de la app (opcional)
 
-Solo si querés que la app mande correos de “te invitaron / hay que votar” además del login.  
-El **login** ya manda mail con Supabase; Resend es para **avisos de la app**.
-
-1. https://resend.com → Sign up (gratis).  
-2. **API Keys** → Create → copiá `re_...`.  
-3. Guardala para el paso 4 (variable `RESEND_API_KEY`).  
-4. Sin dominio propio, en free a veces solo podés mandar a tu propio correo de prueba: está bien para probar; para los 10 amigos más adelante conviene dominio.
+El login ya usa Resend vía SMTP.  
+Más adelante, en Vercel, podés poner la misma `re_...` como `RESEND_API_KEY` para avisos (“te invitaron”, “hay que votar”). No hace falta otra cuenta.
 
 Si preferís, **salteá Resend** y lo hacemos después.
 
