@@ -66,7 +66,18 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
    Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
 9. Corré también `003_notifications_rpc.sql` y **`004_accounts_inapp_notifications.sql`** (usuario único + avisos solo in-app).  
-10. Auth → Providers → Email: activá Email y **desactivá Confirm email** (no mandamos mails de momento).
+10. Auth → Providers → Email: activá Email y **dejá Confirm email ON** (mail de registro sí).  
+    Los avisos del grupo **no** van por mail: solo in-app.  
+11. Auth → Emails → **Confirm signup** — Subject: `Confirmá tu cuenta en Juntada`. Body con enlace:
+```html
+<h2>Confirmá tu cuenta</h2>
+<p>Tocá el enlace para activar Juntada:</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/app/onboarding">
+    Confirmar correo
+  </a>
+</p>
+```
 
 Comprobación:
 1. Menú izquierdo → **Table Editor**.  

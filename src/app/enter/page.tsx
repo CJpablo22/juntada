@@ -109,10 +109,13 @@ function EnterForm() {
         return;
       }
 
+      const origin =
+        process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
       const { data, error: signErr } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
+          emailRedirectTo: `${origin}/auth/confirm?next=/app/onboarding`,
           data: { username: uname, name: uname },
         },
       });
@@ -121,11 +124,15 @@ function EnterForm() {
         return;
       }
       if (!data.session) {
+        // Confirmación de correo activa: bien. No es mail de aviso de la app.
         setInfo(
-          "Cuenta creada. Si Supabase pide confirmar el correo, mirá tu bandeja; si no, iniciá sesión.",
+          "Te mandamos un correo de confirmación a " +
+            email.trim().toLowerCase() +
+            ". Abrí el enlace (mirá spam si no llega). Después volvé acá e iniciá sesión.",
         );
         setMode("login");
         setLoginId(email.trim().toLowerCase());
+        setPassword("");
         return;
       }
       goAfterAuth(false);
@@ -174,7 +181,21 @@ function EnterForm() {
         password,
       });
       if (signErr) {
-        setError(signErr.message);
+        const msg = signErr.message.toLowerCase();
+        if (
+          msg.includes("invalid login") ||
+          msg.includes("invalid credentials")
+        ) {
+          setError(
+            "Correo o contraseña incorrectos, o todavía no confirmaste el mail. Revisá tu bandeja (y spam), tocá el enlace de confirmación y probá de nuevo.",
+          );
+        } else if (msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+          setError(
+            "Todavía no confirmaste el correo. Abrí el mail de Juntada, tocá el enlace y después entrá acá.",
+          );
+        } else {
+          setError(signErr.message);
+        }
         return;
       }
       // AppProvider escucha SIGNED_IN y carga perfil; onboarding lo decide el layout
@@ -220,8 +241,9 @@ function EnterForm() {
           {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
         </h1>
         <p className="mt-2 text-[15px] leading-relaxed text-[var(--mute)] sm:text-base">
-          Obligatoria. Usuario único + correo + contraseña. Teléfono y Apple
-          llegan después; el correo siempre queda asociado.
+          Usuario único + correo + contraseña. Al registrarte te llega un mail
+          de confirmación (solo eso). Los avisos del grupo se ven en la app, no
+          por correo.
         </p>
       </div>
 

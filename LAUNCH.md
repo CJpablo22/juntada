@@ -28,12 +28,13 @@ Cuando crezca el público, **no se migra de un juguete**: ya estaremos en Postgr
 
 ### Login ahora
 - **Registro / login obligatorio**: usuario único + correo + contraseña.
-- Tras entrar: onboarding con **dirección obligatoria**; teléfono / Instagram / TikTok opcionales.
+- Al registrarte **sí llega un mail de confirmación** (uno por persona, a su correo). Eso no es aviso de la app.
+- Tras confirmar: onboarding con **dirección obligatoria**; teléfono / Instagram / TikTok opcionales.
 - En cada grupo elegís si ven tu **@usuario** o tu **nombre real**.
 - Teléfono SMS y Apple / iCloud: UI lista, activación pendiente (pago).
 
 ### Notificaciones ahora
-- **Solo in-app** (apartado Avisos). **No se mandan mails** de eventos por ahora.
+- **Solo in-app** (apartado Avisos). **No se mandan mails** de eventos del grupo (ideas, votos, gastos…).
 - La misma cola servirá luego para email / WhatsApp / push si los activamos.
 
 ---
@@ -66,8 +67,10 @@ Ver también `PRODUCT_VISION.md`: juegos de reunión, Descubrir unificado, fotos
 
 1. [ ] Cuenta en [supabase.com](https://supabase.com) → New project.  
 2. [ ] SQL Editor: `001_init.sql`. Si el proyecto ya existía, también `002`, `003` y **`004_accounts_inapp_notifications.sql`**.  
-3. [ ] Auth → Providers → Email: Enabled. **Confirm email = OFF** (no mandamos mails de momento).  
-4. [ ] Auth → URL configuration: Site URL = tu URL de Vercel (y `http://127.0.0.1:3456` en local).  
+3. [ ] Auth → Providers → Email: Enabled. **Confirm email = ON** (mail de registro sí; avisos de la app no).  
+4. [ ] Auth → URL configuration: Site URL = tu URL de Vercel. Redirect URLs: `https://tu-app.vercel.app/auth/confirm**` y local si hace falta.  
+4b. [ ] Auth → Emails → **Confirm signup**: el enlace debe ir a  
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/app/onboarding`
 5. [ ] Copiar **Project URL** y **anon public key** → variables de entorno.  
 6. [ ] Cuenta en [vercel.com](https://vercel.com) → Importar este repo → mismas env vars → Deploy.
 
