@@ -5,8 +5,6 @@ import { useMemo } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { getExperienceFriends } from "@/lib/friends";
-import { resolveRegionTheme } from "@/lib/regions";
-
 export default function FriendsPage() {
   const { currentUser, state } = useApp();
 
@@ -44,11 +42,6 @@ export default function FriendsPage() {
         ) : (
           <ul className="mt-4 divide-y divide-[var(--line)]">
             {friends.map((friend) => {
-              const theme = resolveRegionTheme({
-                country: friend.user.country,
-                province: friend.user.province,
-                city: friend.user.city,
-              });
               return (
                 <li key={friend.user.id} className="py-3">
                   <div className="flex items-start justify-between gap-3">
@@ -59,8 +52,7 @@ export default function FriendsPage() {
                           {friend.user.name}
                         </span>
                         <span className="block text-xs text-[var(--mute)]">
-                          {friend.user.city} · {friend.user.province} · look{" "}
-                          {theme.label}
+                          {friend.user.city} · {friend.user.province}
                         </span>
                       </span>
                     </span>

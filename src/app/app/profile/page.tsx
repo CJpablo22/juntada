@@ -19,7 +19,6 @@ import {
   rankMembers,
   totalPointsForUser,
 } from "@/lib/points";
-import { resolveRegionTheme } from "@/lib/regions";
 import { createClient } from "@/lib/supabase/client";
 import { authMethodLabel } from "@/lib/supabase/profile";
 
@@ -81,13 +80,6 @@ export default function ProfilePage() {
     currentUser?.floorUnit,
     currentUser?.postalCode,
   ]);
-
-  /* Look solo con lo guardado — no al editar el formulario */
-  const theme = resolveRegionTheme({
-    country: currentUser?.country,
-    province: currentUser?.province,
-    city: currentUser?.city,
-  });
 
   const total = currentUser
     ? totalPointsForUser(state.points, currentUser.id)
@@ -162,14 +154,7 @@ export default function ProfilePage() {
             {currentUser.neighborhood ? `${currentUser.neighborhood}, ` : ""}
             {currentUser.city} · {currentUser.province}
           </p>
-          <p className="mt-2">
-            <span className="region-chip">
-              Look {theme.label} · {theme.tagline}
-            </span>
-            <span className="ml-2 text-sm text-[var(--mute)]">
-              {total} puntos
-            </span>
-          </p>
+          <p className="mt-2 text-sm text-[var(--mute)]">{total} puntos</p>
         </div>
       </div>
 

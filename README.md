@@ -19,7 +19,7 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - **Catálogo** vs **Pronto**
 - Ideas: película / serie / visitar / comer / plan + lugares
 - Voto secreto, reveal, azar, gastos, Descubrir, puntos
-- Look regional (ES/AR), catálogo completo de provincias/localidades
+- Diseño único «Mesa puesta»; catálogo de provincias/localidades para ubicación
 - Dirección con búsqueda + CP + piso/puerta; guardar solo al confirmar
 - Privacidad de ubicación por grupo
 

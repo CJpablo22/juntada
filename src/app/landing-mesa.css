@@ -1,49 +1,6 @@
-/* ——— Landing «Mesa puesta» (scoped) ——— */
+/* ——— Landing «Mesa puesta» (layout; tokens vienen de :root) ——— */
 .landing-mesa {
-  --mesa-bg: #f3ede4;
-  --mesa-ink: #1c1917;
-  --mesa-mute: #3f3a36;
-  --mesa-line: #d6cfc4;
-  --mesa-accent: #0a4d47;
-  --mesa-accent-mid: #0f766e;
-  --mesa-gold: #e7b04b;
-  --mesa-foam: #fffaf3;
-  --mesa-band: #0a4d47;
-
-  --ink: var(--mesa-ink);
-  --paper: var(--mesa-bg);
-  --mute: var(--mesa-mute);
-  --line: var(--mesa-line);
-  --pop: var(--mesa-accent);
-  --pop-soft: color-mix(in oklab, var(--mesa-accent) 12%, var(--mesa-bg));
-  --wash: color-mix(in oklab, var(--mesa-gold) 14%, var(--mesa-bg));
-  --hero: var(--mesa-band);
-  --font-body: var(--font-mesa-sans), var(--font-es-sans), system-ui, sans-serif;
-  --font-display: var(--font-andalucia), Georgia, serif;
-  --heading-tracking: -0.03em;
-  --heading-weight: 700;
-
   color: var(--mesa-ink);
-  background-color: var(--mesa-bg);
-  background-image:
-    radial-gradient(
-      ellipse 80% 50% at 12% -10%,
-      color-mix(in oklab, var(--mesa-gold) 22%, transparent),
-      transparent 55%
-    ),
-    radial-gradient(
-      ellipse 60% 40% at 100% 20%,
-      color-mix(in oklab, var(--mesa-accent-mid) 10%, transparent),
-      transparent 50%
-    ),
-    repeating-linear-gradient(
-      -8deg,
-      transparent,
-      transparent 11px,
-      color-mix(in oklab, var(--mesa-ink) 3.5%, transparent) 11px,
-      color-mix(in oklab, var(--mesa-ink) 3.5%, transparent) 12px
-    );
-  font-family: var(--font-body);
   min-height: 100svh;
 }
 

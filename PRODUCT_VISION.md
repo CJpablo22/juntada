@@ -39,7 +39,7 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Diseño responsive con personalidad
 - [x] README + vision doc vivos
 - [x] Smoke Playwright de flujos core
-- [x] Look regional sobrio (colores por provincia; tipografía única Source Sans)
+- [x] Diseño único «Mesa puesta» (Fraunces + DM Sans; acento teal)
 - [x] Selects reales país → provincia → ciudad → barrio (sin texto libre)
 - [x] **Privacidad de ubicación por grupo**: país / provincia / barrio / dirección exacta (independiente en cada grupo)
 - [x] Amigos de experiencia (solo tras completar algo juntos; no follow abierto)

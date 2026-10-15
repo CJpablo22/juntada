@@ -15,7 +15,6 @@ import { UserAvatar } from "@/components/ui/user-chip";
 import { useApp } from "@/components/providers/app-provider";
 import { Button } from "@/components/ui/button";
 import { displayNameOrUsername } from "@/lib/display-name";
-import { resolveRegionTheme } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -54,13 +53,6 @@ const NAV = [
 export function AppHeader() {
   const { currentUser, signOut } = useApp();
   const pathname = usePathname() ?? "";
-  const theme = currentUser
-    ? resolveRegionTheme({
-        country: currentUser.country,
-        province: currentUser.province,
-        city: currentUser.city,
-      })
-    : null;
 
   return (
     <>
@@ -70,11 +62,6 @@ export function AppHeader() {
             <Link href={currentUser ? "/app" : "/"} className="shrink-0">
               <Logo />
             </Link>
-            {theme ? (
-              <span className="region-chip" title={theme.tagline}>
-                {theme.country} · {theme.label}
-              </span>
-            ) : null}
           </div>
           {currentUser ? (
             <div className="flex items-center gap-1 sm:gap-2">
