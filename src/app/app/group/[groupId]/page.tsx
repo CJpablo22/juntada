@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { badgeForRank, rankMembers } from "@/lib/points";
