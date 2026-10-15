@@ -44,7 +44,10 @@ export default function ExpensesPage() {
         ? state.ideas.filter(
             (i) =>
               i.groupId === group.id &&
-              (i.status === "chosen" || i.status === "done" || i.timing === "soon"),
+              (i.status === "chosen" ||
+                i.status === "in_progress" ||
+                i.status === "done" ||
+                i.timing === "soon"),
           )
         : [],
     [state.ideas, group],

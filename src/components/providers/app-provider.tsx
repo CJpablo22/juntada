@@ -101,6 +101,7 @@ type AppContextValue = {
   toggleSoftVeto: (ideaId: string) => void;
   revealVotes: (ideaId: string) => void;
   chooseIdea: (ideaId: string) => void;
+  markInProgress: (ideaId: string) => void;
   pickRandomIdea: (groupId: string) => string | null;
   markDone: (
     ideaId: string,
@@ -685,6 +686,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         !idea ||
         idea.status === "done" ||
         idea.status === "archived" ||
+        idea.status === "in_progress" ||
         idea.timing !== "soon"
       ) {
         return prev;
@@ -774,7 +776,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const chooseIdea = useCallback((ideaId: string) => {
     setState((prev) => {
       const idea = prev.ideas.find((i) => i.id === ideaId);
-      if (!idea) return prev;
+      if (!idea || idea.status === "done" || idea.status === "in_progress")
+        return prev;
       const pointId = cloudConfigured ? newCloudId() : createId("pt");
       let next: AppState = {
         ...prev,
@@ -787,6 +790,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               revealed: true,
               timing: "soon",
             };
+          // Solo deselige otra "elegida"; no toca las que están en proceso
           if (i.status === "chosen") return { ...i, status: "pending" };
           return i;
         }),
@@ -820,6 +824,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
       }
       return next;
+    });
+  }, []);
+
+  const markInProgress = useCallback((ideaId: string) => {
+    setState((prev) => {
+      const idea = prev.ideas.find((i) => i.id === ideaId);
+      if (!idea || idea.status === "done" || idea.status === "archived")
+        return prev;
+      const nextIdeas = prev.ideas.map((i) =>
+        i.id === ideaId
+          ? { ...i, status: "in_progress" as const, timing: "soon" as const, revealed: true }
+          : i,
+      );
+      if (cloudConfigured) {
+        void cloudUpdateIdea(createSupabaseBrowserClient(), ideaId, {
+          status: "in_progress",
+          timing: "soon",
+          revealed: true,
+        });
+        notifyGroup({
+          groupId: idea.groupId,
+          eventType: "generic",
+          title: `En proceso: ${idea.title}`,
+          body: "El grupo marcó este plan como en proceso.",
+          payload: { ideaId, groupId: idea.groupId },
+        });
+      }
+      return { ...prev, ideas: nextIdeas };
     });
   }, []);
 
@@ -1252,6 +1284,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
+      markInProgress,
       pickRandomIdea,
       markDone,
       addReview,
@@ -1280,6 +1313,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
+      markInProgress,
       pickRandomIdea,
       markDone,
       addReview,

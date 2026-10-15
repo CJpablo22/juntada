@@ -204,16 +204,22 @@ export default function AppHomePage() {
                   i.status === "chosen" &&
                   i.timing === "soon",
               );
+              const inProgress = state.ideas.find(
+                (i) =>
+                  i.groupId === group.id && i.status === "in_progress",
+              );
               const members = group.memberIds
                 .map((id) => state.users.find((u) => u.id === id))
                 .filter(Boolean);
-              const nextHint = chosen
-                ? `Plan elegido: ${chosen.title}`
-                : soon > 0
-                  ? `${soon} en Pronto · tocá para votar o sortear`
-                  : catalog > 0
-                    ? `${catalog} en catálogo · pasá algo a Pronto para decidir`
-                    : "Empezá guardando una idea";
+              const nextHint = inProgress
+                ? `En proceso: ${inProgress.title}`
+                : chosen
+                  ? `Plan elegido: ${chosen.title}`
+                  : soon > 0
+                    ? `${soon} en Pronto · tocá para votar o sortear`
+                    : catalog > 0
+                      ? `${catalog} en catálogo · pasá algo a Pronto para decidir`
+                      : "Empezá guardando una idea";
 
               return (
                 <li key={group.id}>

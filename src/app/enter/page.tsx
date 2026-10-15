@@ -120,7 +120,32 @@ function EnterForm() {
         },
       });
       if (signErr) {
-        setError(signErr.message);
+        const msg = signErr.message.toLowerCase();
+        if (
+          msg.includes("already registered") ||
+          msg.includes("already been registered") ||
+          msg.includes("user already") ||
+          msg.includes("email address is already")
+        ) {
+          setError(
+            "Ese correo ya tiene una cuenta. Iniciá sesión o usá otro correo. Un mail = un usuario.",
+          );
+        } else {
+          setError(signErr.message);
+        }
+        return;
+      }
+      // Supabase a veces “crea” sin error si el mail existe y Confirm email está ON
+      if (
+        data.user &&
+        Array.isArray(data.user.identities) &&
+        data.user.identities.length === 0
+      ) {
+        setError(
+          "Ese correo ya está registrado. Andá a Entrar con tu contraseña.",
+        );
+        setMode("login");
+        setLoginId(email.trim().toLowerCase());
         return;
       }
       if (!data.session) {

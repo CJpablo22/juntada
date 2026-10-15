@@ -95,9 +95,16 @@ export default function GroupPage() {
       .filter((i) => i.status !== "archived")
       .filter((i) => {
         if (shelf === "catalog")
-          return i.timing === "catalog" && i.status !== "done";
+          return (
+            i.timing === "catalog" &&
+            i.status !== "done" &&
+            i.status !== "in_progress"
+          );
         if (shelf === "soon")
-          return i.timing === "soon" && i.status !== "done";
+          return (
+            (i.timing === "soon" || i.status === "in_progress") &&
+            i.status !== "done"
+          );
         return i.status === "done";
       })
       .filter((i) => (typeFilter === "all" ? true : i.type === typeFilter));
@@ -106,6 +113,9 @@ export default function GroupPage() {
   const chosen = state.ideas.find(
     (i) =>
       i.groupId === group?.id && i.status === "chosen" && i.timing === "soon",
+  );
+  const inProgress = state.ideas.find(
+    (i) => i.groupId === group?.id && i.status === "in_progress",
   );
 
   const ranking = group
@@ -120,6 +130,7 @@ export default function GroupPage() {
         i.timing === "soon" &&
         i.status !== "done" &&
         i.status !== "archived" &&
+        i.status !== "in_progress" &&
         !i.revealed &&
         i.votes[currentUser.id] == null &&
         !i.softVetoUserIds.includes(currentUser.id),
@@ -361,11 +372,24 @@ export default function GroupPage() {
           <div>
             <p className="font-semibold text-[var(--ink)]">Decidir juntos</p>
             <p className="mt-1 text-sm text-[var(--mute)]">
-              {chosen
-                ? "Ya hay un plan elegido. Pueden cambiarlo con otro voto o el azar."
-                : "Votá en cada idea, revelen los votos, o dejen que el azar elija entre Pronto."}
+              {inProgress
+                ? "Hay un plan en proceso. Cuando lo terminen, marquenlo como hecho."
+                : chosen
+                  ? "Ya hay un plan elegido. Pueden marcarlo en proceso o cambiarlo."
+                  : "Votá en cada idea, revelen los votos, o dejen que el azar elija entre Pronto."}
             </p>
           </div>
+          {inProgress ? (
+            <p className="text-sm">
+              En proceso:{" "}
+              <Link
+                href={`/app/group/${group.id}/idea/${inProgress.id}`}
+                className="font-semibold text-[var(--ink)] underline"
+              >
+                {inProgress.title}
+              </Link>
+            </p>
+          ) : null}
           {chosen ? (
             <p className="text-sm">
               Elegida:{" "}
@@ -492,17 +516,19 @@ export default function GroupPage() {
               const voteCount = Object.keys(idea.votes).length;
               const myVote = idea.votes[currentUser.id];
               const rowHint =
-                idea.status === "chosen"
-                  ? "Plan elegido · tocá para abrir"
-                  : idea.timing === "soon" && !idea.revealed
-                    ? myVote
-                      ? `Ya votaste (${myVote}/5) · secreto`
-                      : "Pendiente de tu voto"
-                    : idea.timing === "soon" && idea.revealed
-                      ? `${voteCount} votos revelados`
-                      : idea.timing === "catalog"
-                        ? "En catálogo · podés pasarla a Pronto"
-                        : "Hecha";
+                idea.status === "in_progress"
+                  ? "En proceso · tocá para abrir"
+                  : idea.status === "chosen"
+                    ? "Plan elegido · tocá para abrir"
+                    : idea.timing === "soon" && !idea.revealed
+                      ? myVote
+                        ? `Ya votaste (${myVote}/5) · secreto`
+                        : "Pendiente de tu voto"
+                      : idea.timing === "soon" && idea.revealed
+                        ? `${voteCount} votos revelados`
+                        : idea.timing === "catalog"
+                          ? "En catálogo · podés pasarla a Pronto"
+                          : "Hecha";
 
               return (
                 <li key={idea.id} className="py-3">
@@ -514,7 +540,10 @@ export default function GroupPage() {
                       }
                       className={cn(
                         "min-w-0 flex-1 text-left hover:opacity-90",
-                        idea.status === "chosen" && "rounded bg-[var(--pop-soft)]/50 p-2 -m-2",
+                        idea.status === "chosen" &&
+                          "rounded bg-[var(--pop-soft)]/50 p-2 -m-2",
+                        idea.status === "in_progress" &&
+                          "rounded bg-[var(--wash)] p-2 -m-2",
                       )}
                     >
                       <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--mute)]">
@@ -525,6 +554,11 @@ export default function GroupPage() {
                         {idea.status === "chosen" ? (
                           <Badge className="bg-[var(--pop)] text-white">
                             Elegida
+                          </Badge>
+                        ) : null}
+                        {idea.status === "in_progress" ? (
+                          <Badge className="bg-[var(--ink)] text-white">
+                            En proceso
                           </Badge>
                         ) : null}
                       </div>

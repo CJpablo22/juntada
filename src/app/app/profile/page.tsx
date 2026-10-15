@@ -20,7 +20,13 @@ import {
   totalPointsForUser,
 } from "@/lib/points";
 import { resolveRegionTheme } from "@/lib/regions";
+import { createClient } from "@/lib/supabase/client";
 import { authMethodLabel } from "@/lib/supabase/profile";
+
+const cloudConfigured = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+);
 
 export default function ProfilePage() {
   const {
@@ -44,6 +50,11 @@ export default function ProfilePage() {
   });
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMsg, setPasswordMsg] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
 
   /* Solo sincroniza desde lo guardado; no pisa el borrador al tocar privacidad u otros campos */
   useEffect(() => {
@@ -215,6 +226,83 @@ export default function ProfilePage() {
             </>
           )}
         </dl>
+
+        {cloudConfigured ? (
+          <form
+            className="mt-4 space-y-3 border-t border-[var(--line)] pt-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setPasswordError("");
+              setPasswordMsg("");
+              if (newPassword.length < 6) {
+                setPasswordError("Mínimo 6 caracteres.");
+                return;
+              }
+              if (newPassword !== confirmPassword) {
+                setPasswordError("Las contraseñas no coinciden.");
+                return;
+              }
+              setPasswordBusy(true);
+              try {
+                const { error: pwErr } = await createClient().auth.updateUser({
+                  password: newPassword,
+                });
+                if (pwErr) {
+                  setPasswordError(pwErr.message);
+                  return;
+                }
+                setPasswordMsg("Contraseña actualizada.");
+                setNewPassword("");
+                setConfirmPassword("");
+              } catch (err) {
+                setPasswordError(String(err));
+              } finally {
+                setPasswordBusy(false);
+              }
+            }}
+          >
+            <h3 className="text-sm font-semibold text-[var(--ink)]">
+              Cambiar contraseña
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="newPw">Nueva contraseña</Label>
+                <Input
+                  id="newPw"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="field-input"
+                  autoComplete="new-password"
+                  minLength={6}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPw">Repetir</Label>
+                <Input
+                  id="confirmPw"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="field-input"
+                  autoComplete="new-password"
+                  minLength={6}
+                  required
+                />
+              </div>
+            </div>
+            {passwordError ? (
+              <p className="text-sm text-[var(--pop)]">{passwordError}</p>
+            ) : null}
+            {passwordMsg ? (
+              <p className="text-sm text-[var(--ink)]">{passwordMsg}</p>
+            ) : null}
+            <Button type="submit" variant="outline" disabled={passwordBusy}>
+              {passwordBusy ? "Guardando…" : "Actualizar contraseña"}
+            </Button>
+          </form>
+        ) : null}
       </section>
 
       <form onSubmit={onSave} className="surface-panel space-y-4 p-4">

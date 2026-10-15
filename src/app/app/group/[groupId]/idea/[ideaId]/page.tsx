@@ -29,6 +29,7 @@ export default function IdeaDetailPage() {
     toggleSoftVeto,
     revealVotes,
     chooseIdea,
+    markInProgress,
     markDone,
     addReview,
     setIdeaTiming,
@@ -95,8 +96,18 @@ export default function IdeaDetailPage() {
   const vetoed = idea.softVetoUserIds.includes(currentUser.id);
   const allVoted = group.memberIds.every((id) => idea.votes[id] != null);
   const myReview = reviews.find((r) => r.userId === currentUser.id);
-  const inCatalog = idea.timing === "catalog" && idea.status !== "done";
-  const inSoon = idea.timing === "soon" && idea.status !== "done";
+  const inCatalog =
+    idea.timing === "catalog" &&
+    idea.status !== "done" &&
+    idea.status !== "in_progress";
+  const inSoon =
+    idea.timing === "soon" &&
+    idea.status !== "done" &&
+    idea.status !== "in_progress";
+  const canFinish =
+    idea.status === "chosen" ||
+    idea.status === "in_progress" ||
+    (idea.status === "pending" && idea.timing === "soon");
 
   function onVote(score: number) {
     castVote(idea!.id, score);
@@ -138,6 +149,9 @@ export default function IdeaDetailPage() {
           ) : null}
           {idea.status === "chosen" ? (
             <Badge className="bg-[var(--pop)] text-white">Elegida</Badge>
+          ) : null}
+          {idea.status === "in_progress" ? (
+            <Badge className="bg-[var(--ink)] text-white">En proceso</Badge>
           ) : null}
           {idea.status === "done" ? (
             <Badge variant="outline">Hecha</Badge>
@@ -227,7 +241,7 @@ export default function IdeaDetailPage() {
         ) : null}
       </div>
 
-      {idea.status !== "done" ? (
+      {idea.status !== "done" && idea.status !== "in_progress" ? (
         <section className="surface-panel space-y-3 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
             Paso 1 · ¿Dónde la ponen?
@@ -359,11 +373,36 @@ export default function IdeaDetailPage() {
         </section>
       ) : null}
 
-      {idea.status === "chosen" ||
-      (idea.status === "pending" && idea.timing === "soon") ? (
+      {canFinish ? (
         <section className="surface-panel space-y-3 p-4">
+          {idea.status === "chosen" ? (
+            <div className="space-y-2 border-b border-[var(--line)] pb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+                En marcha
+              </p>
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={() => markInProgress(idea.id)}
+              >
+                Marcar en proceso
+              </Button>
+              <p className="text-xs text-[var(--mute)]">
+                Si ya lo están haciendo, marcá en proceso. Cuando terminen,
+                valorá abajo.
+              </p>
+            </div>
+          ) : null}
+          {idea.status === "in_progress" ? (
+            <p className="rounded bg-[var(--wash)] px-3 py-2 text-sm text-[var(--ink)]">
+              Estado: <strong>en proceso</strong>. Cuando lo terminen, valorá y
+              marcá como hecho.
+            </p>
+          ) : null}
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
-            Paso 3 · Cuando lo hagan
+            {idea.status === "in_progress"
+              ? "Cuando lo terminen"
+              : "Paso 3 · Cuando lo hagan"}
           </p>
           <p className="text-sm text-[var(--mute)]">
             Valorá y comentá. Si querés, aparece en Descubrir para otra gente.

@@ -1,5 +1,10 @@
 export type IdeaType = "movie" | "series" | "visit" | "food" | "plan";
-export type IdeaStatus = "pending" | "chosen" | "done" | "archived";
+export type IdeaStatus =
+  | "pending"
+  | "chosen"
+  | "in_progress"
+  | "done"
+  | "archived";
 /** catalog = guardado para no olvidar; soon = candidatos a decidir/hacer pronto */
 export type IdeaTiming = "catalog" | "soon";
 export type GroupKind = "couple" | "friends" | "siblings" | "study" | "other";
@@ -155,6 +160,14 @@ export const MOVIE_VENUE_LABELS: Record<MovieVenue, string> = {
 export const IDEA_TIMING_LABELS: Record<IdeaTiming, string> = {
   catalog: "Catálogo",
   soon: "Pronto",
+};
+
+export const IDEA_STATUS_LABELS: Record<IdeaStatus, string> = {
+  pending: "Pendiente",
+  chosen: "Elegida",
+  in_progress: "En proceso",
+  done: "Hecha",
+  archived: "Archivada",
 };
 
 export const GROUP_KIND_LABELS: Record<GroupKind, string> = {
