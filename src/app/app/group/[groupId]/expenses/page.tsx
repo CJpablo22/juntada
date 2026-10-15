@@ -10,6 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { computeBalances, suggestSettlements } from "@/lib/balances";
+import {
+  expensesVisibleToUser,
+  isBirthdayCelebrant,
+  isIdeaExpenseHiddenFromUser,
+} from "@/lib/birthday-privacy";
 import { formatEuro, parseEuroToCents } from "@/lib/money";
 
 export default function ExpensesPage() {
@@ -30,28 +35,42 @@ export default function ExpensesPage() {
     setSplit((prev) => (prev.length ? prev : group.memberIds));
   }, [currentUser, group]);
 
-  const expenses = useMemo(
-    () =>
-      group
-        ? state.expenses.filter((e) => e.groupId === group.id)
-        : [],
-    [state.expenses, group],
+  const expenses = useMemo(() => {
+    if (!group || !currentUser) return [];
+    return expensesVisibleToUser(
+      state.expenses.filter((e) => e.groupId === group.id),
+      state.ideas,
+      currentUser.id,
+    );
+  }, [state.expenses, state.ideas, group, currentUser]);
+
+  const linkableIdeas = useMemo(() => {
+    if (!group || !currentUser) return [];
+    return state.ideas.filter(
+      (i) =>
+        i.groupId === group.id &&
+        !isIdeaExpenseHiddenFromUser(i, currentUser.id) &&
+        (i.status === "chosen" ||
+          i.status === "in_progress" ||
+          i.status === "done" ||
+          i.timing === "soon"),
+    );
+  }, [state.ideas, group, currentUser]);
+
+  const selectedIdea = useMemo(
+    () => (ideaId ? state.ideas.find((i) => i.id === ideaId) : undefined),
+    [ideaId, state.ideas],
   );
 
-  const linkableIdeas = useMemo(
-    () =>
-      group
-        ? state.ideas.filter(
-            (i) =>
-              i.groupId === group.id &&
-              (i.status === "chosen" ||
-                i.status === "in_progress" ||
-                i.status === "done" ||
-                i.timing === "soon"),
-          )
-        : [],
-    [state.ideas, group],
-  );
+  const celebrantIdForSelected =
+    selectedIdea?.type === "birthday"
+      ? selectedIdea.celebrantMemberId
+      : undefined;
+
+  useEffect(() => {
+    if (!celebrantIdForSelected) return;
+    setSplit((prev) => prev.filter((id) => id !== celebrantIdForSelected));
+  }, [celebrantIdForSelected]);
 
   const balances = useMemo(
     () => (group ? computeBalances(expenses, group.memberIds) : {}),
@@ -61,6 +80,14 @@ export default function ExpensesPage() {
     () => suggestSettlements(balances),
     [balances],
   );
+
+  const hiddenBirthdayPlans = useMemo(() => {
+    if (!group || !currentUser) return [];
+    return state.ideas.filter(
+      (i) =>
+        i.groupId === group.id && isBirthdayCelebrant(i, currentUser.id),
+    );
+  }, [state.ideas, group, currentUser]);
 
   if (!ready || !currentUser) {
     return (
@@ -82,6 +109,7 @@ export default function ExpensesPage() {
   }
 
   function toggleSplit(userId: string) {
+    if (celebrantIdForSelected && userId === celebrantIdForSelected) return;
     setSplit((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
@@ -100,13 +128,22 @@ export default function ExpensesPage() {
       setError("Elegí quién pagó y entre quiénes se parte.");
       return;
     }
+    if (
+      selectedIdea &&
+      isBirthdayCelebrant(selectedIdea, currentUser.id)
+    ) {
+      setError("No podés cargar gastos de tu propio cumpleaños.");
+      return;
+    }
     addExpense({
       groupId: group!.id,
       ideaId: ideaId || undefined,
       title,
       amountCents: cents,
       paidBy,
-      splitBetween: split,
+      splitBetween: celebrantIdForSelected
+        ? split.filter((id) => id !== celebrantIdForSelected)
+        : split,
     });
     setTitle("");
     setAmount("");
@@ -129,6 +166,15 @@ export default function ExpensesPage() {
         <p className="mt-2 text-[var(--brand-mute)]">
           Solo euros por ahora (España). Gastos de un plan o sueltos.
         </p>
+        {hiddenBirthdayPlans.length > 0 ? (
+          <p className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--wash)] px-3 py-2 text-sm text-[var(--mute)]">
+            Hay un cumpleaños tuyo en el grupo:{" "}
+            <strong className="text-[var(--ink)]">
+              no ves cuánto gastaron
+            </strong>{" "}
+            en ese plan (sorpresa).
+          </p>
+        ) : null}
       </Reveal>
 
       <Reveal delayMs={70} className="grid gap-4 lg:grid-cols-2">
@@ -170,9 +216,16 @@ export default function ExpensesPage() {
               {linkableIdeas.map((idea) => (
                 <option key={idea.id} value={idea.id}>
                   {idea.title}
+                  {idea.type === "birthday" ? " (cumple)" : ""}
                 </option>
               ))}
             </select>
+            {celebrantIdForSelected ? (
+              <p className="text-xs text-[var(--mute)]">
+                Cumpleaños: el festejado no ve estos gastos y no entra en el
+                reparto.
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="paidBy">Pagó</Label>
@@ -198,20 +251,30 @@ export default function ExpensesPage() {
               {group.memberIds.map((id) => {
                 const user = state.users.find((u) => u.id === id);
                 if (!user) return null;
-                const active = split.includes(id);
+                const isCelebrant = celebrantIdForSelected === id;
+                const active = !isCelebrant && split.includes(id);
                 return (
                   <button
                     key={id}
                     type="button"
+                    disabled={isCelebrant}
                     onClick={() => toggleSplit(id)}
+                    title={
+                      isCelebrant
+                        ? "El festejado no entra en el reparto"
+                        : undefined
+                    }
                     className={
-                      active
-                        ? "inline-flex items-center gap-2 rounded-full bg-[var(--brand-ink)] px-3 py-1.5 text-xs text-white"
-                        : "inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs text-[var(--brand-mute)] ring-1 ring-[var(--brand-line)]"
+                      isCelebrant
+                        ? "inline-flex items-center gap-2 rounded-full bg-[var(--wash)] px-3 py-1.5 text-xs text-[var(--mute)] opacity-60 ring-1 ring-[var(--line)]"
+                        : active
+                          ? "inline-flex items-center gap-2 rounded-full bg-[var(--brand-ink)] px-3 py-1.5 text-xs text-white"
+                          : "inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs text-[var(--brand-mute)] ring-1 ring-[var(--brand-line)]"
                     }
                   >
                     <UserAvatar user={user} size="sm" className="size-5 text-[10px]" />
                     {user.name}
+                    {isCelebrant ? " · festejado" : ""}
                   </button>
                 );
               })}

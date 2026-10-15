@@ -1272,6 +1272,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }) => {
       setState((prev) => {
         if (!prev.currentUserId) return prev;
+        const linkedIdea = input.ideaId
+          ? prev.ideas.find((i) => i.id === input.ideaId)
+          : undefined;
+        // El festejado no puede cargar ni ver gastos de su propio cumple
+        if (
+          linkedIdea?.type === "birthday" &&
+          linkedIdea.celebrantMemberId === prev.currentUserId
+        ) {
+          return prev;
+        }
+        const splitBetween =
+          linkedIdea?.type === "birthday" && linkedIdea.celebrantMemberId
+            ? input.splitBetween.filter(
+                (id) => id !== linkedIdea.celebrantMemberId,
+              )
+            : input.splitBetween;
+        if (splitBetween.length === 0) return prev;
         const expense: Expense = {
           id: cloudConfigured ? newCloudId() : createId("exp"),
           groupId: input.groupId,
@@ -1279,7 +1296,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           title: input.title.trim(),
           amountCents: input.amountCents,
           paidBy: input.paidBy,
-          splitBetween: input.splitBetween,
+          splitBetween,
           createdAt: new Date().toISOString(),
         };
         const pointId = cloudConfigured ? newCloudId() : createId("pt");

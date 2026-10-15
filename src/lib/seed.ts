@@ -231,9 +231,10 @@ export function createSeedState(): AppState {
         id: "idea_birthday",
         groupId: friends.id,
         type: "birthday" as const,
-        title: "Comida de cumple de Nico",
+        title: `Comida de cumple de ${mateo.name}`,
         notes: "Asado liviano en casa. Que traigan algo dulce.",
-        celebrantName: "Nico",
+        celebrantName: mateo.name,
+        celebrantMemberId: mateo.id,
         birthdayKind: "meal" as const,
         places: [
           {

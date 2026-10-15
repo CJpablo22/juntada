@@ -65,7 +65,7 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
    Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
-9. Corré también `003`–`009` (grupos estables + gestión), **`010_idea_schedule.sql`** (fecha/hora en ideas) y **`011_idea_birthday.sql`** (cumpleaños).  
+9. Corré también `003`–`009` (grupos estables + gestión), **`010`–`011`** (fecha/hora + cumpleaños) y **`012_birthday_expense_privacy.sql`** (el festejado no ve gastos de su cumple).  
 10. Auth → Providers → Email: activá Email y **dejá Confirm email ON** (mail de registro sí).  
     Los avisos del grupo **no** van por mail: solo in-app.  
 11. Auth → Emails → **Confirm signup** — Subject: `Confirmá tu cuenta en Juntada`. Body con enlace:
