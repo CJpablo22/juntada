@@ -26,7 +26,14 @@ export function ideaNeedsPlaces(
   type: IdeaType,
   movieVenue?: MovieVenue | null,
 ): boolean {
-  if (type === "visit" || type === "food" || type === "plan") return true;
+  if (
+    type === "visit" ||
+    type === "food" ||
+    type === "plan" ||
+    type === "birthday"
+  ) {
+    return true;
+  }
   if (type === "movie") return movieVenue === "cinema" || movieVenue === "home";
   return false;
 }

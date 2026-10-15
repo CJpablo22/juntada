@@ -1,4 +1,13 @@
-export type IdeaType = "movie" | "series" | "visit" | "food" | "plan";
+export type IdeaType =
+  | "movie"
+  | "series"
+  | "visit"
+  | "food"
+  | "plan"
+  | "birthday";
+
+/** Cómo festejan el cumpleaños */
+export type BirthdayKind = "meal" | "party" | "other";
 export type IdeaStatus =
   | "pending"
   | "chosen"
@@ -89,6 +98,12 @@ export type Idea = {
   notes: string;
   /** Solo películas: ver en cine o en casa */
   movieVenue?: MovieVenue;
+  /** Cumpleaños: nombre de quien cumple */
+  celebrantName?: string;
+  /** Si el festejado es miembro del grupo */
+  celebrantMemberId?: string;
+  /** Cumpleaños: comida, fiesta u otro */
+  birthdayKind?: BirthdayKind;
   /** Lugares: visitar/comer/plan; cine; o casa de alguien */
   places: IdeaPlace[];
   /** Compat: primera dirección (derivada de places) */
@@ -183,6 +198,13 @@ export const IDEA_TYPE_LABELS: Record<IdeaType, string> = {
   visit: "Visitar",
   food: "Comer",
   plan: "Plan",
+  birthday: "Cumpleaños",
+};
+
+export const BIRTHDAY_KIND_LABELS: Record<BirthdayKind, string> = {
+  meal: "Comida",
+  party: "Fiesta",
+  other: "Otro",
 };
 
 export const MOVIE_VENUE_LABELS: Record<MovieVenue, string> = {

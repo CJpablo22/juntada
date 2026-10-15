@@ -244,7 +244,9 @@ export function PlaceFields({
                             ? "Ej. Escape room Tribunal"
                             : type === "food"
                               ? "Ej. Ramen Shifu"
-                              : "Ej. Parque del Retiro"
+                              : type === "birthday"
+                                ? "Ej. Restó / salón"
+                                : "Ej. Parque del Retiro"
                       }
                       className="field-input"
                       required

@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { mapsUrl } from "@/lib/maps";
 import {
+  BIRTHDAY_KIND_LABELS,
   IDEA_TYPE_LABELS,
   MOVIE_VENUE_LABELS,
   formatDuration,
@@ -183,6 +184,16 @@ export default function IdeaDetailPage() {
           {idea.type === "movie" && idea.movieVenue ? (
             <Badge variant="outline">
               {MOVIE_VENUE_LABELS[idea.movieVenue]}
+            </Badge>
+          ) : null}
+          {idea.type === "birthday" && idea.birthdayKind ? (
+            <Badge variant="outline">
+              {BIRTHDAY_KIND_LABELS[idea.birthdayKind]}
+            </Badge>
+          ) : null}
+          {idea.type === "birthday" && idea.celebrantName ? (
+            <Badge className="bg-[var(--pop)] text-white">
+              Cumple de {idea.celebrantName}
             </Badge>
           ) : null}
           {idea.status === "chosen" ? (

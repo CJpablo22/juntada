@@ -43,6 +43,7 @@ import type {
   GroupLocationVisibility,
   GroupNameVisibility,
   Idea,
+  BirthdayKind,
   IdeaPlace,
   IdeaScheduleInput,
   IdeaTiming,
@@ -107,6 +108,9 @@ type AppContextValue = {
     title: string;
     notes: string;
     movieVenue?: MovieVenue;
+    celebrantName?: string;
+    celebrantMemberId?: string;
+    birthdayKind?: BirthdayKind;
     places?: IdeaPlace[];
     address?: string;
     tags: string[];
@@ -742,6 +746,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: string;
       notes: string;
       movieVenue?: MovieVenue;
+      celebrantName?: string;
+      celebrantMemberId?: string;
+      birthdayKind?: BirthdayKind;
       places?: IdeaPlace[];
       address?: string;
       tags: string[];
@@ -771,6 +778,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
           title: input.title.trim(),
           notes: input.notes.trim(),
           movieVenue: input.type === "movie" ? input.movieVenue : undefined,
+          celebrantName:
+            input.type === "birthday"
+              ? input.celebrantName?.trim() || undefined
+              : undefined,
+          celebrantMemberId:
+            input.type === "birthday"
+              ? input.celebrantMemberId?.trim() || undefined
+              : undefined,
+          birthdayKind:
+            input.type === "birthday" ? input.birthdayKind ?? "meal" : undefined,
           places,
           address: places[0]?.address || input.address?.trim() || undefined,
           ...schedule,

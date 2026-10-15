@@ -29,11 +29,13 @@ import { UserAvatar } from "@/components/ui/user-chip";
 import { badgeForRank, rankMembers } from "@/lib/points";
 import { getVisibleLocationForViewer } from "@/lib/privacy";
 import {
+  BIRTHDAY_KIND_LABELS,
   GROUP_KIND_LABELS,
   IDEA_TYPE_LABELS,
   MOVIE_VENUE_LABELS,
   formatIdeaSchedule,
   formatPlace,
+  type BirthdayKind,
   type IdeaPlace,
   type IdeaScheduleInput,
   type IdeaTiming,
@@ -41,6 +43,7 @@ import {
   type MovieVenue,
   type User,
 } from "@/lib/types";
+import { memberHomePlace } from "@/lib/places";
 import { cn } from "@/lib/utils";
 
 type ShelfFilter = "catalog" | "soon" | "done";
@@ -594,6 +597,7 @@ export default function GroupPage() {
               open={openIdea}
               onOpenChange={setOpenIdea}
               members={members.filter(Boolean) as User[]}
+              currentUser={currentUser}
               defaultTiming={shelf === "soon" ? "soon" : "catalog"}
               onSubmit={(data) => {
                 const id = addIdea({ groupId: group.id, ...data });
@@ -703,6 +707,12 @@ export default function GroupPage() {
                         <span>{IDEA_TYPE_LABELS[idea.type]}</span>
                         {idea.type === "movie" && idea.movieVenue ? (
                           <span>· {MOVIE_VENUE_LABELS[idea.movieVenue]}</span>
+                        ) : null}
+                        {idea.type === "birthday" && idea.birthdayKind ? (
+                          <span>· {BIRTHDAY_KIND_LABELS[idea.birthdayKind]}</span>
+                        ) : null}
+                        {idea.type === "birthday" && idea.celebrantName ? (
+                          <span>· Cumple de {idea.celebrantName}</span>
                         ) : null}
                         {idea.status === "chosen" ? (
                           <Badge className="bg-[var(--pop)] text-white">
@@ -821,17 +831,22 @@ function NewIdeaDialog({
   onOpenChange,
   onSubmit,
   members,
+  currentUser,
   defaultTiming = "catalog",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   members: User[];
+  currentUser: User;
   defaultTiming?: IdeaTiming;
   onSubmit: (data: {
     type: IdeaType;
     title: string;
     notes: string;
     movieVenue?: MovieVenue;
+    celebrantName?: string;
+    celebrantMemberId?: string;
+    birthdayKind?: BirthdayKind;
     places: IdeaPlace[];
     tags: string[];
     timing: IdeaTiming;
@@ -839,6 +854,13 @@ function NewIdeaDialog({
 }) {
   const [type, setType] = useState<IdeaType>("movie");
   const [movieVenue, setMovieVenue] = useState<MovieVenue>("home");
+  const [birthdayKind, setBirthdayKind] = useState<BirthdayKind>("meal");
+  const [birthdayVenue, setBirthdayVenue] = useState<"home" | "out">("home");
+  const [celebrantMode, setCelebrantMode] = useState<"member" | "other">(
+    "other",
+  );
+  const [celebrantMemberId, setCelebrantMemberId] = useState("");
+  const [celebrantName, setCelebrantName] = useState("");
   const [timing, setTiming] = useState<IdeaTiming>(defaultTiming);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -848,19 +870,31 @@ function NewIdeaDialog({
   const [schedule, setSchedule] = useState<IdeaScheduleInput>({});
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false);
 
   useEffect(() => {
     if (open) {
       setTiming(defaultTiming);
       setSchedule({});
       setError("");
+      setTitleTouched(false);
     }
   }, [open, defaultTiming]);
 
   useEffect(() => {
     if (type === "movie") {
       if (movieVenue === "home") {
-        setPlaces([{ kind: "member_home", name: "", address: "", memberId: undefined }]);
+        setPlaces([
+          { kind: "member_home", name: "", address: "", memberId: undefined },
+        ]);
+      } else {
+        setPlaces([{ kind: "custom", name: "", address: "" }]);
+      }
+      return;
+    }
+    if (type === "birthday") {
+      if (birthdayVenue === "home") {
+        setPlaces([memberHomePlace(currentUser)]);
       } else {
         setPlaces([{ kind: "custom", name: "", address: "" }]);
       }
@@ -875,7 +909,31 @@ function NewIdeaDialog({
       return;
     }
     setPlaces([{ kind: "custom", name: "", address: "" }]);
-  }, [type, movieVenue]);
+  }, [type, movieVenue, birthdayVenue, currentUser]);
+
+  useEffect(() => {
+    if (type !== "birthday" || titleTouched) return;
+    const name =
+      celebrantMode === "member"
+        ? members.find((m) => m.id === celebrantMemberId)?.name
+        : celebrantName.trim();
+    if (!name) return;
+    const kindLabel =
+      birthdayKind === "meal"
+        ? "Comida de cumple"
+        : birthdayKind === "party"
+          ? "Fiesta de cumple"
+          : "Cumple";
+    setTitle(`${kindLabel} de ${name}`);
+  }, [
+    type,
+    celebrantMode,
+    celebrantMemberId,
+    celebrantName,
+    birthdayKind,
+    members,
+    titleTouched,
+  ]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -887,17 +945,46 @@ function NewIdeaDialog({
       setError("Elegí si es en cine o en casa.");
       return;
     }
-    const placeError = validatePlaces(type, places, movieVenue);
+    let resolvedCelebrantName: string | undefined;
+    let resolvedCelebrantMemberId: string | undefined;
+    if (type === "birthday") {
+      if (celebrantMode === "member") {
+        const member = members.find((m) => m.id === celebrantMemberId);
+        if (!member) {
+          setError("Elegí quién cumple años.");
+          return;
+        }
+        resolvedCelebrantName = member.name;
+        resolvedCelebrantMemberId = member.id;
+      } else {
+        if (!celebrantName.trim()) {
+          setError("Poné el nombre de quien cumple.");
+          return;
+        }
+        resolvedCelebrantName = celebrantName.trim();
+      }
+    }
+    const placeError = validatePlaces(
+      type,
+      places,
+      type === "movie" ? movieVenue : undefined,
+    );
     if (placeError) {
       setError(placeError);
       return;
     }
-    const needs = ideaNeedsPlaces(type, movieVenue);
+    const needs = ideaNeedsPlaces(
+      type,
+      type === "movie" ? movieVenue : undefined,
+    );
     onSubmit({
       type,
       title,
       notes,
       movieVenue: type === "movie" ? movieVenue : undefined,
+      celebrantName: resolvedCelebrantName,
+      celebrantMemberId: resolvedCelebrantMemberId,
+      birthdayKind: type === "birthday" ? birthdayKind : undefined,
       places: needs ? cleanPlaces(places, members) : [],
       timing,
       tags: tagInput
@@ -913,16 +1000,27 @@ function NewIdeaDialog({
     setTagInput("");
     setError("");
     setMovieVenue("home");
+    setBirthdayKind("meal");
+    setBirthdayVenue("home");
+    setCelebrantMode("other");
+    setCelebrantMemberId("");
+    setCelebrantName("");
+    setTitleTouched(false);
     setTiming(defaultTiming);
   }
 
-  const needsPlaces = ideaNeedsPlaces(type, movieVenue);
+  const needsPlaces = ideaNeedsPlaces(
+    type,
+    type === "movie" ? movieVenue : undefined,
+  );
   const placeMode =
     type === "movie" && movieVenue === "home"
       ? "home"
       : type === "movie" && movieVenue === "cinema"
         ? "cinema"
-        : "places";
+        : type === "birthday" && birthdayVenue === "home"
+          ? "home"
+          : "places";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1028,12 +1126,138 @@ function NewIdeaDialog({
             </div>
           ) : null}
 
+          {type === "birthday" ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-[var(--ink)]">
+                  ¿Qué tipo de festejo?
+                </p>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {(Object.keys(BIRTHDAY_KIND_LABELS) as BirthdayKind[]).map(
+                    (kind) => (
+                      <button
+                        key={kind}
+                        type="button"
+                        onClick={() => setBirthdayKind(kind)}
+                        className={cn(
+                          "min-h-11 border px-3 py-2 text-sm font-semibold",
+                          birthdayKind === kind
+                            ? "border-[var(--pop)] bg-[var(--pop)] text-white"
+                            : "border-[var(--line)] bg-white",
+                        )}
+                      >
+                        {BIRTHDAY_KIND_LABELS[kind]}
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-[var(--ink)]">
+                  ¿Quién cumple?{" "}
+                  <span className="font-normal text-[var(--pop)]">*</span>
+                </p>
+                <div className="flex flex-wrap gap-3 text-sm">
+                  <button
+                    type="button"
+                    onClick={() => setCelebrantMode("other")}
+                    className={cn(
+                      "underline-offset-2",
+                      celebrantMode === "other"
+                        ? "font-semibold text-[var(--ink)] underline"
+                        : "text-[var(--mute)]",
+                    )}
+                  >
+                    Amigo / otra persona
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCelebrantMode("member")}
+                    className={cn(
+                      "underline-offset-2",
+                      celebrantMode === "member"
+                        ? "font-semibold text-[var(--ink)] underline"
+                        : "text-[var(--mute)]",
+                    )}
+                  >
+                    Alguien del grupo
+                  </button>
+                </div>
+                {celebrantMode === "member" ? (
+                  <select
+                    value={celebrantMemberId}
+                    onChange={(e) => setCelebrantMemberId(e.target.value)}
+                    className="field-select"
+                    required
+                  >
+                    <option value="">Elegí a alguien…</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    value={celebrantName}
+                    onChange={(e) => setCelebrantName(e.target.value)}
+                    placeholder="Ej. Nico, Juli…"
+                    className="field-input"
+                    required
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-[var(--ink)]">
+                  ¿Dónde? <span className="font-normal text-[var(--pop)]">*</span>
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setBirthdayVenue("home")}
+                    className={cn(
+                      "border px-3 py-3 text-left text-sm",
+                      birthdayVenue === "home"
+                        ? "border-[var(--pop)] bg-[var(--pop)] text-white"
+                        : "border-[var(--line)] bg-white",
+                    )}
+                  >
+                    <span className="block font-semibold">En casa</span>
+                    <span className="mt-1 block text-xs opacity-80">
+                      Por defecto, la tuya
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBirthdayVenue("out")}
+                    className={cn(
+                      "border px-3 py-3 text-left text-sm",
+                      birthdayVenue === "out"
+                        ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                        : "border-[var(--line)] bg-white",
+                    )}
+                  >
+                    <span className="block font-semibold">Fuera / otro sitio</span>
+                    <span className="mt-1 block text-xs opacity-80">
+                      Restó, parque, salón…
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="space-y-1.5">
             <Label htmlFor="title">Título</Label>
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitleTouched(true);
+                setTitle(e.target.value);
+              }}
               placeholder={
                 type === "series"
                   ? "Ej. Severance"
@@ -1041,7 +1265,9 @@ function NewIdeaDialog({
                     ? "Ej. Past Lives"
                     : type === "food"
                       ? "Ej. Ramen en Malasaña"
-                      : "Ej. Escape + cañas"
+                      : type === "birthday"
+                        ? "Ej. Comida de cumple de Nico"
+                        : "Ej. Escape + cañas"
               }
               className="field-input"
             />
@@ -1052,7 +1278,11 @@ function NewIdeaDialog({
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Por qué les gusta…"
+              placeholder={
+                type === "birthday"
+                  ? "Traer torta, alergias, qué cocinamos…"
+                  : "Por qué les gusta…"
+              }
               className="min-h-20"
             />
           </div>

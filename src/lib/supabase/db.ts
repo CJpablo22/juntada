@@ -5,6 +5,7 @@ import type {
   Group,
   GroupKind,
   Idea,
+  BirthdayKind,
   IdeaPlace,
   IdeaStatus,
   IdeaTiming,
@@ -35,6 +36,9 @@ type IdeaRow = {
   title: string;
   notes: string;
   movie_venue: string | null;
+  celebrant_name: string | null;
+  celebrant_member_id: string | null;
+  birthday_kind: string | null;
   places: IdeaPlace[] | null;
   address: string | null;
   scheduled_date: string | null;
@@ -102,6 +106,9 @@ function mapIdea(row: IdeaRow): Idea {
     title: row.title,
     notes: row.notes ?? "",
     movieVenue: (row.movie_venue as MovieVenue | null) ?? undefined,
+    celebrantName: row.celebrant_name ?? undefined,
+    celebrantMemberId: row.celebrant_member_id ?? undefined,
+    birthdayKind: (row.birthday_kind as BirthdayKind | null) ?? undefined,
     places: row.places ?? [],
     address: row.address ?? undefined,
     scheduledDate: row.scheduled_date ?? undefined,
@@ -398,6 +405,9 @@ export async function cloudInsertIdea(
     title: idea.title,
     notes: idea.notes,
     movie_venue: idea.movieVenue ?? null,
+    celebrant_name: idea.celebrantName ?? null,
+    celebrant_member_id: idea.celebrantMemberId ?? null,
+    birthday_kind: idea.birthdayKind ?? null,
     places: idea.places,
     address: idea.address ?? null,
     scheduled_date: idea.scheduledDate ?? null,

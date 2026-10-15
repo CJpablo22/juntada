@@ -1,5 +1,12 @@
 import { createSeedState } from "@/lib/seed";
-import type { AppState, Idea, IdeaType, Review, User } from "@/lib/types";
+import type {
+  AppState,
+  BirthdayKind,
+  Idea,
+  IdeaType,
+  Review,
+  User,
+} from "@/lib/types";
 import { placesFromLegacy } from "@/lib/types";
 
 export const STORAGE_KEY = "juntada.app.v2";
@@ -128,7 +135,10 @@ const VALID_TYPES: IdeaType[] = [
   "visit",
   "food",
   "plan",
+  "birthday",
 ];
+
+const VALID_BIRTHDAY_KINDS: BirthdayKind[] = ["meal", "party", "other"];
 
 function normalizeIdeaType(type: unknown): IdeaType {
   if (typeof type === "string" && VALID_TYPES.includes(type as IdeaType)) {
@@ -161,6 +171,15 @@ function normalizeIdea(idea: Partial<Idea> & { id: string; title: string }): Ide
           ? ("cinema" as const)
           : undefined;
 
+  const birthdayKind =
+    type === "birthday" &&
+    idea.birthdayKind &&
+    VALID_BIRTHDAY_KINDS.includes(idea.birthdayKind)
+      ? idea.birthdayKind
+      : type === "birthday"
+        ? ("meal" as const)
+        : undefined;
+
   return {
     id: idea.id,
     groupId: idea.groupId ?? "",
@@ -168,6 +187,15 @@ function normalizeIdea(idea: Partial<Idea> & { id: string; title: string }): Ide
     title: idea.title,
     notes: idea.notes ?? "",
     movieVenue,
+    celebrantName:
+      type === "birthday"
+        ? idea.celebrantName?.trim() || undefined
+        : undefined,
+    celebrantMemberId:
+      type === "birthday"
+        ? idea.celebrantMemberId?.trim() || undefined
+        : undefined,
+    birthdayKind,
     places,
     address: places[0]?.address || idea.address,
     scheduledDate: idea.scheduledDate?.trim() || undefined,

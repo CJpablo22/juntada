@@ -228,6 +228,40 @@ export function createSeedState(): AppState {
         createdAt: now,
       },
       {
+        id: "idea_birthday",
+        groupId: friends.id,
+        type: "birthday" as const,
+        title: "Comida de cumple de Nico",
+        notes: "Asado liviano en casa. Que traigan algo dulce.",
+        celebrantName: "Nico",
+        birthdayKind: "meal" as const,
+        places: [
+          {
+            kind: "member_home" as const,
+            memberId: lucia.id,
+            name: `Casa de ${lucia.name}`,
+            address: "Calle del Espíritu Santo 12, 28004, Malasaña, Madrid, Madrid",
+          },
+        ],
+        address: "Calle del Espíritu Santo 12, 28004, Malasaña, Madrid, Madrid",
+        scheduledDate: (() => {
+          const d = new Date();
+          d.setDate(d.getDate() + 10);
+          return d.toISOString().slice(0, 10);
+        })(),
+        scheduledTime: "14:00",
+        durationMinutes: 180,
+        budgetNote: "Cada uno aporta algo",
+        proposedBy: lucia.id,
+        status: "pending" as const,
+        timing: "soon" as const,
+        tags: ["cumple", "casa"],
+        votes: {},
+        revealed: false,
+        softVetoUserIds: [],
+        createdAt: now,
+      },
+      {
         id: "idea_escape",
         groupId: friends.id,
         type: "plan" as const,
