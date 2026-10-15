@@ -50,6 +50,7 @@ export default function ProfilePage() {
   });
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMsg, setPasswordMsg] = useState("");
@@ -234,17 +235,40 @@ export default function ProfilePage() {
               e.preventDefault();
               setPasswordError("");
               setPasswordMsg("");
+              const email = currentUser?.email;
+              if (!email) {
+                setPasswordError("No hay correo en la cuenta.");
+                return;
+              }
+              if (!currentPassword) {
+                setPasswordError("Poné tu contraseña actual.");
+                return;
+              }
               if (newPassword.length < 6) {
-                setPasswordError("Mínimo 6 caracteres.");
+                setPasswordError("La nueva debe tener mínimo 6 caracteres.");
                 return;
               }
               if (newPassword !== confirmPassword) {
-                setPasswordError("Las contraseñas no coinciden.");
+                setPasswordError("Las contraseñas nuevas no coinciden.");
+                return;
+              }
+              if (newPassword === currentPassword) {
+                setPasswordError("La nueva tiene que ser distinta a la actual.");
                 return;
               }
               setPasswordBusy(true);
               try {
-                const { error: pwErr } = await createClient().auth.updateUser({
+                const supabase = createClient();
+                const { error: checkErr } =
+                  await supabase.auth.signInWithPassword({
+                    email,
+                    password: currentPassword,
+                  });
+                if (checkErr) {
+                  setPasswordError("La contraseña actual no es correcta.");
+                  return;
+                }
+                const { error: pwErr } = await supabase.auth.updateUser({
                   password: newPassword,
                 });
                 if (pwErr) {
@@ -252,6 +276,7 @@ export default function ProfilePage() {
                   return;
                 }
                 setPasswordMsg("Contraseña actualizada.");
+                setCurrentPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
               } catch (err) {
@@ -264,6 +289,18 @@ export default function ProfilePage() {
             <h3 className="text-sm font-semibold text-[var(--ink)]">
               Cambiar contraseña
             </h3>
+            <div className="space-y-1.5">
+              <Label htmlFor="currentPw">Contraseña actual</Label>
+              <Input
+                id="currentPw"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="field-input"
+                autoComplete="current-password"
+                required
+              />
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="newPw">Nueva contraseña</Label>
@@ -279,7 +316,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPw">Repetir</Label>
+                <Label htmlFor="confirmPw">Repetir nueva</Label>
                 <Input
                   id="confirmPw"
                   type="password"

@@ -255,11 +255,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setState({ ...createEmpty(), currentUserId: null });
             return;
           }
-          // boot() ya carga INITIAL_SESSION; acá solo login nuevo o cambio de identidad
-          if (
-            (event === "SIGNED_IN" || event === "USER_UPDATED") &&
-            session?.user
-          ) {
+          // Solo recargar mundo en login real. USER_UPDATED (ej. cambio de
+          // contraseña) no debe pisar grupos/ideas en memoria.
+          if (event === "SIGNED_IN" && session?.user) {
             void (async () => {
               try {
                 await applyAuthUser(session.user);
@@ -476,26 +474,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (input: { name: string; kind: GroupKind }) => {
       const id = cloudConfigured ? newCloudId() : createId("group");
       const inviteCode = createInviteCode();
+      const name = input.name.trim();
+      const kind = input.kind;
+
       setState((prev) => {
         if (!prev.currentUserId) return prev;
         const uid = prev.currentUserId;
         const group: Group = {
           id,
-          name: input.name.trim(),
-          kind: input.kind,
+          name,
+          kind,
           inviteCode,
           memberIds: [uid],
           createdAt: new Date().toISOString(),
         };
-        if (cloudConfigured) {
-          void cloudCreateGroup(createSupabaseBrowserClient(), {
-            id,
-            name: group.name,
-            kind: group.kind,
-            inviteCode,
-            userId: uid,
-          });
-        }
         return {
           ...prev,
           groups: [group, ...prev.groups],
@@ -512,9 +504,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ),
         };
       });
+
+      if (cloudConfigured) {
+        const uid = state.currentUserId;
+        if (uid) {
+          void (async () => {
+            const result = await cloudCreateGroup(
+              createSupabaseBrowserClient(),
+              { id, name, kind, inviteCode, userId: uid },
+            );
+            if (!result.ok) {
+              // Revertir optimista si falló en DB
+              setState((prev) => ({
+                ...prev,
+                groups: prev.groups.filter((g) => g.id !== id),
+              }));
+              console.error("No se pudo guardar el grupo:", result.error);
+            }
+          })();
+        }
+      }
+
       return id;
     },
-    [],
+    [state.currentUserId],
   );
 
   const joinGroupByCode = useCallback(async (code: string) => {

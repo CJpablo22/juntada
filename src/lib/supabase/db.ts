@@ -249,7 +249,7 @@ export async function loadCloudState(
 export async function cloudCreateGroup(
   supabase: Supabase,
   input: { id: string; name: string; kind: GroupKind; inviteCode: string; userId: string },
-): Promise<void> {
+): Promise<{ ok: boolean; error?: string }> {
   const { error: gErr } = await supabase.from("groups").insert({
     id: input.id,
     name: input.name,
@@ -259,13 +259,19 @@ export async function cloudCreateGroup(
   });
   if (gErr) {
     console.error("create group", gErr.message);
-    return;
+    return { ok: false, error: gErr.message };
   }
   const { error: mErr } = await supabase.from("group_members").insert({
     group_id: input.id,
     user_id: input.userId,
   });
-  if (mErr) console.error("create member", mErr.message);
+  if (mErr) {
+    console.error("create member", mErr.message);
+    // Rollback best-effort
+    await supabase.from("groups").delete().eq("id", input.id);
+    return { ok: false, error: mErr.message };
+  }
+  return { ok: true };
 }
 
 export async function cloudJoinGroup(
