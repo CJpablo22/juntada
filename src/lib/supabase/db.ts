@@ -37,6 +37,12 @@ type IdeaRow = {
   movie_venue: string | null;
   places: IdeaPlace[] | null;
   address: string | null;
+  scheduled_date: string | null;
+  scheduled_time: string | null;
+  duration_minutes: number | null;
+  date_flexible: boolean | null;
+  link: string | null;
+  budget_note: string | null;
   proposed_by: string;
   status: string;
   timing: string;
@@ -98,6 +104,12 @@ function mapIdea(row: IdeaRow): Idea {
     movieVenue: (row.movie_venue as MovieVenue | null) ?? undefined,
     places: row.places ?? [],
     address: row.address ?? undefined,
+    scheduledDate: row.scheduled_date ?? undefined,
+    scheduledTime: row.scheduled_time ?? undefined,
+    durationMinutes: row.duration_minutes ?? undefined,
+    dateFlexible: row.date_flexible || undefined,
+    link: row.link ?? undefined,
+    budgetNote: row.budget_note ?? undefined,
     proposedBy: row.proposed_by,
     status: row.status as IdeaStatus,
     timing: (row.timing as IdeaTiming) || "catalog",
@@ -388,6 +400,12 @@ export async function cloudInsertIdea(
     movie_venue: idea.movieVenue ?? null,
     places: idea.places,
     address: idea.address ?? null,
+    scheduled_date: idea.scheduledDate ?? null,
+    scheduled_time: idea.scheduledTime ?? null,
+    duration_minutes: idea.durationMinutes ?? null,
+    date_flexible: idea.dateFlexible ?? false,
+    link: idea.link ?? null,
+    budget_note: idea.budgetNote ?? null,
     proposed_by: idea.proposedBy,
     status: idea.status,
     timing: idea.timing,

@@ -93,6 +93,18 @@ export type Idea = {
   places: IdeaPlace[];
   /** Compat: primera dirección (derivada de places) */
   address?: string;
+  /** Día propuesto YYYY-MM-DD */
+  scheduledDate?: string;
+  /** Hora propuesta HH:mm (24h) */
+  scheduledTime?: string;
+  /** Duración aproximada en minutos */
+  durationMinutes?: number;
+  /** Fecha/hora todavía a confirmar */
+  dateFlexible?: boolean;
+  /** Trailer, reserva, mapa, entradas… */
+  link?: string;
+  /** Presupuesto orientativo: "gratis", "15€ c/u" */
+  budgetNote?: string;
   proposedBy: string;
   status: IdeaStatus;
   timing: IdeaTiming;
@@ -104,6 +116,25 @@ export type Idea = {
   doneNote?: string;
   createdAt: string;
 };
+
+/** Campos de cuándo / extras al crear o editar una idea */
+export type IdeaScheduleInput = {
+  scheduledDate?: string;
+  scheduledTime?: string;
+  durationMinutes?: number;
+  dateFlexible?: boolean;
+  link?: string;
+  budgetNote?: string;
+};
+
+export const DURATION_OPTIONS: { value: number; label: string }[] = [
+  { value: 30, label: "30 min" },
+  { value: 60, label: "1 h" },
+  { value: 90, label: "1 h 30" },
+  { value: 120, label: "2 h" },
+  { value: 180, label: "3 h" },
+  { value: 240, label: "4 h+" },
+];
 
 export type Review = {
   id: string;
@@ -210,4 +241,77 @@ export function formatPlace(place: IdeaPlace): string {
     return `${place.name} · ${place.address}`;
   }
   return place.name || place.address;
+}
+
+export function normalizeLink(raw?: string): string | undefined {
+  const trimmed = raw?.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+export function formatDuration(minutes?: number): string | null {
+  if (!minutes || minutes <= 0) return null;
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (!m) return h === 1 ? "1 h" : `${h} h`;
+  return `${h} h ${m} min`;
+}
+
+/** Texto corto para lista: "sáb 18 · 20:30" / "Fecha a confirmar" */
+export function formatIdeaSchedule(
+  idea: Pick<
+    Idea,
+    "scheduledDate" | "scheduledTime" | "dateFlexible" | "durationMinutes"
+  >,
+): string | null {
+  const flexible = idea.dateFlexible;
+  const date = idea.scheduledDate?.trim();
+  const time = idea.scheduledTime?.trim();
+  const duration = formatDuration(idea.durationMinutes);
+
+  if (!date && !time && !flexible && !duration) return null;
+
+  const parts: string[] = [];
+  if (date) {
+    parts.push(formatDateLabel(date));
+  } else if (flexible) {
+    parts.push("Fecha a confirmar");
+  }
+  if (time) parts.push(time);
+  if (duration) parts.push(duration);
+  if (flexible && date) parts.push("flexible");
+  return parts.join(" · ");
+}
+
+function formatDateLabel(isoDate: string): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  if (!y || !m || !d) return isoDate;
+  const dt = new Date(y, m - 1, d);
+  return new Intl.DateTimeFormat("es-ES", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(dt);
+}
+
+export function cleanScheduleInput(input: IdeaScheduleInput): IdeaScheduleInput {
+  const scheduledDate = input.scheduledDate?.trim() || undefined;
+  const scheduledTime = input.scheduledTime?.trim() || undefined;
+  const durationMinutes =
+    input.durationMinutes && input.durationMinutes > 0
+      ? input.durationMinutes
+      : undefined;
+  const link = normalizeLink(input.link);
+  const budgetNote = input.budgetNote?.trim() || undefined;
+  const dateFlexible = Boolean(input.dateFlexible);
+  return {
+    scheduledDate,
+    scheduledTime,
+    durationMinutes,
+    dateFlexible: dateFlexible || undefined,
+    link,
+    budgetNote,
+  };
 }

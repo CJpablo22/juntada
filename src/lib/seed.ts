@@ -184,6 +184,15 @@ export function createSeedState(): AppState {
           },
         ],
         address: "Calle de la Palma 16, Madrid",
+        scheduledDate: (() => {
+          const d = new Date();
+          d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7));
+          return d.toISOString().slice(0, 10);
+        })(),
+        scheduledTime: "21:00",
+        durationMinutes: 90,
+        budgetNote: "18€ c/u",
+        link: "https://maps.google.com/?q=Ramen+Shifu+Madrid",
         proposedBy: mateo.id,
         status: "pending" as const,
         timing: "soon" as const,
@@ -206,6 +215,9 @@ export function createSeedState(): AppState {
           },
         ],
         address: "Plaza de la Independencia 7, Madrid",
+        dateFlexible: true,
+        durationMinutes: 180,
+        budgetNote: "Gratis (traer snacks)",
         proposedBy: sofia.id,
         status: "pending" as const,
         timing: "soon" as const,

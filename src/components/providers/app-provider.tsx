@@ -44,12 +44,14 @@ import type {
   GroupNameVisibility,
   Idea,
   IdeaPlace,
+  IdeaScheduleInput,
   IdeaTiming,
   IdeaType,
   MovieVenue,
   Review,
   User,
 } from "@/lib/types";
+import { cleanScheduleInput } from "@/lib/types";
 
 const cloudConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -109,7 +111,8 @@ type AppContextValue = {
     address?: string;
     tags: string[];
     timing: IdeaTiming;
-  }) => string;
+  } & IdeaScheduleInput) => string;
+  updateIdeaSchedule: (ideaId: string, schedule: IdeaScheduleInput) => void;
   setIdeaTiming: (ideaId: string, timing: IdeaTiming) => void;
   castVote: (ideaId: string, score: number) => void;
   toggleSoftVeto: (ideaId: string) => void;
@@ -743,7 +746,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       address?: string;
       tags: string[];
       timing: IdeaTiming;
-    }) => {
+    } & IdeaScheduleInput) => {
       const id = cloudConfigured ? newCloudId() : createId("idea");
       const pointId = cloudConfigured ? newCloudId() : createId("pt");
       setState((prev) => {
@@ -760,6 +763,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               ? Boolean(p.memberId && p.name)
               : Boolean(p.name && p.address),
           );
+        const schedule = cleanScheduleInput(input);
         const idea: Idea = {
           id,
           groupId: input.groupId,
@@ -769,6 +773,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           movieVenue: input.type === "movie" ? input.movieVenue : undefined,
           places,
           address: places[0]?.address || input.address?.trim() || undefined,
+          ...schedule,
           proposedBy: prev.currentUserId,
           status: "pending",
           timing: input.timing,
@@ -805,6 +810,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return next;
       });
       return id;
+    },
+    [],
+  );
+
+  const updateIdeaSchedule = useCallback(
+    (ideaId: string, scheduleInput: IdeaScheduleInput) => {
+      const schedule = cleanScheduleInput(scheduleInput);
+      setState((prev) => {
+        const nextIdeas = prev.ideas.map((i) =>
+          i.id === ideaId
+            ? {
+                ...i,
+                scheduledDate: schedule.scheduledDate,
+                scheduledTime: schedule.scheduledTime,
+                durationMinutes: schedule.durationMinutes,
+                dateFlexible: schedule.dateFlexible,
+                link: schedule.link,
+                budgetNote: schedule.budgetNote,
+              }
+            : i,
+        );
+        if (cloudConfigured) {
+          void cloudUpdateIdea(createSupabaseBrowserClient(), ideaId, {
+            scheduled_date: schedule.scheduledDate ?? null,
+            scheduled_time: schedule.scheduledTime ?? null,
+            duration_minutes: schedule.durationMinutes ?? null,
+            date_flexible: schedule.dateFlexible ?? false,
+            link: schedule.link ?? null,
+            budget_note: schedule.budgetNote ?? null,
+          });
+        }
+        return { ...prev, ideas: nextIdeas };
+      });
     },
     [],
   );
@@ -1441,6 +1479,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       kickMember,
       deleteGroup,
       addIdea,
+      updateIdeaSchedule,
       setIdeaTiming,
       castVote,
       toggleSoftVeto,
@@ -1474,6 +1513,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       kickMember,
       deleteGroup,
       addIdea,
+      updateIdeaSchedule,
       setIdeaTiming,
       castVote,
       toggleSoftVeto,

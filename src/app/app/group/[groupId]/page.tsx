@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowRight, Copy, MapPin, Plus, Wallet } from "lucide-react";
+import { ArrowRight, CalendarClock, Copy, MapPin, Plus, Wallet } from "lucide-react";
 import { LotteryButton } from "@/components/ideas/lottery-button";
 import {
   PlaceFields,
@@ -11,6 +11,7 @@ import {
   ideaNeedsPlaces,
   validatePlaces,
 } from "@/components/ideas/place-fields";
+import { ScheduleFields } from "@/components/ideas/schedule-fields";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,8 +32,10 @@ import {
   GROUP_KIND_LABELS,
   IDEA_TYPE_LABELS,
   MOVIE_VENUE_LABELS,
+  formatIdeaSchedule,
   formatPlace,
   type IdeaPlace,
+  type IdeaScheduleInput,
   type IdeaTiming,
   type IdeaType,
   type MovieVenue,
@@ -722,6 +725,15 @@ export default function GroupPage() {
                       ) : null}
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--mute)]">
                         {proposer ? <span>Por {proposer.name}</span> : null}
+                        {(() => {
+                          const when = formatIdeaSchedule(idea);
+                          return when ? (
+                            <span className="inline-flex items-center gap-1 font-medium text-[var(--ink)]">
+                              <CalendarClock className="size-3.5 text-[var(--pop)]" />
+                              {when}
+                            </span>
+                          ) : null;
+                        })()}
                         {idea.places?.length ? (
                           <span className="inline-flex items-center gap-1">
                             <MapPin className="size-3.5" />
@@ -734,6 +746,9 @@ export default function GroupPage() {
                             <MapPin className="size-3.5" />
                             {idea.address}
                           </span>
+                        ) : null}
+                        {idea.budgetNote ? (
+                          <span>≈ {idea.budgetNote}</span>
                         ) : null}
                         <span className="font-medium text-[var(--ink)]">
                           {rowHint}
@@ -820,7 +835,7 @@ function NewIdeaDialog({
     places: IdeaPlace[];
     tags: string[];
     timing: IdeaTiming;
-  }) => void;
+  } & IdeaScheduleInput) => void;
 }) {
   const [type, setType] = useState<IdeaType>("movie");
   const [movieVenue, setMovieVenue] = useState<MovieVenue>("home");
@@ -830,12 +845,14 @@ function NewIdeaDialog({
   const [places, setPlaces] = useState<IdeaPlace[]>([
     { kind: "custom", name: "", address: "" },
   ]);
+  const [schedule, setSchedule] = useState<IdeaScheduleInput>({});
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
       setTiming(defaultTiming);
+      setSchedule({});
       setError("");
     }
   }, [open, defaultTiming]);
@@ -887,10 +904,12 @@ function NewIdeaDialog({
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean),
+      ...schedule,
     });
     setTitle("");
     setNotes("");
     setPlaces([{ kind: "custom", name: "", address: "" }]);
+    setSchedule({});
     setTagInput("");
     setError("");
     setMovieVenue("home");
@@ -1053,9 +1072,10 @@ function NewIdeaDialog({
             </p>
           ) : null}
 
+          <ScheduleFields value={schedule} onChange={setSchedule} />
+
           <div className="space-y-1.5">
-            <Label htmlFor="tags">Tags (opcional, separados por coma)</Label>
-            <Input
+            <Label htmlFor="tags">Tags (opcional, separados por coma)</Label>            <Input
               id="tags"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}

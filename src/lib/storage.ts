@@ -170,6 +170,15 @@ function normalizeIdea(idea: Partial<Idea> & { id: string; title: string }): Ide
     movieVenue,
     places,
     address: places[0]?.address || idea.address,
+    scheduledDate: idea.scheduledDate?.trim() || undefined,
+    scheduledTime: idea.scheduledTime?.trim() || undefined,
+    durationMinutes:
+      idea.durationMinutes && idea.durationMinutes > 0
+        ? idea.durationMinutes
+        : undefined,
+    dateFlexible: idea.dateFlexible || undefined,
+    link: idea.link?.trim() || undefined,
+    budgetNote: idea.budgetNote?.trim() || undefined,
     proposedBy: idea.proposedBy ?? "",
     status: idea.status ?? "pending",
     timing: idea.timing ?? "catalog",

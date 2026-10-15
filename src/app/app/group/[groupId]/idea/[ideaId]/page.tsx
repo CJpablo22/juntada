@@ -2,8 +2,19 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
-import { Ban, BookmarkPlus, ExternalLink, Eye, MapPin, Zap } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  Ban,
+  BookmarkPlus,
+  CalendarClock,
+  ExternalLink,
+  Eye,
+  Link2,
+  MapPin,
+  Wallet,
+  Zap,
+} from "lucide-react";
+import { ScheduleFields } from "@/components/ideas/schedule-fields";
 import { ScorePicker } from "@/components/ideas/score-picker";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +26,10 @@ import { mapsUrl } from "@/lib/maps";
 import {
   IDEA_TYPE_LABELS,
   MOVIE_VENUE_LABELS,
+  formatDuration,
+  formatIdeaSchedule,
   formatPlace,
+  type IdeaScheduleInput,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +47,7 @@ export default function IdeaDetailPage() {
     markDone,
     addReview,
     setIdeaTiming,
+    updateIdeaSchedule,
   } = useApp();
   const [doneRating, setDoneRating] = useState(5);
   const [doneNote, setDoneNote] = useState("");
@@ -40,6 +55,9 @@ export default function IdeaDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [flash, setFlash] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState(false);
+  const [scheduleDraft, setScheduleDraft] = useState<IdeaScheduleInput>({});
+  const [scheduleSaved, setScheduleSaved] = useState(false);
 
   const idea = state.ideas.find((i) => i.id === params.ideaId);
   const group = state.groups.find((g) => g.id === params.groupId);
@@ -76,6 +94,26 @@ export default function IdeaDetailPage() {
       publicOnes.reduce((a, b) => a + b.rating, 0) / publicOnes.length
     );
   }, [reviews]);
+
+  useEffect(() => {
+    if (!idea) return;
+    setScheduleDraft({
+      scheduledDate: idea.scheduledDate,
+      scheduledTime: idea.scheduledTime,
+      durationMinutes: idea.durationMinutes,
+      dateFlexible: idea.dateFlexible,
+      link: idea.link,
+      budgetNote: idea.budgetNote,
+    });
+  }, [
+    idea?.id,
+    idea?.scheduledDate,
+    idea?.scheduledTime,
+    idea?.durationMinutes,
+    idea?.dateFlexible,
+    idea?.link,
+    idea?.budgetNote,
+  ]);
 
   if (!ready || !currentUser) {
     return <div className="p-6 text-[var(--mute)]">Cargando idea…</div>;
@@ -240,6 +278,83 @@ export default function IdeaDetailPage() {
           </a>
         ) : null}
       </div>
+
+      <section className="surface-panel space-y-3 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+            <CalendarClock className="size-4 text-[var(--pop)]" />
+            Cuándo y extras
+          </p>
+          {idea.status !== "done" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setEditingSchedule((v) => !v);
+                setScheduleSaved(false);
+              }}
+            >
+              {editingSchedule ? "Cancelar" : "Editar"}
+            </Button>
+          ) : null}
+        </div>
+
+        {editingSchedule ? (
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateIdeaSchedule(idea.id, scheduleDraft);
+              setEditingSchedule(false);
+              setScheduleSaved(true);
+              setTimeout(() => setScheduleSaved(false), 1600);
+            }}
+          >
+            <ScheduleFields value={scheduleDraft} onChange={setScheduleDraft} />
+            <Button type="submit" className="w-full sm:w-auto">
+              Guardar cuándo
+            </Button>
+          </form>
+        ) : (
+          <div className="space-y-2 text-sm text-[var(--mute)]">
+            {formatIdeaSchedule(idea) ? (
+              <p className="font-medium text-[var(--ink)]">
+                {formatIdeaSchedule(idea)}
+              </p>
+            ) : (
+              <p>Todavía no hay fecha ni hora. Podés agregarlas cuando quieran.</p>
+            )}
+            {idea.budgetNote ? (
+              <p className="inline-flex items-center gap-1.5">
+                <Wallet className="size-3.5" />
+                {idea.budgetNote}
+              </p>
+            ) : null}
+            {idea.link ? (
+              <a
+                href={idea.link}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 font-medium text-[var(--pop)]"
+              >
+                <Link2 className="size-3.5" />
+                Abrir link
+                <ExternalLink className="size-3.5" />
+              </a>
+            ) : null}
+            {!formatIdeaSchedule(idea) &&
+            !idea.budgetNote &&
+            !idea.link &&
+            formatDuration(idea.durationMinutes) ? (
+              <p>{formatDuration(idea.durationMinutes)}</p>
+            ) : null}
+            {scheduleSaved ? (
+              <p className="text-[var(--pop)]">Guardado.</p>
+            ) : null}
+          </div>
+        )}
+      </section>
 
       {idea.status !== "done" && idea.status !== "in_progress" ? (
         <section className="surface-panel space-y-3 p-4">
