@@ -24,6 +24,8 @@ export function Reveal({
       return;
     }
 
+    el.dataset.armed = "true";
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -33,7 +35,7 @@ export function Reveal({
           }
         }
       },
-      { threshold: 0.18, rootMargin: "0px 0px -8% 0px" },
+      { threshold: 0.12, rootMargin: "0px 0px -4% 0px" },
     );
 
     observer.observe(el);
