@@ -83,6 +83,7 @@ function mapGroup(row: GroupRow, memberIds: string[]): Group {
     kind: row.kind as GroupKind,
     inviteCode: row.invite_code,
     memberIds,
+    createdBy: row.created_by ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -115,47 +116,82 @@ export async function loadCloudState(
   supabase: Supabase,
   currentUser: User,
 ): Promise<AppState> {
-  const { data: memberRows, error: membersError } = await supabase
-    .from("group_members")
-    .select("group_id, user_id")
-    .eq("user_id", currentUser.id);
-
-  if (membersError) console.error("group_members", membersError.message);
-
-  const myGroupIds = (memberRows as MemberRow[] | null)?.map((m) => m.group_id) ?? [];
-
-  if (myGroupIds.length === 0) {
-    return {
-      version: 2,
-      currentUserId: currentUser.id,
-      users: [currentUser],
-      groups: [],
-      ideas: [],
-      reviews: [],
-      expenses: [],
-      points: [],
-    };
+  // RPC security definer: no depende de RLS circular en group_members
+  const { data: idRows, error: idsError } = await supabase.rpc("my_group_ids");
+  if (idsError) {
+    console.error("my_group_ids", idsError.message);
+    // Fallback a select directo (por si aún no corrieron el 008)
+    const { data: memberRows, error: membersError } = await supabase
+      .from("group_members")
+      .select("group_id, user_id")
+      .eq("user_id", currentUser.id);
+    if (membersError) console.error("group_members", membersError.message);
+    const fallbackIds =
+      (memberRows as MemberRow[] | null)?.map((m) => m.group_id) ?? [];
+    if (fallbackIds.length === 0) {
+      return emptyCloudState(currentUser);
+    }
+    return loadCloudStateWithIds(supabase, currentUser, fallbackIds);
   }
 
-  const [
-    { data: groupsData, error: groupsError },
-    { data: allMembers, error: allMembersError },
-  ] = await Promise.all([
-    supabase.from("groups").select("*").in("id", myGroupIds),
-    supabase.from("group_members").select("group_id, user_id").in("group_id", myGroupIds),
-  ]);
+  const myGroupIds = ((idRows as string[] | null) ?? []).filter(Boolean);
+  if (myGroupIds.length === 0) {
+    return emptyCloudState(currentUser);
+  }
+  return loadCloudStateWithIds(supabase, currentUser, myGroupIds);
+}
+
+function emptyCloudState(currentUser: User): AppState {
+  return {
+    version: 2,
+    currentUserId: currentUser.id,
+    users: [currentUser],
+    groups: [],
+    ideas: [],
+    reviews: [],
+    expenses: [],
+    points: [],
+  };
+}
+
+async function loadCloudStateWithIds(
+  supabase: Supabase,
+  currentUser: User,
+  myGroupIds: string[],
+): Promise<AppState> {
+  const { data: groupsData, error: groupsError } = await supabase
+    .from("groups")
+    .select("*")
+    .in("id", myGroupIds);
 
   if (groupsError) console.error("groups", groupsError.message);
-  if (allMembersError) console.error("all members", allMembersError.message);
 
   const membersByGroup = new Map<string, string[]>();
   const memberUserIds = new Set<string>([currentUser.id]);
-  for (const m of (allMembers as MemberRow[] | null) ?? []) {
-    const list = membersByGroup.get(m.group_id) ?? [];
-    list.push(m.user_id);
-    membersByGroup.set(m.group_id, list);
-    memberUserIds.add(m.user_id);
-  }
+
+  await Promise.all(
+    myGroupIds.map(async (gid) => {
+      const { data: memberIds, error } = await supabase.rpc("group_member_ids", {
+        p_group_id: gid,
+      });
+      if (error) {
+        // Fallback tabla
+        const { data: rows } = await supabase
+          .from("group_members")
+          .select("user_id")
+          .eq("group_id", gid);
+        const ids = ((rows as { user_id: string }[] | null) ?? []).map(
+          (r) => r.user_id,
+        );
+        membersByGroup.set(gid, ids);
+        ids.forEach((id) => memberUserIds.add(id));
+        return;
+      }
+      const ids = ((memberIds as string[] | null) ?? []).filter(Boolean);
+      membersByGroup.set(gid, ids);
+      ids.forEach((id) => memberUserIds.add(id));
+    }),
+  );
 
   const groups = ((groupsData as GroupRow[] | null) ?? []).map((g) =>
     mapGroup(g, membersByGroup.get(g.id) ?? []),
@@ -284,6 +320,50 @@ export async function cloudJoinGroup(
     return null;
   }
   return typeof data === "string" ? data : null;
+}
+
+export async function cloudLeaveGroup(
+  supabase: Supabase,
+  groupId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase.rpc("leave_group", { p_group_id: groupId });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function cloudRenameGroup(
+  supabase: Supabase,
+  groupId: string,
+  name: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase.rpc("rename_group", {
+    p_group_id: groupId,
+    p_name: name,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function cloudKickMember(
+  supabase: Supabase,
+  groupId: string,
+  userId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase.rpc("kick_group_member", {
+    p_group_id: groupId,
+    p_user_id: userId,
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function cloudDeleteGroup(
+  supabase: Supabase,
+  groupId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { error } = await supabase.rpc("delete_group", { p_group_id: groupId });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 export async function cloudInsertIdea(

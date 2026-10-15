@@ -39,10 +39,14 @@ export default function AppHomePage() {
     [state.groups, currentUser],
   );
 
-  function onCreate(e: FormEvent) {
+  async function onCreate(e: FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    const id = createGroup({ name, kind });
+    const id = await createGroup({ name, kind });
+    if (!id) {
+      setJoinError("No se pudo crear el grupo. Probá de nuevo.");
+      return;
+    }
     setOpenCreate(false);
     setName("");
     router.push(`/app/group/${id}`);

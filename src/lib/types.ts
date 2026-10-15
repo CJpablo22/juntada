@@ -76,6 +76,8 @@ export type Group = {
   kind: GroupKind;
   inviteCode: string;
   memberIds: string[];
+  /** Dueño: puede renombrar, expulsar y eliminar */
+  createdBy?: string;
   createdAt: string;
 };
 

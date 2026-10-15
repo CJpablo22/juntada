@@ -15,11 +15,15 @@ import { loadState, resetState, saveState } from "@/lib/storage";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   cloudCreateGroup,
+  cloudDeleteGroup,
   cloudInsertExpense,
   cloudInsertIdea,
   cloudInsertPoint,
   cloudInsertReview,
   cloudJoinGroup,
+  cloudKickMember,
+  cloudLeaveGroup,
+  cloudRenameGroup,
   cloudUpdateIdea,
   loadCloudState,
   newCloudId,
@@ -83,8 +87,18 @@ type AppContextValue = {
   }) => string;
   signOut: () => void;
   resetDemo: () => void;
-  createGroup: (input: { name: string; kind: GroupKind }) => string;
+  createGroup: (input: { name: string; kind: GroupKind }) => Promise<string | null>;
   joinGroupByCode: (code: string) => Promise<string | null>;
+  leaveGroup: (groupId: string) => Promise<{ ok: boolean; error?: string }>;
+  renameGroup: (
+    groupId: string,
+    name: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
+  kickMember: (
+    groupId: string,
+    userId: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
+  deleteGroup: (groupId: string) => Promise<{ ok: boolean; error?: string }>;
   addIdea: (input: {
     groupId: string;
     type: IdeaType;
@@ -471,21 +485,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const createGroup = useCallback(
-    (input: { name: string; kind: GroupKind }) => {
+    async (input: { name: string; kind: GroupKind }) => {
+      const uid = state.currentUserId;
+      if (!uid) return null;
+
       const id = cloudConfigured ? newCloudId() : createId("group");
       const inviteCode = createInviteCode();
       const name = input.name.trim();
       const kind = input.kind;
 
+      if (cloudConfigured) {
+        const result = await cloudCreateGroup(createSupabaseBrowserClient(), {
+          id,
+          name,
+          kind,
+          inviteCode,
+          userId: uid,
+        });
+        if (!result.ok) {
+          console.error("No se pudo guardar el grupo:", result.error);
+          return null;
+        }
+        // Recargar desde DB para confirmar persistencia
+        const supabase = createSupabaseBrowserClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          const profile = await ensureProfileFromAuth(supabase, user);
+          const cloud = await loadCloudState(supabase, profile);
+          setState(cloud);
+        }
+        return id;
+      }
+
       setState((prev) => {
-        if (!prev.currentUserId) return prev;
-        const uid = prev.currentUserId;
         const group: Group = {
           id,
           name,
           kind,
           inviteCode,
           memberIds: [uid],
+          createdBy: uid,
           createdAt: new Date().toISOString(),
         };
         return {
@@ -504,31 +545,104 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ),
         };
       });
-
-      if (cloudConfigured) {
-        const uid = state.currentUserId;
-        if (uid) {
-          void (async () => {
-            const result = await cloudCreateGroup(
-              createSupabaseBrowserClient(),
-              { id, name, kind, inviteCode, userId: uid },
-            );
-            if (!result.ok) {
-              // Revertir optimista si falló en DB
-              setState((prev) => ({
-                ...prev,
-                groups: prev.groups.filter((g) => g.id !== id),
-              }));
-              console.error("No se pudo guardar el grupo:", result.error);
-            }
-          })();
-        }
-      }
-
       return id;
     },
     [state.currentUserId],
   );
+
+  const leaveGroup = useCallback(
+    async (groupId: string) => {
+      if (cloudConfigured) {
+        const result = await cloudLeaveGroup(
+          createSupabaseBrowserClient(),
+          groupId,
+        );
+        if (!result.ok) return result;
+        setState((prev) => ({
+          ...prev,
+          groups: prev.groups.filter((g) => g.id !== groupId),
+          ideas: prev.ideas.filter((i) => i.groupId !== groupId),
+          expenses: prev.expenses.filter((e) => e.groupId !== groupId),
+          points: prev.points.filter((p) => p.groupId !== groupId),
+        }));
+        return { ok: true };
+      }
+      setState((prev) => {
+        if (!prev.currentUserId) return prev;
+        const uid = prev.currentUserId;
+        return {
+          ...prev,
+          groups: prev.groups
+            .map((g) =>
+              g.id === groupId
+                ? { ...g, memberIds: g.memberIds.filter((id) => id !== uid) }
+                : g,
+            )
+            .filter((g) => g.memberIds.length > 0),
+        };
+      });
+      return { ok: true };
+    },
+    [],
+  );
+
+  const renameGroup = useCallback(async (groupId: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return { ok: false, error: "Nombre vacío" };
+    if (cloudConfigured) {
+      const result = await cloudRenameGroup(
+        createSupabaseBrowserClient(),
+        groupId,
+        trimmed,
+      );
+      if (!result.ok) return result;
+    }
+    setState((prev) => ({
+      ...prev,
+      groups: prev.groups.map((g) =>
+        g.id === groupId ? { ...g, name: trimmed } : g,
+      ),
+    }));
+    return { ok: true };
+  }, []);
+
+  const kickMember = useCallback(async (groupId: string, userId: string) => {
+    if (cloudConfigured) {
+      const result = await cloudKickMember(
+        createSupabaseBrowserClient(),
+        groupId,
+        userId,
+      );
+      if (!result.ok) return result;
+    }
+    setState((prev) => ({
+      ...prev,
+      groups: prev.groups.map((g) =>
+        g.id === groupId
+          ? { ...g, memberIds: g.memberIds.filter((id) => id !== userId) }
+          : g,
+      ),
+    }));
+    return { ok: true };
+  }, []);
+
+  const deleteGroup = useCallback(async (groupId: string) => {
+    if (cloudConfigured) {
+      const result = await cloudDeleteGroup(
+        createSupabaseBrowserClient(),
+        groupId,
+      );
+      if (!result.ok) return result;
+    }
+    setState((prev) => ({
+      ...prev,
+      groups: prev.groups.filter((g) => g.id !== groupId),
+      ideas: prev.ideas.filter((i) => i.groupId !== groupId),
+      expenses: prev.expenses.filter((e) => e.groupId !== groupId),
+      points: prev.points.filter((p) => p.groupId !== groupId),
+    }));
+    return { ok: true };
+  }, []);
 
   const joinGroupByCode = useCallback(async (code: string) => {
     if (cloudConfigured) {
@@ -1291,6 +1405,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetDemo,
       createGroup,
       joinGroupByCode,
+      leaveGroup,
+      renameGroup,
+      kickMember,
+      deleteGroup,
       addIdea,
       setIdeaTiming,
       castVote,
@@ -1320,6 +1438,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetDemo,
       createGroup,
       joinGroupByCode,
+      leaveGroup,
+      renameGroup,
+      kickMember,
+      deleteGroup,
       addIdea,
       setIdeaTiming,
       castVote,

@@ -22,7 +22,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/ui/user-chip";
 import { badgeForRank, rankMembers } from "@/lib/points";
@@ -52,14 +51,25 @@ export default function GroupPage() {
     addIdea,
     pickRandomIdea,
     setIdeaTiming,
+    leaveGroup,
+    renameGroup,
+    kickMember,
+    deleteGroup,
   } = useApp();
   const [shelf, setShelf] = useState<ShelfFilter>("catalog");
   const [typeFilter, setTypeFilter] = useState<"all" | IdeaType>("all");
   const [openIdea, setOpenIdea] = useState(false);
+  const [openSettings, setOpenSettings] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [mgmtError, setMgmtError] = useState("");
+  const [mgmtBusy, setMgmtBusy] = useState(false);
 
   const group = state.groups.find((g) => g.id === params.groupId);
+  const isOwner = Boolean(
+    group && currentUser && group.createdBy === currentUser.id,
+  );
   const members = useMemo(
     () =>
       group
@@ -234,6 +244,109 @@ export default function GroupPage() {
               <Wallet className="size-4" />
               Gastos
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRenameValue(group.name);
+                setMgmtError("");
+                setOpenSettings(true);
+              }}
+            >
+              Gestionar
+            </Button>
+            <Dialog
+              open={openSettings}
+              onOpenChange={(o) => {
+                setOpenSettings(o);
+                setMgmtError("");
+                if (o) setRenameValue(group.name);
+              }}
+            >
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Gestionar grupo</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {isOwner ? (
+                    <form
+                      className="space-y-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        setMgmtBusy(true);
+                        setMgmtError("");
+                        const r = await renameGroup(group.id, renameValue);
+                        setMgmtBusy(false);
+                        if (!r.ok) {
+                          setMgmtError(r.error || "No se pudo renombrar");
+                          return;
+                        }
+                        setOpenSettings(false);
+                      }}
+                    >
+                      <Label htmlFor="rename">Cambiar nombre</Label>
+                      <Input
+                        id="rename"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        className="field-input"
+                      />
+                      <Button type="submit" disabled={mgmtBusy} size="sm">
+                        Guardar nombre
+                      </Button>
+                    </form>
+                  ) : null}
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={mgmtBusy}
+                    onClick={async () => {
+                      if (!window.confirm("¿Salir de este grupo?")) return;
+                      setMgmtBusy(true);
+                      const r = await leaveGroup(group.id);
+                      setMgmtBusy(false);
+                      if (!r.ok) {
+                        setMgmtError(r.error || "No se pudo salir");
+                        return;
+                      }
+                      router.replace("/app");
+                    }}
+                  >
+                    Salir del grupo
+                  </Button>
+
+                  {isOwner ? (
+                    <Button
+                      variant="ghost"
+                      className="w-full text-[var(--pop)]"
+                      disabled={mgmtBusy}
+                      onClick={async () => {
+                        if (
+                          !window.confirm(
+                            "¿Eliminar el grupo y todo su contenido? No se puede deshacer.",
+                          )
+                        )
+                          return;
+                        setMgmtBusy(true);
+                        const r = await deleteGroup(group.id);
+                        setMgmtBusy(false);
+                        if (!r.ok) {
+                          setMgmtError(r.error || "No se pudo eliminar");
+                          return;
+                        }
+                        router.replace("/app");
+                      }}
+                    >
+                      Eliminar grupo
+                    </Button>
+                  ) : null}
+
+                  {mgmtError ? (
+                    <p className="text-sm text-[var(--pop)]">{mgmtError}</p>
+                  ) : null}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -270,16 +383,52 @@ export default function GroupPage() {
                   inSharedGroup: true,
                   groupId: group.id,
                 });
+                const canKick =
+                  isOwner && currentUser && m.id !== currentUser.id;
                 return (
-                  <li key={m.id} className="flex items-center gap-2 text-sm">
-                    <UserAvatar user={m} size="sm" className="size-6 text-[10px]" />
-                    <span>
-                      <span className="font-medium">{m.name}</span>
-                      <span className="text-[var(--mute)]">
-                        {" "}
-                        · {visible.label}
+                  <li
+                    key={m.id}
+                    className="flex items-center justify-between gap-2 text-sm"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <UserAvatar
+                        user={m}
+                        size="sm"
+                        className="size-6 text-[10px]"
+                      />
+                      <span>
+                        <span className="font-medium">{m.name}</span>
+                        {group.createdBy === m.id ? (
+                          <span className="ml-1 text-xs text-[var(--mute)]">
+                            (dueño)
+                          </span>
+                        ) : null}
+                        <span className="text-[var(--mute)]">
+                          {" "}
+                          · {visible.label}
+                        </span>
                       </span>
                     </span>
+                    {canKick ? (
+                      <button
+                        type="button"
+                        className="shrink-0 text-xs font-semibold text-[var(--pop)]"
+                        onClick={async () => {
+                          if (
+                            !window.confirm(
+                              `¿Expulsar a ${m.name} del grupo?`,
+                            )
+                          )
+                            return;
+                          const r = await kickMember(group.id, m.id);
+                          if (!r.ok) {
+                            window.alert(r.error || "No se pudo expulsar");
+                          }
+                        }}
+                      >
+                        Expulsar
+                      </button>
+                    ) : null}
                   </li>
                 );
               })}

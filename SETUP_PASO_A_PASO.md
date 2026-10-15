@@ -65,7 +65,7 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
    Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
-9. Corré también `003`–`006` y **`007_harden_rpc_grants.sql`** (006 = grupos; 007 = avisos Advisors de funciones).  
+9. Corré también `003`–`007` y **`008_group_mgmt_and_stable_load.sql`** (imprescindible para que los grupos no desaparezcan + gestionar grupo).  
 10. Auth → Providers → Email: activá Email y **dejá Confirm email ON** (mail de registro sí).  
     Los avisos del grupo **no** van por mail: solo in-app.  
 11. Auth → Emails → **Confirm signup** — Subject: `Confirmá tu cuenta en Juntada`. Body con enlace:
