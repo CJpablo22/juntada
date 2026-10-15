@@ -1,0 +1,419 @@
+/* ——— Landing «Mesa puesta» (scoped) ——— */
+.landing-mesa {
+  --mesa-bg: #f3ede4;
+  --mesa-ink: #1c1917;
+  --mesa-mute: #3f3a36;
+  --mesa-line: #d6cfc4;
+  --mesa-accent: #0a4d47;
+  --mesa-accent-mid: #0f766e;
+  --mesa-gold: #e7b04b;
+  --mesa-foam: #fffaf3;
+  --mesa-band: #0a4d47;
+
+  --ink: var(--mesa-ink);
+  --paper: var(--mesa-bg);
+  --mute: var(--mesa-mute);
+  --line: var(--mesa-line);
+  --pop: var(--mesa-accent);
+  --pop-soft: color-mix(in oklab, var(--mesa-accent) 12%, var(--mesa-bg));
+  --wash: color-mix(in oklab, var(--mesa-gold) 14%, var(--mesa-bg));
+  --hero: var(--mesa-band);
+  --font-body: var(--font-mesa-sans), var(--font-es-sans), system-ui, sans-serif;
+  --font-display: var(--font-andalucia), Georgia, serif;
+  --heading-tracking: -0.03em;
+  --heading-weight: 700;
+
+  color: var(--mesa-ink);
+  background-color: var(--mesa-bg);
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 12% -10%,
+      color-mix(in oklab, var(--mesa-gold) 22%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 100% 20%,
+      color-mix(in oklab, var(--mesa-accent-mid) 10%, transparent),
+      transparent 50%
+    ),
+    repeating-linear-gradient(
+      -8deg,
+      transparent,
+      transparent 11px,
+      color-mix(in oklab, var(--mesa-ink) 3.5%, transparent) 11px,
+      color-mix(in oklab, var(--mesa-ink) 3.5%, transparent) 12px
+    );
+  font-family: var(--font-body);
+  min-height: 100svh;
+}
+
+.landing-mesa .type-display,
+.landing-mesa h1,
+.landing-mesa h2 {
+  font-family: var(--font-display);
+  font-weight: var(--heading-weight);
+  letter-spacing: var(--heading-tracking);
+}
+
+.landing-mesa a:focus-visible,
+.landing-mesa button:focus-visible {
+  outline: 3px solid var(--mesa-accent);
+  outline-offset: 3px;
+}
+
+/* Scroll reveal */
+.mesa-reveal {
+  opacity: 0;
+  transform: translateY(1.1rem);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mesa-reveal[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesa-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Hero */
+.mesa-hero {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: calc(100svh - 4.5rem);
+  padding: 0.5rem 0 2.5rem;
+}
+
+.mesa-brand {
+  font-family: var(--font-display);
+  font-size: clamp(3.25rem, 14vw, 7.5rem);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: var(--mesa-ink);
+  padding: 0.25rem 1rem 0.75rem;
+  animation: mesa-brand-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mesa-brand-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mesa-band {
+  position: relative;
+  margin: 0.5rem 0 1.25rem;
+  background: var(--mesa-band);
+  color: var(--mesa-foam);
+  clip-path: polygon(0 12%, 100% 0, 100% 88%, 0 100%);
+  padding: clamp(2.25rem, 7vw, 3.75rem) 1rem clamp(2.5rem, 8vw, 4rem);
+  animation: mesa-band-in 0.85s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mesa-band-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) skewY(-1deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mesa-band h1 {
+  max-width: 18ch;
+  font-size: clamp(1.55rem, 5.2vw, 2.85rem);
+  line-height: 1.12;
+  color: var(--mesa-foam);
+  text-wrap: balance;
+}
+
+.mesa-band p {
+  margin-top: 0.85rem;
+  max-width: 34ch;
+  font-size: clamp(0.95rem, 2.4vw, 1.1rem);
+  line-height: 1.45;
+  color: color-mix(in oklab, var(--mesa-foam) 88%, var(--mesa-gold));
+}
+
+.mesa-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.65rem;
+  padding: 0 1rem;
+  animation: mesa-chips-in 0.7s 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mesa-chips-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mesa-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.95rem;
+  border: 1.5px solid var(--mesa-ink);
+  background: var(--mesa-foam);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 3px 3px 0 0 var(--mesa-gold);
+}
+
+.mesa-chip:nth-child(2) {
+  box-shadow: 3px 3px 0 0 var(--mesa-accent-mid);
+}
+
+.mesa-chip:nth-child(3) {
+  transform: rotate(-1.5deg);
+}
+
+.mesa-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1.75rem 1rem 0;
+}
+
+.mesa-btn-primary,
+.mesa-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.75rem 1.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  border-radius: 0.15rem;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.mesa-btn-primary {
+  border: 2px solid var(--mesa-accent);
+  background: var(--mesa-accent);
+  color: #fffaf3;
+  box-shadow: 0 3px 0 0 color-mix(in oklab, var(--mesa-ink) 55%, var(--mesa-accent));
+}
+
+.mesa-btn-primary:hover {
+  background: color-mix(in oklab, var(--mesa-accent) 88%, black);
+  transform: translateY(-1px);
+}
+
+.mesa-btn-primary:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.mesa-btn-ghost {
+  border: 2px solid var(--mesa-ink);
+  background: transparent;
+  color: var(--mesa-ink);
+}
+
+.mesa-btn-ghost:hover {
+  background: var(--mesa-foam);
+}
+
+/* Sections — asymmetric, one job each */
+.mesa-section {
+  padding: 3.5rem 1rem;
+  border-top: 1px solid var(--mesa-line);
+}
+
+.mesa-section--accent {
+  background: color-mix(in oklab, var(--mesa-accent) 92%, black);
+  color: var(--mesa-foam);
+  border-top: none;
+}
+
+.mesa-section--accent .mesa-kicker,
+.mesa-section--accent p {
+  color: color-mix(in oklab, var(--mesa-foam) 82%, var(--mesa-gold));
+}
+
+.mesa-section--accent h2 {
+  color: var(--mesa-foam);
+}
+
+.mesa-kicker {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mesa-accent);
+}
+
+.mesa-section h2 {
+  margin-top: 0.5rem;
+  max-width: 16ch;
+  font-size: clamp(1.65rem, 4.5vw, 2.35rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.mesa-section > p,
+.mesa-section .mesa-lead {
+  margin-top: 0.85rem;
+  max-width: 36ch;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--mesa-mute);
+}
+
+.mesa-split {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 720px) {
+  .mesa-brand {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .mesa-band {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .mesa-chips,
+  .mesa-cta-row {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .mesa-section {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .mesa-split {
+    grid-template-columns: 1.1fr 0.9fr;
+    align-items: end;
+    gap: 2.5rem;
+  }
+
+  .mesa-split--flip {
+    grid-template-columns: 0.85fr 1.15fr;
+  }
+
+  .mesa-split--flip .mesa-split-copy {
+    order: 2;
+  }
+
+  .mesa-split--flip .mesa-split-visual {
+    order: 1;
+  }
+}
+
+.mesa-visual-block {
+  position: relative;
+  min-height: 10rem;
+  padding: 1.25rem;
+  background: var(--mesa-foam);
+  border: 1.5px solid var(--mesa-ink);
+  box-shadow: 6px 6px 0 0 var(--mesa-gold);
+}
+
+.mesa-section--accent .mesa-visual-block {
+  background: color-mix(in oklab, var(--mesa-foam) 8%, transparent);
+  border-color: color-mix(in oklab, var(--mesa-foam) 55%, transparent);
+  box-shadow: 6px 6px 0 0 var(--mesa-gold);
+  color: var(--mesa-foam);
+}
+
+.mesa-visual-block strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.mesa-visual-block span {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.mesa-footer {
+  padding: 3rem 1rem 4rem;
+  border-top: 1px solid var(--mesa-line);
+  text-align: left;
+}
+
+.mesa-footer h2 {
+  max-width: 14ch;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: 1.12;
+}
+
+.mesa-footer p {
+  margin-top: 0.75rem;
+  max-width: 32ch;
+  color: var(--mesa-mute);
+}
+
+.mesa-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--mesa-mute);
+}
+
+.mesa-nav-link:hover {
+  color: var(--mesa-ink);
+}
+
+.mesa-nav-link--strong {
+  color: var(--mesa-ink);
+  border-bottom: 2px solid var(--mesa-accent);
+}
+
+@media (max-width: 360px) {
+  .mesa-brand {
+    font-size: clamp(2.75rem, 16vw, 3.5rem);
+  }
+
+  .mesa-band h1 {
+    font-size: 1.4rem;
+  }
+
+  .mesa-chip {
+    font-size: 0.8rem;
+    padding-inline: 0.75rem;
+  }
+}

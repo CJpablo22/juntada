@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import {
   Archivo_Black,
   Barlow_Condensed,
+  DM_Sans,
   Fraunces,
   Nunito,
   Outfit,
@@ -12,6 +13,7 @@ import {
 import { AppProvider } from "@/components/providers/app-provider";
 import { RegionThemeSync } from "@/components/theme/region-theme";
 import "./globals.css";
+import "./landing-mesa.css";
 
 /** España — capital / meseta: sans limpia */
 const esSans = Source_Sans_3({
@@ -20,7 +22,14 @@ const esSans = Source_Sans_3({
   weight: ["400", "500", "600", "700"],
 });
 
-/** Andalucía — display con carácter */
+/** Landing «Mesa puesta» — cuerpo */
+const mesaSans = DM_Sans({
+  variable: "--font-mesa-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+/** Andalucía — display con carácter (también landing Mesa) */
 const andalucia = Fraunces({
   variable: "--font-andalucia",
   subsets: ["latin"],
@@ -64,6 +73,7 @@ const arDisplay = Archivo_Black({
 
 const fontVars = [
   esSans.variable,
+  mesaSans.variable,
   andalucia.variable,
   catalunya.variable,
   levante.variable,
