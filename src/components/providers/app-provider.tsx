@@ -194,6 +194,13 @@ function addPoints(
   };
 }
 
+function mergeUsersKeep(a: User[], b: User[]): User[] {
+  const map = new Map<string, User>();
+  for (const u of a) map.set(u.id, u);
+  for (const u of b) map.set(u.id, u);
+  return [...map.values()];
+}
+
 function upsertUser(
   prev: AppState,
   match: (u: User) => boolean,
@@ -494,6 +501,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const name = input.name.trim();
       const kind = input.kind;
 
+      const group: Group = {
+        id,
+        name,
+        kind,
+        inviteCode,
+        memberIds: [uid],
+        createdBy: uid,
+        createdAt: new Date().toISOString(),
+      };
+
       if (cloudConfigured) {
         const result = await cloudCreateGroup(createSupabaseBrowserClient(), {
           id,
@@ -506,32 +523,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           console.error("No se pudo guardar el grupo:", result.error);
           return null;
         }
-        // Recargar desde DB para confirmar persistencia
-        const supabase = createSupabaseBrowserClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          const profile = await ensureProfileFromAuth(supabase, user);
-          const cloud = await loadCloudState(supabase, profile);
-          setState(cloud);
-        }
-        return id;
       }
 
+      // Siempre dejar el grupo en memoria YA (antes de navegar).
+      // Un reload vacío de la DB no debe borrar este grupo.
       setState((prev) => {
-        const group: Group = {
-          id,
-          name,
-          kind,
-          inviteCode,
-          memberIds: [uid],
-          createdBy: uid,
-          createdAt: new Date().toISOString(),
-        };
+        const without = prev.groups.filter((g) => g.id !== id);
         return {
           ...prev,
-          groups: [group, ...prev.groups],
+          groups: [group, ...without],
           users: prev.users.map((u) =>
             u.id === uid
               ? {
@@ -545,6 +545,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ),
         };
       });
+
+      if (cloudConfigured) {
+        // Sync en segundo plano; si falla la lectura, no pisamos el grupo local
+        void (async () => {
+          try {
+            const supabase = createSupabaseBrowserClient();
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (!user) return;
+            const profile = await ensureProfileFromAuth(supabase, user);
+            const cloud = await loadCloudState(supabase, profile);
+            setState((prev) => {
+              const hasNew = cloud.groups.some((g) => g.id === id);
+              if (hasNew) return cloud;
+              // Merge: conservar el grupo recién creado
+              return {
+                ...cloud,
+                groups: [
+                  group,
+                  ...cloud.groups.filter((g) => g.id !== id),
+                ],
+                users: mergeUsersKeep(prev.users, cloud.users),
+              };
+            });
+          } catch (e) {
+            console.error("reload after createGroup", e);
+          }
+        })();
+      }
+
       return id;
     },
     [state.currentUserId],

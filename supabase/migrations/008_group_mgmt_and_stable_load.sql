@@ -17,6 +17,25 @@ revoke all on function public.my_group_ids() from public;
 revoke all on function public.my_group_ids() from anon;
 grant execute on function public.my_group_ids() to authenticated;
 
+-- Filas de groups sin depender de RLS de select
+create or replace function public.get_my_groups()
+returns setof public.groups
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select g.*
+  from public.groups g
+  join public.group_members m on m.group_id = g.id
+  where m.user_id = auth.uid()
+  order by g.created_at desc;
+$$;
+
+revoke all on function public.get_my_groups() from public;
+revoke all on function public.get_my_groups() from anon;
+grant execute on function public.get_my_groups() to authenticated;
+
 -- Miembros de un grupo (solo si sos miembro)
 create or replace function public.group_member_ids(p_group_id uuid)
 returns setof uuid

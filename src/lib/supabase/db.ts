@@ -159,12 +159,21 @@ async function loadCloudStateWithIds(
   currentUser: User,
   myGroupIds: string[],
 ): Promise<AppState> {
-  const { data: groupsData, error: groupsError } = await supabase
-    .from("groups")
-    .select("*")
-    .in("id", myGroupIds);
-
-  if (groupsError) console.error("groups", groupsError.message);
+  // Preferir RPC (evita RLS de SELECT en groups)
+  let groupsData: GroupRow[] | null = null;
+  const { data: rpcGroups, error: rpcGroupsError } =
+    await supabase.rpc("get_my_groups");
+  if (rpcGroupsError) {
+    console.error("get_my_groups", rpcGroupsError.message);
+    const { data, error: groupsError } = await supabase
+      .from("groups")
+      .select("*")
+      .in("id", myGroupIds);
+    if (groupsError) console.error("groups", groupsError.message);
+    groupsData = (data as GroupRow[] | null) ?? null;
+  } else {
+    groupsData = (rpcGroups as GroupRow[] | null) ?? null;
+  }
 
   const membersByGroup = new Map<string, string[]>();
   const memberUserIds = new Set<string>([currentUser.id]);
