@@ -28,6 +28,7 @@ export default function ProfilePage() {
     state,
     updateProfile,
     setGroupLocationVisibility,
+    setGroupNameVisibility,
     resetDemo,
     signOut,
   } = useApp();
@@ -140,6 +141,11 @@ export default function ProfilePage() {
           <h1 className="type-display text-2xl text-[var(--ink)] sm:text-3xl">
             {currentUser.name}
           </h1>
+          {currentUser.username ? (
+            <p className="text-sm font-medium text-[var(--pop)]">
+              @{currentUser.username}
+            </p>
+          ) : null}
           <p className="text-sm text-[var(--mute)]">
             {currentUser.neighborhood ? `${currentUser.neighborhood}, ` : ""}
             {currentUser.city} · {currentUser.province}
@@ -185,15 +191,29 @@ export default function ProfilePage() {
             </dd>
           </div>
           <div>
-            <dt className="text-[var(--mute)]">Apple / iCloud</dt>
+            <dt className="text-[var(--mute)]">Usuario</dt>
             <dd className="mt-0.5 font-medium text-[var(--ink)]">
-              {currentUser.authProvider === "apple"
-                ? currentUser.email && !currentUser.email.includes("demo")
-                  ? currentUser.email
-                  : "Vinculado"
-                : "Pendiente de activar"}
+              {currentUser.username ? `@${currentUser.username}` : "—"}
             </dd>
           </div>
+          {(currentUser.instagram || currentUser.tiktok) && (
+            <>
+              <div>
+                <dt className="text-[var(--mute)]">Instagram</dt>
+                <dd className="mt-0.5 font-medium text-[var(--ink)]">
+                  {currentUser.instagram
+                    ? `@${currentUser.instagram}`
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[var(--mute)]">TikTok</dt>
+                <dd className="mt-0.5 font-medium text-[var(--ink)]">
+                  {currentUser.tiktok ? `@${currentUser.tiktok}` : "—"}
+                </dd>
+              </div>
+            </>
+          )}
         </dl>
       </section>
 
@@ -239,7 +259,8 @@ export default function ProfilePage() {
           <GroupPrivacySettings
             user={currentUser}
             groups={state.groups}
-            onChange={setGroupLocationVisibility}
+            onChangeLocation={setGroupLocationVisibility}
+            onChangeName={setGroupNameVisibility}
           />
         </div>
       </section>

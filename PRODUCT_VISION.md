@@ -18,9 +18,11 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Scaffold Next.js + TypeScript + Tailwind + shadcn/ui
 - [x] Persistencia local (`localStorage` v2) + seed demo (dev sin Supabase)
 - [x] Landing + entrar
-- [x] Login UI: correo / teléfono / Apple (tabs); cloud = magic link real; SMS/Apple documentados como pendientes de pago
-- [x] Schema Supabase + middleware de sesión + `/auth/confirm` + cola de notificaciones (email)
-- [x] Perfil guarda email / teléfono / Apple (auth_provider) al ingresar + UI de cuenta
+- [x] Login / registro obligatorio: usuario único + correo + contraseña; SMS/Apple pendientes de pago
+- [x] Onboarding: dirección obligatoria; tel / IG / TikTok opcionales
+- [x] En grupo: elegir si ven @usuario o nombre real
+- [x] Notificaciones solo in-app (sin mails de eventos)
+- [x] Schema Supabase + cola de notificaciones in-app
 - [x] Persistencia cloud: perfiles + grupos/ideas/votos/gastos/puntos (dual-write)
 - [x] Guía de lanzamiento gratis: [`LAUNCH.md`](./LAUNCH.md)
 - [x] Grupos: crear, unirse por código, multi-grupo
@@ -45,11 +47,11 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 
 ### Falta / siguiente en el producto 1 (lanzamiento free)
 - [ ] Nombre final de la marca
-- [ ] Migrar estado de grupos/ideas/votos/gastos de `localStorage` → tablas Supabase (CRUD + RLS)
-- [ ] Crear proyecto Supabase + deploy Vercel (pasos en LAUNCH.md) — requiere cuentas del owner
-- [ ] Avisos email en eventos clave (invite, votar, resultados, gasto) vía Resend free
-- [ ] Unificar títulos iguales en Descubrir (hoy es por idea/grupo)
-- [ ] Gasto ligado a una idea desde UI (modelo ya lo permite)
+- [x] Migrar estado de grupos/ideas/votos/gastos de `localStorage` → tablas Supabase (CRUD + RLS)
+- [x] Crear proyecto Supabase + deploy Vercel (pasos en LAUNCH.md) — requiere cuentas del owner
+- [x] Avisos email en eventos clave (invite, votar, resultados, gasto) vía Resend free + cola DB
+- [x] Unificar títulos iguales en Descubrir
+- [x] Gasto ligado a una idea desde UI
 - [ ] Foto en recuerdos
 - [ ] Beneficio jugable real del #1 (romper empate con acción)
 - [ ] PWA / instalación móvil

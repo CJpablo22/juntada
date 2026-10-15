@@ -1,17 +1,29 @@
 import { cn } from "@/lib/utils";
+import {
+  displayNameInGroup,
+  displayNameOrUsername,
+} from "@/lib/display-name";
 import type { User } from "@/lib/types";
 
 export function UserAvatar({
   user,
   size = "md",
   className,
+  label,
 }: {
-  user: Pick<User, "name" | "avatarHue">;
+  user: Pick<User, "name" | "username" | "avatarHue">;
   size?: "sm" | "md" | "lg";
   className?: string;
+  /** Inicial / etiqueta visible (ej. @usuario en un grupo) */
+  label?: string;
 }) {
   const dim =
-    size === "sm" ? "size-7 text-xs" : size === "lg" ? "size-12 text-lg" : "size-9 text-sm";
+    size === "sm"
+      ? "size-7 text-xs"
+      : size === "lg"
+        ? "size-12 text-lg"
+        : "size-9 text-sm";
+  const text = (label || displayNameOrUsername(user)).replace(/^@/, "");
   return (
     <span
       className={cn(
@@ -24,7 +36,7 @@ export function UserAvatar({
       }}
       aria-hidden
     >
-      {user.name.slice(0, 1).toUpperCase()}
+      {text.slice(0, 1).toUpperCase()}
     </span>
   );
 }
@@ -32,16 +44,21 @@ export function UserAvatar({
 export function UserChip({
   user,
   subtitle,
+  groupId,
 }: {
   user: User;
   subtitle?: string;
+  groupId?: string;
 }) {
+  const label = groupId
+    ? displayNameInGroup(user, groupId)
+    : displayNameOrUsername(user);
   return (
     <span className="inline-flex items-center gap-2">
-      <UserAvatar user={user} size="sm" />
+      <UserAvatar user={user} size="sm" label={label} />
       <span className="min-w-0">
         <span className="block truncate text-sm font-medium text-[var(--brand-ink)]">
-          {user.name}
+          {label}
         </span>
         {subtitle && (
           <span className="block truncate text-xs text-[var(--brand-mute)]">

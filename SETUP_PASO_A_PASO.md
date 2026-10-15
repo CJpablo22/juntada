@@ -64,7 +64,9 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 7. Abajo debería decir algo como **Success**. Si hay error en rojo, copiá el mensaje y mandámelo.  
 8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
-   Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.
+   Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
+9. Corré también `003_notifications_rpc.sql` y **`004_accounts_inapp_notifications.sql`** (usuario único + avisos solo in-app).  
+10. Auth → Providers → Email: activá Email y **desactivá Confirm email** (no mandamos mails de momento).
 
 Comprobación:
 1. Menú izquierdo → **Table Editor**.  

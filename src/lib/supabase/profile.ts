@@ -1,5 +1,10 @@
 import type { User as AuthUser } from "@supabase/supabase-js";
-import type { AuthProvider, GroupLocationVisibility, User } from "@/lib/types";
+import type {
+  AuthProvider,
+  GroupLocationVisibility,
+  GroupNameVisibility,
+  User,
+} from "@/lib/types";
 import type { createClient } from "@/lib/supabase/client";
 
 type Supabase = ReturnType<typeof createClient>;
@@ -7,6 +12,7 @@ type Supabase = ReturnType<typeof createClient>;
 export type ProfileRow = {
   id: string;
   name: string;
+  username: string | null;
   country: string;
   province: string;
   city: string;
@@ -15,8 +21,12 @@ export type ProfileRow = {
   floor_unit: string | null;
   postal_code: string | null;
   group_location_visibility: Record<string, GroupLocationVisibility> | null;
+  group_name_visibility: Record<string, GroupNameVisibility> | null;
   email: string | null;
   phone: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  profile_complete: boolean | null;
   auth_provider: string;
   avatar_hue: number;
   created_at: string;
@@ -39,7 +49,8 @@ export function authProviderFromUser(authUser: AuthUser): AuthProvider {
   }
 
   if (providers.has("apple")) return "apple";
-  if (providers.has("phone") || (authUser.phone && !authUser.email)) return "phone";
+  if (providers.has("phone") || (authUser.phone && !authUser.email))
+    return "phone";
   if (providers.has("email") || authUser.email) return "email";
   return "email";
 }
@@ -49,6 +60,7 @@ export function identityFromAuth(authUser: AuthUser): {
   phone?: string;
   authProvider: AuthProvider;
   suggestedName: string;
+  username?: string;
 } {
   const authProvider = authProviderFromUser(authUser);
   const email =
@@ -64,14 +76,26 @@ export function identityFromAuth(authUser: AuthUser): {
       : undefined) ||
     undefined;
 
-  const metaName = authUser.user_metadata?.name ?? authUser.user_metadata?.full_name;
+  const metaUser =
+    typeof authUser.user_metadata?.username === "string"
+      ? authUser.user_metadata.username.trim().toLowerCase()
+      : undefined;
+  const metaName =
+    authUser.user_metadata?.name ?? authUser.user_metadata?.full_name;
   const suggestedName =
     (typeof metaName === "string" && metaName.trim()) ||
+    metaUser ||
     email?.split("@")[0] ||
     (phone ? `User ${phone.replace(/\D/g, "").slice(-4)}` : "") ||
     "Alguien";
 
-  return { email, phone, authProvider, suggestedName };
+  return {
+    email,
+    phone,
+    authProvider,
+    suggestedName,
+    username: metaUser || undefined,
+  };
 }
 
 export function userFromAuth(authUser: AuthUser, base?: Partial<User>): User {
@@ -84,6 +108,7 @@ export function userFromAuth(authUser: AuthUser, base?: Partial<User>): User {
   return {
     id: authUser.id,
     name: base?.name?.trim() || identity.suggestedName,
+    username: base?.username || identity.username,
     country: base?.country || "ES",
     province: base?.province || "Madrid",
     city: base?.city || "Madrid",
@@ -92,8 +117,12 @@ export function userFromAuth(authUser: AuthUser, base?: Partial<User>): User {
     floorUnit: base?.floorUnit,
     postalCode: base?.postalCode,
     groupLocationVisibility: base?.groupLocationVisibility ?? {},
+    groupNameVisibility: base?.groupNameVisibility ?? {},
     email: identity.email,
-    phone: identity.phone,
+    phone: identity.phone ?? base?.phone,
+    instagram: base?.instagram,
+    tiktok: base?.tiktok,
+    profileComplete: base?.profileComplete ?? false,
     authProvider: identity.authProvider,
     avatarHue: hue,
     createdAt: base?.createdAt || new Date().toISOString(),
@@ -104,6 +133,7 @@ export function rowToUser(row: ProfileRow): User {
   return {
     id: row.id,
     name: row.name || "Alguien",
+    username: row.username ?? undefined,
     country: row.country || "ES",
     province: row.province || "",
     city: row.city || "",
@@ -112,9 +142,15 @@ export function rowToUser(row: ProfileRow): User {
     floorUnit: row.floor_unit ?? undefined,
     postalCode: row.postal_code ?? undefined,
     groupLocationVisibility: row.group_location_visibility ?? {},
+    groupNameVisibility: row.group_name_visibility ?? {},
     email: row.email ?? undefined,
     phone: row.phone ?? undefined,
-    authProvider: (["email", "phone", "apple", "demo"].includes(row.auth_provider)
+    instagram: row.instagram ?? undefined,
+    tiktok: row.tiktok ?? undefined,
+    profileComplete: Boolean(row.profile_complete),
+    authProvider: (["email", "phone", "apple", "demo"].includes(
+      row.auth_provider,
+    )
       ? row.auth_provider
       : "email") as AuthProvider,
     avatarHue: row.avatar_hue ?? 180,
@@ -123,8 +159,8 @@ export function rowToUser(row: ProfileRow): User {
 }
 
 /**
- * Crea o actualiza el perfil en Postgres con el email / teléfono / Apple
- * con el que acaba de autenticarse. No pisa nombre/ubicación si ya existen.
+ * Crea o actualiza el perfil en Postgres con la identidad de Auth.
+ * No pisa nombre/ubicación/username si ya existen.
  */
 export async function ensureProfileFromAuth(
   supabase: Supabase,
@@ -146,9 +182,8 @@ export async function ensureProfileFromAuth(
 
   const payload = {
     id: authUser.id,
-    name:
-      existingRow?.name?.trim() ||
-      identity.suggestedName,
+    name: existingRow?.name?.trim() || identity.suggestedName,
+    username: existingRow?.username || identity.username || null,
     country: existingRow?.country || "ES",
     province: existingRow?.province || "Madrid",
     city: existingRow?.city || "Madrid",
@@ -157,8 +192,12 @@ export async function ensureProfileFromAuth(
     floor_unit: existingRow?.floor_unit ?? null,
     postal_code: existingRow?.postal_code ?? null,
     group_location_visibility: existingRow?.group_location_visibility ?? {},
+    group_name_visibility: existingRow?.group_name_visibility ?? {},
     email: identity.email ?? existingRow?.email ?? null,
     phone: identity.phone ?? existingRow?.phone ?? null,
+    instagram: existingRow?.instagram ?? null,
+    tiktok: existingRow?.tiktok ?? null,
+    profile_complete: existingRow?.profile_complete ?? false,
     auth_provider: identity.authProvider,
     avatar_hue:
       existingRow?.avatar_hue ??
@@ -193,38 +232,63 @@ export async function updateProfileRow(
   supabase: Supabase,
   userId: string,
   input: {
-    name: string;
-    country: string;
-    province: string;
-    city: string;
+    name?: string;
+    username?: string;
+    country?: string;
+    province?: string;
+    city?: string;
     neighborhood?: string;
     addressLine?: string;
     floorUnit?: string;
     postalCode?: string;
+    phone?: string;
+    instagram?: string;
+    tiktok?: string;
+    profileComplete?: boolean;
     groupLocationVisibility?: Record<string, GroupLocationVisibility>;
+    groupNameVisibility?: Record<string, GroupNameVisibility>;
   },
-): Promise<void> {
+): Promise<{ ok: boolean; error?: string }> {
   const patch: Record<string, unknown> = {
-    name: input.name.trim(),
-    country: input.country.trim() || "ES",
-    province: input.province.trim(),
-    city: input.city.trim(),
-    neighborhood: input.neighborhood?.trim() || null,
-    address_line: input.addressLine?.trim() || null,
-    floor_unit: input.floorUnit?.trim() || null,
-    postal_code: input.postalCode?.trim() || null,
     updated_at: new Date().toISOString(),
   };
-  if (input.groupLocationVisibility) {
+  if (input.name !== undefined) patch.name = input.name.trim();
+  if (input.username !== undefined)
+    patch.username = input.username.trim().toLowerCase() || null;
+  if (input.country !== undefined)
+    patch.country = input.country.trim() || "ES";
+  if (input.province !== undefined) patch.province = input.province.trim();
+  if (input.city !== undefined) patch.city = input.city.trim();
+  if (input.neighborhood !== undefined)
+    patch.neighborhood = input.neighborhood?.trim() || null;
+  if (input.addressLine !== undefined)
+    patch.address_line = input.addressLine?.trim() || null;
+  if (input.floorUnit !== undefined)
+    patch.floor_unit = input.floorUnit?.trim() || null;
+  if (input.postalCode !== undefined)
+    patch.postal_code = input.postalCode?.trim() || null;
+  if (input.phone !== undefined) patch.phone = input.phone?.trim() || null;
+  if (input.instagram !== undefined)
+    patch.instagram = input.instagram?.trim().replace(/^@/, "") || null;
+  if (input.tiktok !== undefined)
+    patch.tiktok = input.tiktok?.trim().replace(/^@/, "") || null;
+  if (input.profileComplete !== undefined)
+    patch.profile_complete = input.profileComplete;
+  if (input.groupLocationVisibility)
     patch.group_location_visibility = input.groupLocationVisibility;
-  }
+  if (input.groupNameVisibility)
+    patch.group_name_visibility = input.groupNameVisibility;
 
   const { error } = await supabase
     .from("profiles")
     .update(patch)
     .eq("id", userId);
 
-  if (error) console.error("profiles update", error.message);
+  if (error) {
+    console.error("profiles update", error.message);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
 export function authMethodLabel(provider: AuthProvider): string {

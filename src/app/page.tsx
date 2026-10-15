@@ -30,7 +30,7 @@ export default function LandingPage() {
             href="/enter"
             className="border-b-2 border-[var(--pop)] font-semibold text-[var(--ink)]"
           >
-            Entrar
+            Entrar / Registro
           </Link>
         </nav>
       </header>

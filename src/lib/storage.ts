@@ -85,6 +85,7 @@ function normalizeUser(user: Partial<User> & { id: string; name: string }): User
   return {
     id: user.id,
     name: user.name,
+    username: user.username,
     country: user.country ?? "ES",
     province: user.province ?? guessProvince(city),
     city,
@@ -93,8 +94,14 @@ function normalizeUser(user: Partial<User> & { id: string; name: string }): User
     floorUnit: user.floorUnit,
     postalCode: user.postalCode,
     groupLocationVisibility: user.groupLocationVisibility ?? {},
+    groupNameVisibility: user.groupNameVisibility ?? {},
     email: user.email,
     phone: user.phone,
+    instagram: user.instagram,
+    tiktok: user.tiktok,
+    profileComplete:
+      user.profileComplete ??
+      Boolean(user.addressLine && user.city && user.province),
     authProvider: user.authProvider ?? "demo",
     avatarHue: user.avatarHue ?? 180,
     createdAt: user.createdAt ?? new Date().toISOString(),

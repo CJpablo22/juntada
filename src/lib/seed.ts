@@ -7,6 +7,7 @@ export function createSeedState(): AppState {
   const lucia: User = {
     id: "user_lucia",
     name: "Lucía",
+    username: "lucia",
     country: "ES",
     province: "Madrid",
     city: "Madrid",
@@ -18,8 +19,14 @@ export function createSeedState(): AppState {
       group_nos: "neighborhood",
       group_finde: "province",
     },
+    groupNameVisibility: {
+      group_nos: "real_name",
+      group_finde: "username",
+    },
     email: "lucia@demo.juntada",
     phone: "+34 600 111 222",
+    instagram: "lucia.demo",
+    profileComplete: true,
     authProvider: "email",
     avatarHue: 12,
     createdAt: now,
@@ -27,6 +34,7 @@ export function createSeedState(): AppState {
   const mateo: User = {
     id: "user_mateo",
     name: "Mateo",
+    username: "mateo",
     country: "ES",
     province: "Sevilla",
     city: "Sevilla",
@@ -38,8 +46,13 @@ export function createSeedState(): AppState {
       group_nos: "exact",
       group_finde: "neighborhood",
     },
+    groupNameVisibility: {
+      group_nos: "real_name",
+      group_finde: "real_name",
+    },
     email: "mateo@demo.juntada",
     phone: "+34 600 333 444",
+    profileComplete: true,
     authProvider: "apple",
     avatarHue: 168,
     createdAt: now,
@@ -47,6 +60,7 @@ export function createSeedState(): AppState {
   const sofia: User = {
     id: "user_sofia",
     name: "Sofía",
+    username: "sofia",
     country: "ES",
     province: "Barcelona",
     city: "Barcelona",
@@ -57,8 +71,13 @@ export function createSeedState(): AppState {
     groupLocationVisibility: {
       group_finde: "country",
     },
+    groupNameVisibility: {
+      group_finde: "username",
+    },
     email: "sofia@demo.juntada",
     phone: "+34 600 555 666",
+    tiktok: "sofia.plans",
+    profileComplete: true,
     authProvider: "phone",
     avatarHue: 210,
     createdAt: now,
@@ -66,6 +85,7 @@ export function createSeedState(): AppState {
   const valentina: User = {
     id: "user_valentina",
     name: "Valentina",
+    username: "vale.ba",
     country: "AR",
     province: "CABA",
     city: "Buenos Aires",
@@ -76,8 +96,12 @@ export function createSeedState(): AppState {
     groupLocationVisibility: {
       group_finde: "neighborhood",
     },
+    groupNameVisibility: {
+      group_finde: "real_name",
+    },
     email: "valentina@demo.juntada",
     phone: "+54 11 5555 7788",
+    profileComplete: true,
     authProvider: "email",
     avatarHue: 28,
     createdAt: now,

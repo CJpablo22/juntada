@@ -29,6 +29,7 @@ import {
   updateProfileRow,
   userFromAuth,
 } from "@/lib/supabase/profile";
+import { notifyGroup } from "@/lib/notify-client";
 import type {
   AppState,
   AuthProvider,
@@ -36,6 +37,7 @@ import type {
   Group,
   GroupKind,
   GroupLocationVisibility,
+  GroupNameVisibility,
   Idea,
   IdeaPlace,
   IdeaTiming,
@@ -129,10 +131,30 @@ type AppContextValue = {
     addressLine?: string;
     floorUnit?: string;
     postalCode?: string;
+    phone?: string;
+    instagram?: string;
+    tiktok?: string;
   }) => void;
+  completeOnboarding: (input: {
+    name: string;
+    country: string;
+    province: string;
+    city: string;
+    neighborhood?: string;
+    addressLine: string;
+    floorUnit?: string;
+    postalCode?: string;
+    phone?: string;
+    instagram?: string;
+    tiktok?: string;
+  }) => Promise<{ ok: boolean; error?: string }>;
   setGroupLocationVisibility: (
     groupId: string,
     level: GroupLocationVisibility,
+  ) => void;
+  setGroupNameVisibility: (
+    groupId: string,
+    level: GroupNameVisibility,
   ) => void;
 };
 
@@ -321,8 +343,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         floorUnit: input.floorUnit?.trim() || undefined,
         postalCode: input.postalCode?.trim() || undefined,
         groupLocationVisibility: {},
+        groupNameVisibility: {},
         email: input.email?.trim().toLowerCase() || undefined,
         phone: input.phone?.trim() || undefined,
+        profileComplete: Boolean(input.addressLine),
         authProvider: input.authProvider ?? "demo",
         avatarHue: Math.floor(Math.random() * 360),
         createdAt: new Date().toISOString(),
@@ -348,12 +372,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           () => ({
             id: createId("user"),
             name: input.name?.trim() || email.split("@")[0] || "Usuario",
+            username: email.split("@")[0],
             country: "ES",
             province: "Madrid",
             city: input.city?.trim() || "Madrid",
             neighborhood: "Malasaña",
             groupLocationVisibility: {},
+            groupNameVisibility: {},
             email,
+            profileComplete: false,
             authProvider: "email" as const,
             avatarHue: Math.floor(Math.random() * 360),
             createdAt: new Date().toISOString(),
@@ -378,12 +405,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           () => ({
             id: createId("user"),
             name: input.name?.trim() || `User ${phone.slice(-4)}`,
+            username: `user${phone.replace(/\D/g, "").slice(-6)}`,
             country: "ES",
             province: "Madrid",
             city: input.city?.trim() || "Madrid",
             neighborhood: "Malasaña",
             groupLocationVisibility: {},
+            groupNameVisibility: {},
             phone,
+            profileComplete: false,
             authProvider: "phone" as const,
             avatarHue: Math.floor(Math.random() * 360),
             createdAt: new Date().toISOString(),
@@ -408,12 +438,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           () => ({
             id: createId("user"),
             name: input?.name?.trim() || "Usuario Apple",
+            username: "apple.demo",
             country: "ES",
             province: "Madrid",
             city: input?.city?.trim() || "Madrid",
             neighborhood: "Malasaña",
             groupLocationVisibility: {},
+            groupNameVisibility: {},
             email: appleKey,
+            profileComplete: false,
             authProvider: "apple" as const,
             avatarHue: Math.floor(Math.random() * 360),
             createdAt: new Date().toISOString(),
@@ -495,6 +528,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const profile = await ensureProfileFromAuth(supabase, user);
       const cloud = await loadCloudState(supabase, profile);
       setState(cloud);
+      const groupName =
+        cloud.groups.find((g) => g.id === gid)?.name ?? "el grupo";
+      notifyGroup({
+        groupId: gid,
+        eventType: "group_invite",
+        title: `${profile.name} se unió a ${groupName}`,
+        body: "Hay un integrante nuevo. Compartí el catálogo y lo que viene pronto.",
+        payload: { userId: profile.id, groupId: gid },
+      });
       return gid;
     }
 
@@ -593,6 +635,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           void cloudInsertIdea(sb, idea);
           const pt = next.points[next.points.length - 1];
           void cloudInsertPoint(sb, pt);
+          notifyGroup({
+            groupId: input.groupId,
+            eventType: "idea_proposed",
+            title: `Nueva idea: ${idea.title}`,
+            body: `${idea.title} se sumó al grupo. Entrá a votar o guardar.`,
+            payload: { ideaId: idea.id, groupId: input.groupId },
+          });
         }
         return next;
       });
@@ -666,6 +715,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         void cloudUpdateIdea(sb, ideaId, { votes });
         if (!already) {
           void cloudInsertPoint(sb, next.points[next.points.length - 1]);
+          const memberCount =
+            prev.groups.find((g) => g.id === idea.groupId)?.memberIds.length ??
+            0;
+          const voteCount = Object.keys(votes).length;
+          if (memberCount > 0 && voteCount >= memberCount) {
+            notifyGroup({
+              groupId: idea.groupId,
+              eventType: "votes_revealed",
+              title: `Todos votaron: ${idea.title}`,
+              body: "Ya están los votos del grupo. Revisá el resultado.",
+              payload: { ideaId, groupId: idea.groupId },
+            });
+          }
         }
       }
       return next;
@@ -749,6 +811,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           });
         }
         void cloudInsertPoint(sb, next.points[next.points.length - 1]);
+        notifyGroup({
+          groupId: idea.groupId,
+          eventType: "idea_chosen",
+          title: `Elegido: ${idea.title}`,
+          body: "El grupo ya tiene plan. Coordiná día y hora.",
+          payload: { ideaId, groupId: idea.groupId },
+        });
       }
       return next;
     });
@@ -810,6 +879,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           });
         }
         void cloudInsertPoint(sb, next.points[next.points.length - 1]);
+        notifyGroup({
+          groupId,
+          eventType: "idea_chosen",
+          title: `Sorteo: ${winner.title}`,
+          body: "El azar eligió entre los finalistas. ¡A disfrutar!",
+          payload: { ideaId: winner.id, groupId },
+        });
       }
       return next;
     });
@@ -980,6 +1056,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const sb = createSupabaseBrowserClient();
           void cloudInsertExpense(sb, expense);
           void cloudInsertPoint(sb, next.points[next.points.length - 1]);
+          notifyGroup({
+            groupId: input.groupId,
+            eventType: "expense_added",
+            title: `Gasto: ${expense.title}`,
+            body: "Hay un gasto nuevo en el grupo. Miralo en Saldos.",
+            payload: {
+              expenseId: expense.id,
+              ideaId: expense.ideaId,
+              groupId: input.groupId,
+            },
+          });
         }
         return next;
       });
@@ -997,6 +1084,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addressLine?: string;
       floorUnit?: string;
       postalCode?: string;
+      phone?: string;
+      instagram?: string;
+      tiktok?: string;
     }) => {
       setState((prev) => {
         if (!prev.currentUserId) return prev;
@@ -1018,6 +1108,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   addressLine: input.addressLine?.trim() || undefined,
                   floorUnit: input.floorUnit?.trim() || undefined,
                   postalCode: input.postalCode?.trim() || undefined,
+                  phone: input.phone?.trim() || undefined,
+                  instagram: input.instagram?.trim().replace(/^@/, "") || undefined,
+                  tiktok: input.tiktok?.trim().replace(/^@/, "") || undefined,
                 }
               : u,
           ),
@@ -1027,26 +1120,76 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const completeOnboarding = useCallback(
+    async (input: {
+      name: string;
+      country: string;
+      province: string;
+      city: string;
+      neighborhood?: string;
+      addressLine: string;
+      floorUnit?: string;
+      postalCode?: string;
+      phone?: string;
+      instagram?: string;
+      tiktok?: string;
+    }) => {
+      const uid = state.currentUserId;
+      if (!uid) return { ok: false, error: "Sin sesión" };
+
+      const patch = {
+        name: input.name.trim(),
+        country: input.country.trim() || "ES",
+        province: input.province.trim(),
+        city: input.city.trim(),
+        neighborhood: input.neighborhood?.trim() || undefined,
+        addressLine: input.addressLine.trim(),
+        floorUnit: input.floorUnit?.trim() || undefined,
+        postalCode: input.postalCode?.trim() || undefined,
+        phone: input.phone?.trim() || undefined,
+        instagram: input.instagram?.trim().replace(/^@/, "") || undefined,
+        tiktok: input.tiktok?.trim().replace(/^@/, "") || undefined,
+        profileComplete: true as const,
+      };
+
+      if (cloudConfigured) {
+        const result = await updateProfileRow(
+          createSupabaseBrowserClient(),
+          uid,
+          patch,
+        );
+        if (!result.ok) return result;
+      }
+
+      setState((prev) => ({
+        ...prev,
+        users: prev.users.map((u) =>
+          u.id === uid
+            ? {
+                ...u,
+                ...patch,
+                profileComplete: true,
+              }
+            : u,
+        ),
+      }));
+      return { ok: true };
+    },
+    [state.currentUserId],
+  );
+
   const setGroupLocationVisibility = useCallback(
     (groupId: string, level: GroupLocationVisibility) => {
       setState((prev) => {
         if (!prev.currentUserId) return prev;
         const uid = prev.currentUserId;
+        const me = prev.users.find((u) => u.id === uid);
         const nextVisibility = {
-          ...(prev.users.find((u) => u.id === uid)?.groupLocationVisibility ??
-            {}),
+          ...(me?.groupLocationVisibility ?? {}),
           [groupId]: level,
         };
         if (cloudConfigured) {
           void updateProfileRow(createSupabaseBrowserClient(), uid, {
-            name: prev.users.find((u) => u.id === uid)?.name ?? "",
-            country: prev.users.find((u) => u.id === uid)?.country ?? "ES",
-            province: prev.users.find((u) => u.id === uid)?.province ?? "",
-            city: prev.users.find((u) => u.id === uid)?.city ?? "",
-            neighborhood: prev.users.find((u) => u.id === uid)?.neighborhood,
-            addressLine: prev.users.find((u) => u.id === uid)?.addressLine,
-            floorUnit: prev.users.find((u) => u.id === uid)?.floorUnit,
-            postalCode: prev.users.find((u) => u.id === uid)?.postalCode,
             groupLocationVisibility: nextVisibility,
           });
         }
@@ -1054,11 +1197,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ...prev,
           users: prev.users.map((u) =>
             u.id === uid
-              ? {
-                  ...u,
-                  groupLocationVisibility: nextVisibility,
-                }
+              ? { ...u, groupLocationVisibility: nextVisibility }
               : u,
+          ),
+        };
+      });
+    },
+    [],
+  );
+
+  const setGroupNameVisibility = useCallback(
+    (groupId: string, level: GroupNameVisibility) => {
+      setState((prev) => {
+        if (!prev.currentUserId) return prev;
+        const uid = prev.currentUserId;
+        const me = prev.users.find((u) => u.id === uid);
+        const nextVisibility = {
+          ...(me?.groupNameVisibility ?? {}),
+          [groupId]: level,
+        };
+        if (cloudConfigured) {
+          void updateProfileRow(createSupabaseBrowserClient(), uid, {
+            groupNameVisibility: nextVisibility,
+          });
+        }
+        return {
+          ...prev,
+          users: prev.users.map((u) =>
+            u.id === uid ? { ...u, groupNameVisibility: nextVisibility } : u,
           ),
         };
       });
@@ -1091,7 +1257,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addReview,
       addExpense,
       updateProfile,
+      completeOnboarding,
       setGroupLocationVisibility,
+      setGroupNameVisibility,
     }),
     [
       ready,
@@ -1117,7 +1285,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addReview,
       addExpense,
       updateProfile,
+      completeOnboarding,
       setGroupLocationVisibility,
+      setGroupNameVisibility,
     ],
   );
 

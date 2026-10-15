@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { useApp } from "@/components/providers/app-provider";
+import { clusterDiscoverEntries } from "@/lib/discover";
 import { IDEA_TYPE_LABELS, type IdeaType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -12,22 +13,10 @@ export default function DiscoverPage() {
   const [type, setType] = useState<"all" | IdeaType>("all");
 
   const entries = useMemo(() => {
-    const done = state.ideas.filter((i) => i.status === "done");
-    return done
-      .map((idea) => {
-        const reviews = state.reviews.filter(
-          (r) => r.ideaId === idea.id && r.publicVisible,
-        );
-        if (reviews.length === 0) return null;
-        const avg =
-          reviews.reduce((a, b) => a + b.rating, 0) / reviews.length;
-        return { idea, reviews, avg };
-      })
-      .filter(Boolean)
-      .filter((row) =>
-        type === "all" ? true : row!.idea.type === type,
-      )
-      .sort((a, b) => b!.avg - a!.avg || b!.reviews.length - a!.reviews.length);
+    const clusters = clusterDiscoverEntries(state.ideas, state.reviews);
+    return type === "all"
+      ? clusters
+      : clusters.filter((c) => c.type === type);
   }, [state.ideas, state.reviews, type]);
 
   return (
@@ -48,7 +37,7 @@ export default function DiscoverPage() {
         </h1>
         <p className="mt-2 max-w-xl text-[var(--mute)]">
           Pelis, sitios y planes que la gente ya hizo — con valoración y
-          comentarios públicos.
+          comentarios públicos. Títulos iguales se unifican.
         </p>
       </div>
 
@@ -77,38 +66,38 @@ export default function DiscoverPage() {
         </div>
       ) : (
         <ul className="mt-8 divide-y divide-[var(--line)] border-y border-[var(--line)]">
-          {entries.map((row) => {
-            if (!row) return null;
-            return (
-              <li key={row.idea.id}>
-                <Link
-                  href={`/discover/${row.idea.id}`}
-                  className="block py-4 hover:bg-white/50"
-                >
-                  <div className="flex flex-wrap items-baseline gap-2 text-sm">
-                    <span className="text-[var(--mute)]">
-                      {IDEA_TYPE_LABELS[row.idea.type]}
-                    </span>
-                    <span className="font-semibold text-[var(--pop)]">
-                      {row.avg.toFixed(1)}/5
-                    </span>
-                    <span className="text-xs text-[var(--mute)]">
-                      {row.reviews.length}{" "}
-                      {row.reviews.length === 1 ? "opinión" : "opiniones"}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xl font-semibold text-[var(--ink)]">
-                    {row.idea.title}
+          {entries.map((row) => (
+            <li key={row.key}>
+              <Link
+                href={`/discover/${row.canonicalIdeaId}`}
+                className="block py-4 hover:bg-white/50"
+              >
+                <div className="flex flex-wrap items-baseline gap-2 text-sm">
+                  <span className="text-[var(--mute)]">
+                    {IDEA_TYPE_LABELS[row.type]}
+                  </span>
+                  <span className="font-semibold text-[var(--pop)]">
+                    {row.avg.toFixed(1)}/5
+                  </span>
+                  <span className="text-xs text-[var(--mute)]">
+                    {row.reviews.length}{" "}
+                    {row.reviews.length === 1 ? "opinión" : "opiniones"}
+                    {row.ideaIds.length > 1
+                      ? ` · ${row.ideaIds.length} grupos`
+                      : ""}
+                  </span>
+                </div>
+                <p className="mt-1 text-xl font-semibold text-[var(--ink)]">
+                  {row.title}
+                </p>
+                {row.reviews[0]?.comment ? (
+                  <p className="mt-1 line-clamp-2 text-sm text-[var(--mute)]">
+                    “{row.reviews[0].comment}”
                   </p>
-                  {row.reviews[0]?.comment ? (
-                    <p className="mt-1 line-clamp-2 text-sm text-[var(--mute)]">
-                      “{row.reviews[0].comment}”
-                    </p>
-                  ) : null}
-                </Link>
-              </li>
-            );
-          })}
+                ) : null}
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
     </main>

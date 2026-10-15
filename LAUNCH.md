@@ -27,13 +27,14 @@ Cuando crezca el público, **no se migra de un juguete**: ya estaremos en Postgr
 | Calles / CP | Nominatim (OSM) vía `/api/address-search` | Sin API key |
 
 ### Login ahora
-- **Correo con link mágico** (cualquier Gmail, Outlook, etc.).
-- Sin contraseña: te llega un mail → tocás el enlace → entras.
-- **Obligatorio** estar logueado para usar la app.
+- **Registro / login obligatorio**: usuario único + correo + contraseña.
+- Tras entrar: onboarding con **dirección obligatoria**; teléfono / Instagram / TikTok opcionales.
+- En cada grupo elegís si ven tu **@usuario** o tu **nombre real**.
+- Teléfono SMS y Apple / iCloud: UI lista, activación pendiente (pago).
 
 ### Notificaciones ahora
-- **Solo correo** (gratis).
-- Misma cola de eventos servirá luego para WhatsApp / push.
+- **Solo in-app** (apartado Avisos). **No se mandan mails** de eventos por ahora.
+- La misma cola servirá luego para email / WhatsApp / push si los activamos.
 
 ---
 
@@ -64,13 +65,11 @@ Ver también `PRODUCT_VISION.md`: juegos de reunión, Descubrir unificado, fotos
 ## Qué tenés que crear vos (cuentas gratis)
 
 1. [ ] Cuenta en [supabase.com](https://supabase.com) → New project.  
-2. [ ] En el SQL Editor, pegar y ejecutar `supabase/migrations/001_init.sql`. Si el proyecto ya existía, ejecutá también `002_profile_identity.sql` (guarda mail/teléfono/Apple en el perfil).  
-3. [ ] Auth → URL configuration: Site URL = tu URL de Vercel (y `http://127.0.0.1:3456` en local).  
-4. [ ] Auth → Email templates → Magic Link: usar  
-   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/app`  
+2. [ ] SQL Editor: `001_init.sql`. Si el proyecto ya existía, también `002`, `003` y **`004_accounts_inapp_notifications.sql`**.  
+3. [ ] Auth → Providers → Email: Enabled. **Confirm email = OFF** (no mandamos mails de momento).  
+4. [ ] Auth → URL configuration: Site URL = tu URL de Vercel (y `http://127.0.0.1:3456` en local).  
 5. [ ] Copiar **Project URL** y **anon public key** → variables de entorno.  
-6. [ ] Cuenta en [vercel.com](https://vercel.com) → Importar este repo → mismas env vars → Deploy.  
-7. [ ] (Opcional avisos) Cuenta [resend.com](https://resend.com) free + `RESEND_API_KEY`.
+6. [ ] Cuenta en [vercel.com](https://vercel.com) → Importar este repo → mismas env vars → Deploy.
 
 ### Variables de entorno
 
@@ -78,9 +77,6 @@ Ver también `PRODUCT_VISION.md`: juegos de reunión, Descubrir unificado, fotos
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 NEXT_PUBLIC_APP_URL=https://tu-app.vercel.app
-# Opcional (avisos por correo más adelante / Resend)
-RESEND_API_KEY=
-RESEND_FROM=Juntada <onboarding@resend.dev>
 ```
 
 Sin `NEXT_PUBLIC_SUPABASE_URL`, la app sigue en **modo local** (`localStorage`) solo para desarrollo. En producción **hay que** configurar Supabase.

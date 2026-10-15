@@ -8,6 +8,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/user-chip";
+import { clusterDiscoverEntries, discoverKey } from "@/lib/discover";
 import { IDEA_TYPE_LABELS } from "@/lib/types";
 
 export default function DiscoverDetailPage() {
@@ -15,17 +16,19 @@ export default function DiscoverDetailPage() {
   const { ready, state } = useApp();
   const idea = state.ideas.find((i) => i.id === params.ideaId);
 
-  const reviews = useMemo(
-    () =>
-      state.reviews
-        .filter((r) => r.ideaId === params.ideaId && r.publicVisible)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [state.reviews, params.ideaId],
-  );
+  const cluster = useMemo(() => {
+    if (!idea) return null;
+    const clusters = clusterDiscoverEntries(state.ideas, state.reviews);
+    return (
+      clusters.find((c) => c.key === discoverKey(idea)) ??
+      clusters.find((c) => c.ideaIds.includes(idea.id)) ??
+      null
+    );
+  }, [idea, state.ideas, state.reviews]);
 
-  const avg = reviews.length
-    ? reviews.reduce((a, b) => a + b.rating, 0) / reviews.length
-    : null;
+  const reviews = cluster?.reviews ?? [];
+  const avg = cluster?.avg ?? null;
+  const title = cluster?.title ?? idea?.title ?? "";
 
   if (!ready) {
     return (
@@ -35,7 +38,7 @@ export default function DiscoverDetailPage() {
     );
   }
 
-  if (!idea || reviews.length === 0) {
+  if (!idea || !cluster || reviews.length === 0) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-8">
         <Logo />
@@ -77,9 +80,14 @@ export default function DiscoverDetailPage() {
               {avg.toFixed(1)}/5 · {reviews.length} opiniones
             </span>
           ) : null}
+          {cluster.ideaIds.length > 1 ? (
+            <span className="text-xs text-[var(--brand-mute)]">
+              Unificado de {cluster.ideaIds.length} grupos
+            </span>
+          ) : null}
         </div>
         <h1 className="type-display mt-2 text-3xl font-bold text-[var(--brand-ink)] sm:text-4xl">
-          {idea.title}
+          {title}
         </h1>
         {idea.notes ? (
           <p className="mt-3 text-[var(--brand-mute)]">{idea.notes}</p>
@@ -98,33 +106,19 @@ export default function DiscoverDetailPage() {
                 <span className="inline-flex items-center gap-2 text-sm font-medium">
                   {author ? <UserAvatar user={author} size="sm" /> : null}
                   {author?.name ?? "Alguien"}
-                  {author?.city ? (
-                    <span className="text-xs font-normal text-[var(--brand-mute)]">
-                      · {author.city}
-                    </span>
-                  ) : null}
                 </span>
-                <span className="font-semibold text-[var(--brand-pop)]">
+                <span className="text-sm font-semibold text-[var(--brand-pop)]">
                   {review.rating}/5
                 </span>
               </div>
               {review.comment ? (
-                <p className="mt-3 text-sm leading-relaxed text-[var(--brand-mute)]">
+                <p className="mt-2 text-sm leading-relaxed text-[var(--brand-ink)]">
                   {review.comment}
                 </p>
               ) : null}
             </article>
           );
         })}
-      </Reveal>
-
-      <Reveal delayMs={140} className="mt-8">
-        <Link
-          href="/enter"
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-[var(--brand-ink)] px-4 text-sm font-medium text-white"
-        >
-          Guardá esto en tu grupo
-        </Link>
       </Reveal>
     </main>
   );

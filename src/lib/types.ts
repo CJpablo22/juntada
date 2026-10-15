@@ -12,6 +12,9 @@ export type GroupLocationVisibility =
   | "neighborhood"
   | "exact";
 
+/** En el grupo: ¿ven tu @usuario o tu nombre real? */
+export type GroupNameVisibility = "username" | "real_name";
+
 /** Cine o casa — solo aplica a películas */
 export type MovieVenue = "cinema" | "home";
 
@@ -27,6 +30,8 @@ export type IdeaPlace = {
 export type User = {
   id: string;
   name: string;
+  /** @usuario único (estilo Instagram) */
+  username?: string;
   country: string;
   province: string;
   city: string;
@@ -41,12 +46,24 @@ export type User = {
    * Si falta la clave, por defecto "province".
    */
   groupLocationVisibility: Record<string, GroupLocationVisibility>;
+  /** Por grupo: username o nombre real. Default real_name. */
+  groupNameVisibility: Record<string, GroupNameVisibility>;
   email?: string;
   phone?: string;
+  instagram?: string;
+  tiktok?: string;
+  /** Completó onboarding (dirección + nombre) */
+  profileComplete: boolean;
   authProvider: AuthProvider;
   avatarHue: number;
   createdAt: string;
 };
+
+export const GROUP_NAME_VISIBILITY_LABELS: Record<GroupNameVisibility, string> =
+  {
+    real_name: "Nombre real",
+    username: "Nombre de usuario (@)",
+  };
 
 export type Group = {
   id: string;

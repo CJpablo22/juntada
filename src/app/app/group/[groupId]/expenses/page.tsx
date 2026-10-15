@@ -21,6 +21,7 @@ export default function ExpensesPage() {
   const [amount, setAmount] = useState("");
   const [paidBy, setPaidBy] = useState("");
   const [split, setSplit] = useState<string[]>([]);
+  const [ideaId, setIdeaId] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -35,6 +36,18 @@ export default function ExpensesPage() {
         ? state.expenses.filter((e) => e.groupId === group.id)
         : [],
     [state.expenses, group],
+  );
+
+  const linkableIdeas = useMemo(
+    () =>
+      group
+        ? state.ideas.filter(
+            (i) =>
+              i.groupId === group.id &&
+              (i.status === "chosen" || i.status === "done" || i.timing === "soon"),
+          )
+        : [],
+    [state.ideas, group],
   );
 
   const balances = useMemo(
@@ -86,6 +99,7 @@ export default function ExpensesPage() {
     }
     addExpense({
       groupId: group!.id,
+      ideaId: ideaId || undefined,
       title,
       amountCents: cents,
       paidBy,
@@ -93,6 +107,7 @@ export default function ExpensesPage() {
     });
     setTitle("");
     setAmount("");
+    setIdeaId("");
     setError("");
   }
 
@@ -139,6 +154,22 @@ export default function ExpensesPage() {
               className="h-11 rounded-xl"
               inputMode="decimal"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ideaId">Plan (opcional)</Label>
+            <select
+              id="ideaId"
+              value={ideaId}
+              onChange={(e) => setIdeaId(e.target.value)}
+              className="h-11 w-full rounded-xl border border-[var(--brand-line)] bg-white px-3 text-sm"
+            >
+              <option value="">Gasto suelto</option>
+              {linkableIdeas.map((idea) => (
+                <option key={idea.id} value={idea.id}>
+                  {idea.title}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="paidBy">Pagó</Label>
@@ -266,6 +297,9 @@ export default function ExpensesPage() {
           <ul className="space-y-2">
             {expenses.map((expense) => {
               const payer = state.users.find((u) => u.id === expense.paidBy);
+              const linked = expense.ideaId
+                ? state.ideas.find((i) => i.id === expense.ideaId)
+                : undefined;
               return (
                 <li
                   key={expense.id}
@@ -278,6 +312,7 @@ export default function ExpensesPage() {
                     <p className="text-xs text-[var(--brand-mute)]">
                       Pagó {payer?.name ?? "—"} ·{" "}
                       {expense.splitBetween.length} personas
+                      {linked ? ` · ${linked.title}` : ""}
                     </p>
                   </div>
                   <p className="font-semibold">{formatEuro(expense.amountCents)}</p>
