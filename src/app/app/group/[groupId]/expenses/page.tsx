@@ -130,6 +130,7 @@ export default function ExpensesPage() {
     }
     if (
       selectedIdea &&
+      currentUser &&
       isBirthdayCelebrant(selectedIdea, currentUser.id)
     ) {
       setError("No podés cargar gastos de tu propio cumpleaños.");
