@@ -63,7 +63,7 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Beneficio jugable real del #1 (romper empate con acción)
 - [x] Ritual semanal «¿qué hacemos?»
 - [x] Digest semanal in-app (planes, gastos, ranking)
-- [ ] Import por link (Maps / Netflix / Letterboxd / IG → título/lugar)
+- [x] Import por link (Maps / Netflix / Letterboxd / IG → título/lugar)
 - [ ] Álbum simple de recuerdos del grupo
 - [ ] 1 juego de reunión piloto (impostor / adivinar quién soy)
 - [ ] Mejoras Discover / gastos / votos / UI privacidad (si aportan)
@@ -210,7 +210,7 @@ Beneficios simbólicos del #1 del grupo:
 ### 4.3 Inteligencia de planes
 - Mood filters avanzados
 - [x] Ritual semanal “¿qué hacemos?” (2026-10-16)
-- Import por link (Maps, Netflix, Letterboxd, IG) *(en cola free, básico)*
+- [x] Import por link (Maps, Netflix, Letterboxd, IG) básico (2026-10-16)
 - Mapa embebido con pins del grupo
 - Sugerencias smart / IA
 - [x] PWA instalable (manifest + SW + prompt); app móvil nativa en stores = después
@@ -232,7 +232,7 @@ Idea general:
 - [x] Digest semanal (planes, gastos, ranking) in-app (2026-10-16)
 - Privacidad fuerte por grupo — ya hay RLS + UI por grupo; pulido UI pendiente
 - Temporadas / badges temáticos
-- Álbum de recuerdos del grupo *(en cola free, simple)*
+- Álbum de recuerdos del grupo *(siguiente en cola free)*
 - Nota: “ahora no” (veto suave) ya entró al MVP web
 - [x] Foto en recuerdos (2026-10-16)
 - [x] Beneficio jugable del #1 (2026-10-16)
