@@ -218,10 +218,10 @@ function EnterForm() {
         }
         return;
       }
-      const supabase = createClient();
-      await supabase.auth.getSession();
-      goAfterAuth(true);
-      router.replace(safeInternalPath(data.next, nextPath));
+      // Hard navigation: el login setea cookies en el server y el AppProvider
+      // solo las lee al boot. Sin reload queda en "Cargando…" sin currentUser.
+      window.location.assign(safeInternalPath(data.next, nextPath));
+      return;
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo entrar.");
     } finally {

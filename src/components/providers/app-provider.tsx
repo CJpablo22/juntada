@@ -284,15 +284,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } = supabase.auth.onAuthStateChange((event, session) => {
           if (event === "SIGNED_OUT") {
             setState({ ...createEmpty(), currentUserId: null });
+            setReady(true);
             return;
           }
-          // Solo recargar mundo en login real. USER_UPDATED (ej. cambio de
-          // contraseña) no debe pisar grupos/ideas en memoria.
+          // Solo recargar mundo en login real. USER_UPDATED no debe pisar estado.
           if (event === "SIGNED_IN" && session?.user) {
             void (async () => {
               try {
                 await applyAuthUser(session.user);
               } catch {
+                if (cancelled) return;
                 setState((prev) => {
                   const found = prev.users.find((u) => u.id === session.user.id);
                   if (found) {
@@ -312,6 +313,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     currentUserId: session.user.id,
                   };
                 });
+                setReady(true);
               }
             })();
           }
