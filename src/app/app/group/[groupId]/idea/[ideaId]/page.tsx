@@ -125,6 +125,40 @@ export default function IdeaDetailPage() {
     idea?.budgetNote,
   ]);
 
+  // Ideas viejas sin planOptions: el creador publica el lugar/fecha base como 1ª opción.
+  useEffect(() => {
+    if (!idea || !currentUser) return;
+    if (idea.proposedBy !== currentUser.id) return;
+    if ((idea.planOptions ?? []).length > 0) return;
+    if (idea.status === "done" || idea.status === "archived") return;
+    const place = idea.places?.[0];
+    const placeName = place?.name?.trim();
+    const placeAddress = place?.address?.trim() || idea.address?.trim();
+    const scheduledDate = idea.scheduledDate?.trim();
+    const scheduledTime = idea.scheduledTime?.trim();
+    if (!placeName && !placeAddress && !scheduledDate && !scheduledTime) return;
+    void addPlanOption({
+      ideaId: idea.id,
+      placeName,
+      placeAddress,
+      memberHomeId:
+        place?.kind === "member_home" ? place.memberId : undefined,
+      scheduledDate,
+      scheduledTime,
+    });
+  }, [
+    idea?.id,
+    idea?.proposedBy,
+    idea?.planOptions,
+    idea?.status,
+    idea?.places,
+    idea?.address,
+    idea?.scheduledDate,
+    idea?.scheduledTime,
+    currentUser?.id,
+    addPlanOption,
+  ]);
+
   if (!ready || !currentUser) {
     return <div className="p-6 text-[var(--mute)]">Cargando idea…</div>;
   }
@@ -318,6 +352,16 @@ export default function IdeaDetailPage() {
           currentUserId={currentUser.id}
           ideaProposerId={idea.proposedBy}
           canEdit={canTouchOptions}
+          currentPlaceHint={
+            [
+              idea.places?.[0]
+                ? formatPlace(idea.places[0])
+                : idea.address,
+              formatIdeaSchedule(idea),
+            ]
+              .filter(Boolean)
+              .join(" · ") || null
+          }
           onAdd={(input) => addPlanOption({ ideaId: idea.id, ...input })}
           onVote={(optionId) => votePlanOption(idea.id, optionId)}
           onRemove={(optionId) => removePlanOption(idea.id, optionId)}

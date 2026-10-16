@@ -42,6 +42,7 @@ export function PlanOptionsSection({
   currentUserId,
   ideaProposerId,
   canEdit,
+  currentPlaceHint,
   onAdd,
   onVote,
   onRemove,
@@ -51,6 +52,8 @@ export function PlanOptionsSection({
   currentUserId: string;
   ideaProposerId: string;
   canEdit: boolean;
+  /** Lugar/fecha ya puestos en la idea (si aún no hay opciones). */
+  currentPlaceHint?: string | null;
   onAdd: (input: {
     placeName?: string;
     placeAddress?: string;
@@ -148,10 +151,22 @@ export function PlanOptionsSection({
       </div>
 
       {sorted.length === 0 ? (
-        <p className="rounded-none border border-dashed border-[var(--line)] bg-[var(--wash)] px-3 py-4 text-sm text-[var(--mute)]">
-          Todavía no hay opciones. El creador puede haber dejado el plan sin
-          lugar ni fecha — proponé la primera.
-        </p>
+        <div className="space-y-2 rounded-none border border-dashed border-[var(--line)] bg-[var(--wash)] px-3 py-4 text-sm text-[var(--mute)]">
+          {currentPlaceHint ? (
+            <p>
+              Ahora figura:{" "}
+              <strong className="font-medium text-[var(--ink)]">
+                {currentPlaceHint}
+              </strong>
+              . Todavía no hay alternativas para votar — proponé una.
+            </p>
+          ) : (
+            <p>
+              Todavía no hay opciones. Proponé lugar, fecha u hora para
+              empezar.
+            </p>
+          )}
+        </div>
       ) : (
         <ul className="space-y-2">
           {sorted.map((option, index) => {
