@@ -94,15 +94,35 @@ export async function subscribeToPush(): Promise<
   }
 
   const reg = await navigator.serviceWorker.ready;
-  let sub = await reg.pushManager.getSubscription();
-  if (!sub) {
+  // Si cambió el VAPID (redeploy / claves nuevas), hay que re-suscribir.
+  const existing = await reg.pushManager.getSubscription();
+  if (existing) {
+    try {
+      await existing.unsubscribe();
+    } catch {
+      /* ignore */
+    }
+  }
+
+  let sub: PushSubscription;
+  try {
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey()),
     });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "subscribe_failed";
+    return {
+      ok: false,
+      error: `No se pudo suscribir al push (${msg}). En iPhone usá iOS 16.4+ y abrí desde el icono.`,
+    };
   }
 
   const json = sub.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    return { ok: false, error: "El navegador no devolvió una suscripción válida." };
+  }
+
   const res = await fetch("/api/push/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -113,10 +133,46 @@ export async function subscribeToPush(): Promise<
     }),
   });
   if (!res.ok) {
-    const data = (await res.json().catch(() => ({}))) as { error?: string };
-    return { ok: false, error: data.error || "No se pudo guardar la suscripción." };
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+    };
+    return {
+      ok: false,
+      error:
+        data.error ||
+        "No se pudo guardar la suscripción (¿migración 016 en Supabase?).",
+    };
   }
   return { ok: true };
+}
+
+export async function sendTestPush(): Promise<
+  { ok: true; detail: string } | { ok: false; error: string }
+> {
+  const res = await fetch("/api/push/test", { method: "POST" });
+  const data = (await res.json().catch(() => ({}))) as {
+    ok?: boolean;
+    error?: string;
+    hint?: string;
+    sent?: number;
+    failed?: number;
+    skipped?: string;
+    subscriptions?: number;
+  };
+  if (!res.ok || !data.ok) {
+    return {
+      ok: false,
+      error:
+        data.hint ||
+        data.error ||
+        data.skipped ||
+        "No se pudo enviar el aviso de prueba.",
+    };
+  }
+  return {
+    ok: true,
+    detail: `Enviado (${data.sent ?? 0}). Deberías verlo ya en la pantalla.`,
+  };
 }
 
 export async function unsubscribeFromPush(): Promise<void> {

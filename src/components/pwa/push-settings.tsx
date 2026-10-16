@@ -1,10 +1,11 @@
 "use client";
 
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   getPushSupport,
+  sendTestPush,
   subscribeToPush,
   unsubscribeFromPush,
   type PushSupport,
@@ -53,7 +54,9 @@ export function PushSettings() {
       await refresh();
       return;
     }
-    setMsg("Listo. Vas a recibir avisos del grupo en este dispositivo.");
+    setMsg(
+      "Listo. Tocá «Probar aviso» para comprobar. Los avisos del grupo van a los demás (no a quien hace la acción).",
+    );
     await refresh();
   }
 
@@ -64,6 +67,14 @@ export function PushSettings() {
     setBusy(false);
     setMsg("Avisos push desactivados en este dispositivo.");
     await refresh();
+  }
+
+  async function test() {
+    setBusy(true);
+    setMsg("");
+    const result = await sendTestPush();
+    setBusy(false);
+    setMsg(result.ok ? result.detail : result.error);
   }
 
   const reason = support?.reason;
@@ -89,7 +100,8 @@ export function PushSettings() {
       {reason === "vapid" ? (
         <p className="mt-3 text-sm text-[#7f1d1d]">
           Faltan las claves VAPID en el servidor. Mirá{" "}
-          <code className="text-xs">.env.example</code> / SETUP.
+          <code className="text-xs">.env.example</code> / SETUP. Después de
+          pegarlas en Vercel, hacé Redeploy.
         </p>
       ) : null}
 
@@ -102,16 +114,27 @@ export function PushSettings() {
 
       <div className="mt-3 flex flex-wrap gap-2">
         {subscribed ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={busy}
-            onClick={() => void disable()}
-          >
-            <BellOff className="size-4" />
-            Desactivar avisos
-          </Button>
+          <>
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy}
+              onClick={() => void test()}
+            >
+              <Send className="size-4" />
+              Probar aviso
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={busy}
+              onClick={() => void disable()}
+            >
+              <BellOff className="size-4" />
+              Desactivar
+            </Button>
+          </>
         ) : (
           <Button
             type="button"
@@ -127,7 +150,8 @@ export function PushSettings() {
 
       {subscribed ? (
         <p className="mt-2 text-xs text-[var(--pop)]">
-          Activos en este dispositivo.
+          Activos en este dispositivo. Para ver un aviso de grupo hace falta
+          otra cuenta del grupo haciendo algo (idea, voto, gasto).
         </p>
       ) : null}
       {msg ? <p className="mt-2 text-sm text-[var(--ink)]">{msg}</p> : null}
