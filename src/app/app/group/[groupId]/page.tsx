@@ -12,6 +12,7 @@ import {
   validatePlaces,
 } from "@/components/ideas/place-fields";
 import { ScheduleFields } from "@/components/ideas/schedule-fields";
+import { WeeklyRitual } from "@/components/ideas/weekly-ritual";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -548,54 +549,70 @@ export default function GroupPage() {
       </section>
 
       {shelf === "soon" ? (
-        <section className="surface-panel space-y-3 p-4">
-          <div>
-            <p className="font-semibold text-[var(--ink)]">Decidir juntos</p>
-            <p className="mt-1 text-sm text-[var(--mute)]">
-              {inProgress
-                ? "Hay un plan en proceso. Cuando lo terminen, marquenlo como hecho."
-                : chosen
-                  ? "Ya hay un plan elegido. Pueden marcarlo en proceso o cambiarlo."
-                  : "Votá en cada idea, revelen los votos, o dejen que el azar elija entre Pronto."}
-            </p>
-          </div>
-          {inProgress ? (
-            <p className="text-sm">
-              En proceso:{" "}
-              <Link
-                href={`/app/group/${group.id}/idea/${inProgress.id}`}
-                className="font-semibold text-[var(--ink)] underline"
-              >
-                {inProgress.title}
-              </Link>
-            </p>
-          ) : null}
-          {chosen ? (
-            <p className="text-sm">
-              Elegida:{" "}
-              <Link
-                href={`/app/group/${group.id}/idea/${chosen.id}`}
-                className="font-semibold text-[var(--pop)] underline"
-              >
-                {chosen.title}
-              </Link>
-            </p>
-          ) : null}
-          <div className="max-w-md">
-            <LotteryButton
-              onPick={() => pickRandomIdea(group.id)}
-              disabled={
-                !state.ideas.some(
-                  (i) =>
-                    i.groupId === group.id &&
-                    i.timing === "soon" &&
-                    (i.status === "pending" || i.status === "chosen") &&
-                    i.softVetoUserIds.length === 0,
-                )
-              }
-            />
-          </div>
-        </section>
+        <>
+          <WeeklyRitual
+            groupId={group.id}
+            ideas={state.ideas}
+            onLottery={(ids) => pickRandomIdea(group.id, ids)}
+            lotteryDisabled={
+              !state.ideas.some(
+                (i) =>
+                  i.groupId === group.id &&
+                  i.timing === "soon" &&
+                  (i.status === "pending" || i.status === "chosen") &&
+                  i.softVetoUserIds.length === 0,
+              )
+            }
+          />
+          <section className="surface-panel space-y-3 p-4">
+            <div>
+              <p className="font-semibold text-[var(--ink)]">Decidir juntos</p>
+              <p className="mt-1 text-sm text-[var(--mute)]">
+                {inProgress
+                  ? "Hay un plan en proceso. Cuando lo terminen, marquenlo como hecho."
+                  : chosen
+                    ? "Ya hay un plan elegido. Pueden marcarlo en proceso o cambiarlo."
+                    : "Votá en cada idea, revelen los votos, o dejen que el azar elija entre Pronto."}
+              </p>
+            </div>
+            {inProgress ? (
+              <p className="text-sm">
+                En proceso:{" "}
+                <Link
+                  href={`/app/group/${group.id}/idea/${inProgress.id}`}
+                  className="font-semibold text-[var(--ink)] underline"
+                >
+                  {inProgress.title}
+                </Link>
+              </p>
+            ) : null}
+            {chosen ? (
+              <p className="text-sm">
+                Elegida:{" "}
+                <Link
+                  href={`/app/group/${group.id}/idea/${chosen.id}`}
+                  className="font-semibold text-[var(--pop)] underline"
+                >
+                  {chosen.title}
+                </Link>
+              </p>
+            ) : null}
+            <div className="max-w-md">
+              <LotteryButton
+                onPick={() => pickRandomIdea(group.id)}
+                disabled={
+                  !state.ideas.some(
+                    (i) =>
+                      i.groupId === group.id &&
+                      i.timing === "soon" &&
+                      (i.status === "pending" || i.status === "chosen") &&
+                      i.softVetoUserIds.length === 0,
+                  )
+                }
+              />
+            </div>
+          </section>
+        </>
       ) : null}
 
       {shelf === "soon" && captainTie ? (

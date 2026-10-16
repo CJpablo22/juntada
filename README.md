@@ -24,6 +24,8 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - Privacidad de ubicación por grupo
 - **PWA**: instalable en el móvil (manifest + service worker + aviso en app/Perfil)
 - Foto opcional al marcar un plan como hecho (comprimida en el dispositivo)
+- Privilegio del Capitán (#1): romper empates en Pronto 1×/semana
+- Ritual semanal «¿qué hacemos?» con mood y finalistas de Pronto
 
 ## Stack
 

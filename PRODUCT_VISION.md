@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-16 (PWA + fotos + privilegio Capitán; backlog free uno a uno)
+Última actualización: 2026-10-16 (PWA, fotos, Capitán, ritual semanal; backlog free uno a uno)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -46,6 +46,8 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Preparado para crecer: `es-ES`, EUR; PWA ya instalable (app nativa store = después)
 - [x] **PWA**: manifest + iconos + service worker (offline shell) + prompt de instalación (banner + Perfil)
 - [x] **Foto en recuerdos**: al marcar hecho / valorar (compresión JPEG en cliente; columna `done_photo_url` / `photo_url`; migración `014`)
+- [x] **Privilegio del #1 (Capitán)**: romper empate en Pronto 1×/semana (`015_captain_tie_break.sql` + UI)
+- [x] **Ritual semanal «¿qué hacemos?»**: finalistas de Pronto + filtros de mood (jue–dom)
 
 ### Falta / siguiente en el producto 1 (lanzamiento free)
 - [ ] Nombre final de la marca
@@ -56,8 +58,8 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Gasto ligado a una idea desde UI
 - [x] PWA / instalación móvil
 - [x] Foto en recuerdos
-- [ ] Beneficio jugable real del #1 (romper empate con acción)
-- [ ] Ritual semanal «¿qué hacemos?»
+- [x] Beneficio jugable real del #1 (romper empate con acción)
+- [x] Ritual semanal «¿qué hacemos?»
 - [ ] Digest semanal in-app (planes, gastos, ranking)
 - [ ] Import por link (Maps / Netflix / Letterboxd / IG → título/lugar)
 - [ ] Álbum simple de recuerdos del grupo
@@ -177,7 +179,8 @@ Puntos por acciones útiles (anti-spam):
 
 Beneficios simbólicos del #1 del grupo:
 - badge / título en perfil y en el grupo
-- privilegios divertidos ligeros (romper empate, elegir mood, etc.)
+- [x] privilegio jugable: **romper empate** en Pronto (1×/semana) si hay media empatada
+- (futuro) elegir mood, etc.
 
 ### 3.8 UX / personalidad
 - Copy divertido (ES), con espacio para variant AR
@@ -204,7 +207,7 @@ Beneficios simbólicos del #1 del grupo:
 
 ### 4.3 Inteligencia de planes
 - Mood filters avanzados
-- Ritual semanal “¿qué hacemos?” *(en cola de implementación free)*
+- [x] Ritual semanal “¿qué hacemos?” (2026-10-16)
 - Import por link (Maps, Netflix, Letterboxd, IG) *(en cola free, básico)*
 - Mapa embebido con pins del grupo
 - Sugerencias smart / IA
@@ -230,7 +233,7 @@ Idea general:
 - Álbum de recuerdos del grupo *(en cola free, simple)*
 - Nota: “ahora no” (veto suave) ya entró al MVP web
 - [x] Foto en recuerdos (2026-10-16)
-- Beneficio jugable del #1 *(en cola free, siguiente)*
+- [x] Beneficio jugable del #1 (2026-10-16)
 - 1 juego de reunión piloto *(en cola free)*
 
 ---
@@ -259,8 +262,8 @@ Grupos + ideas + votos secretos + azar + hechos/ratings + Maps link + gastos EUR
 Estado: **slice usable en local** (ver sección 0).
 
 ### Fase 2 — Más juego y retención
-Mood, ritual semanal, import links, mejor historial, más badges.  
-PWA: **hecho** (2026-10-16).
+Import links, digest, álbum, juego reunión, más badges.  
+PWA + ritual + mood básico + Capitán: **hecho** (2026-10-16).
 
 ### Fase 3 — Social ligero
 Descubrimiento por intereses/cercanía/estudios, contenido público puntuable, grupos por hobby.

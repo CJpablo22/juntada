@@ -133,7 +133,7 @@ type AppContextValue = {
   /** Capitán #1 rompe empate en Pronto (1×/semana). */
   breakTieAsCaptain: (ideaId: string) => string | null;
   markInProgress: (ideaId: string) => void;
-  pickRandomIdea: (groupId: string) => string | null;
+  pickRandomIdea: (groupId: string, candidateIds?: string[]) => string | null;
   markDone: (
     ideaId: string,
     rating: number,
@@ -1168,14 +1168,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const pickRandomIdea = useCallback((groupId: string) => {
+  const pickRandomIdea = useCallback((groupId: string, candidateIds?: string[]) => {
     let picked: string | null = null;
     setState((prev) => {
+      const idSet =
+        candidateIds && candidateIds.length > 0
+          ? new Set(candidateIds)
+          : null;
       const candidates = prev.ideas.filter((i) => {
         if (i.groupId !== groupId) return false;
         if (i.timing !== "soon") return false;
         if (i.status !== "pending" && i.status !== "chosen") return false;
         if (i.softVetoUserIds.length > 0) return false;
+        if (idSet && !idSet.has(i.id)) return false;
         return true;
       });
       if (candidates.length === 0) return prev;
