@@ -13,6 +13,7 @@ import {
 } from "@/components/ideas/place-fields";
 import { ScheduleFields } from "@/components/ideas/schedule-fields";
 import { WeeklyRitual } from "@/components/ideas/weekly-ritual";
+import { WeeklyDigestCard } from "@/components/group/weekly-digest";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -547,6 +548,8 @@ export default function GroupPage() {
           </button>
         ))}
       </section>
+
+      {shelf === "done" ? <WeeklyDigestCard groupId={group.id} /> : null}
 
       {shelf === "soon" ? (
         <>

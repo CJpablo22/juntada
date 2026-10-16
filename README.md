@@ -26,6 +26,7 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - Foto opcional al marcar un plan como hecho (comprimida en el dispositivo)
 - Privilegio del Capitán (#1): romper empates en Pronto 1×/semana
 - Ritual semanal «¿qué hacemos?» con mood y finalistas de Pronto
+- Digest semanal in-app (hechos, gastos, ranking) en Hechas
 
 ## Stack
 
