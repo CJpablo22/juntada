@@ -133,16 +133,19 @@ export function GroupPrivacySettings({
               </div>
             </div>
 
-            <p className="mt-2 rounded bg-[var(--wash)] px-3 py-2 text-sm">
-              <span className="text-[var(--mute)]">Ellos ven: </span>
-              <span className="font-medium text-[var(--ink)]">
+            <div className="mt-2 border border-[var(--line)] bg-[var(--wash)] px-3 py-2 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+                Vista previa · qué ven en este grupo
+              </p>
+              <p className="mt-1 font-medium text-[var(--ink)]">
                 {namePreview}
-              </span>
-              <span className="text-[var(--mute)]"> · </span>
-              <span className="font-medium text-[var(--ink)]">
+                <span className="font-normal text-[var(--mute)]"> · </span>
                 {preview.label}
-              </span>
-            </p>
+              </p>
+              <p className="mt-1 text-xs text-[var(--mute)]">
+                {HINTS[level]}. Independiente de otros grupos.
+              </p>
+            </div>
           </li>
         );
       })}

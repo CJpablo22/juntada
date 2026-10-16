@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-16 (backlog free: PWA→álbum+impostor; polish pendiente)
+Última actualización: 2026-10-16 (backlog free de producto 1 cerrado: PWA→polish)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -50,9 +50,12 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] **Ritual semanal «¿qué hacemos?»**: finalistas de Pronto + filtros de mood (jue–dom)
 - [x] **Digest semanal in-app**: hechos / gastos / ranking en la pestaña Hechas
 - [x] **Import por link**: pegar Maps / Netflix / Letterboxd / IG → título/lugar (sin APIs de pago)
+- [x] **Álbum de recuerdos** del grupo (`/album`)
+- [x] **Juego de reunión piloto**: El impostor (roles secretos; se juega en persona)
+- [x] **Polish**: Descubrir orden por nota/opiniones; badge «Falta tu voto»; preview privacidad más clara
 
 ### Falta / siguiente en el producto 1 (lanzamiento free)
-- [ ] Nombre final de la marca
+- [ ] Nombre final de la marca *(decisión tuya, no código)*
 - [x] Migrar estado de grupos/ideas/votos/gastos de `localStorage` → tablas Supabase (CRUD + RLS)
 - [x] Crear proyecto Supabase + deploy Vercel (pasos en LAUNCH.md) — requiere cuentas del owner
 - [x] Avisos email en eventos clave (invite, votar, resultados, gasto) vía Resend free + cola DB
@@ -64,9 +67,9 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Ritual semanal «¿qué hacemos?»
 - [x] Digest semanal in-app (planes, gastos, ranking)
 - [x] Import por link (Maps / Netflix / Letterboxd / IG → título/lugar)
-- [ ] Álbum simple de recuerdos del grupo
-- [ ] 1 juego de reunión piloto (impostor / adivinar quién soy)
-- [ ] Mejoras Discover / gastos / votos / UI privacidad (si aportan)
+- [x] Álbum simple de recuerdos del grupo
+- [x] 1 juego de reunión piloto (impostor)
+- [x] Mejoras Discover / votos / UI privacidad
 
 ### Pendiente con coste (no free — no bloquear el lanzamiento &lt;10)
 Ver checklist vivo en [`LAUNCH.md`](./LAUNCH.md):
@@ -84,7 +87,7 @@ Ver checklist vivo en [`LAUNCH.md`](./LAUNCH.md):
 - Chat, mapa embebido, IA, multi-moneda
 - **Google OAuth** (gratis de config; opcional además del correo)
 - **Juegos de reunión (presenciales, sin pantallas como tablero):**
-  - El impostor
+  - [x] El impostor (piloto 2026-10-16)
   - Adivinar quién soy
   - Qué edad tengo / quién soy yo
   - Otros icebreakers / party games sencillos para cuando el grupo ya está junto
@@ -232,11 +235,11 @@ Idea general:
 - [x] Digest semanal (planes, gastos, ranking) in-app (2026-10-16)
 - Privacidad fuerte por grupo — ya hay RLS + UI por grupo; pulido UI pendiente
 - Temporadas / badges temáticos
-- Álbum de recuerdos del grupo *(siguiente en cola free)*
+- [x] Álbum de recuerdos del grupo (2026-10-16)
 - Nota: “ahora no” (veto suave) ya entró al MVP web
 - [x] Foto en recuerdos (2026-10-16)
 - [x] Beneficio jugable del #1 (2026-10-16)
-- 1 juego de reunión piloto *(en cola free)*
+- [x] 1 juego de reunión piloto — impostor (2026-10-16)
 
 ---
 
@@ -264,8 +267,8 @@ Grupos + ideas + votos secretos + azar + hechos/ratings + Maps link + gastos EUR
 Estado: **slice usable en local** (ver sección 0).
 
 ### Fase 2 — Más juego y retención
-Import links, digest, álbum, juego reunión, más badges.  
-PWA + ritual + mood básico + Capitán: **hecho** (2026-10-16).
+Más badges / temporadas; más juegos de reunión; mood avanzado.  
+PWA + ritual + Capitán + import + digest + álbum + impostor + polish: **hecho** (2026-10-16).
 
 ### Fase 3 — Social ligero
 Descubrimiento por intereses/cercanía/estudios, contenido público puntuable, grupos por hobby.

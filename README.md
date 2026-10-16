@@ -29,6 +29,7 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - Digest semanal in-app (hechos, gastos, ranking) en Hechas
 - Importar idea pegando link (Maps / Netflix / Letterboxd / IG)
 - Álbum de recuerdos del grupo + juego presencial «El impostor»
+- Descubrir ordenable; aviso «Falta tu voto»; preview clara de privacidad por grupo
 
 ## Stack
 

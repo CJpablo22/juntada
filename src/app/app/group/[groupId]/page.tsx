@@ -793,6 +793,13 @@ export default function GroupPage() {
               );
               const voteCount = Object.keys(idea.votes).length;
               const myVote = idea.votes[currentUser.id];
+              const needsMyVote =
+                idea.timing === "soon" &&
+                !idea.revealed &&
+                myVote == null &&
+                idea.status !== "done" &&
+                idea.status !== "in_progress" &&
+                !idea.softVetoUserIds.includes(currentUser.id);
               const rowHint =
                 idea.status === "in_progress"
                   ? "En proceso · tocá para abrir"
@@ -801,7 +808,7 @@ export default function GroupPage() {
                     : idea.timing === "soon" && !idea.revealed
                       ? myVote
                         ? `Ya votaste (${myVote}/5) · secreto`
-                        : "Pendiente de tu voto"
+                        : "Falta tu voto"
                       : idea.timing === "soon" && idea.revealed
                         ? `${voteCount} votos revelados`
                         : idea.timing === "catalog"
@@ -830,10 +837,17 @@ export default function GroupPage() {
                           "rounded bg-[var(--pop-soft)]/50 p-2 -m-2",
                         idea.status === "in_progress" &&
                           "rounded bg-[var(--wash)] p-2 -m-2",
+                        needsMyVote &&
+                          "rounded border border-[var(--pop)] bg-[var(--pop-soft)]/40 p-2 -m-2",
                       )}
                     >
                       <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--mute)]">
                         <span>{IDEA_TYPE_LABELS[idea.type]}</span>
+                        {needsMyVote ? (
+                          <Badge className="bg-[var(--pop)] text-white">
+                            Falta tu voto
+                          </Badge>
+                        ) : null}
                         {idea.type === "movie" && idea.movieVenue ? (
                           <span>· {MOVIE_VENUE_LABELS[idea.movieVenue]}</span>
                         ) : null}

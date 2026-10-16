@@ -8,16 +8,23 @@ import { clusterDiscoverEntries } from "@/lib/discover";
 import { IDEA_TYPE_LABELS, type IdeaType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+type SortMode = "rating" | "opinions";
+
 export default function DiscoverPage() {
   const { ready, state } = useApp();
   const [type, setType] = useState<"all" | IdeaType>("all");
+  const [sort, setSort] = useState<SortMode>("rating");
 
   const entries = useMemo(() => {
     const clusters = clusterDiscoverEntries(state.ideas, state.reviews);
-    return type === "all"
-      ? clusters
-      : clusters.filter((c) => c.type === type);
-  }, [state.ideas, state.reviews, type]);
+    const filtered =
+      type === "all" ? clusters : clusters.filter((c) => c.type === type);
+    return [...filtered].sort((a, b) =>
+      sort === "rating"
+        ? b.avg - a.avg || b.reviews.length - a.reviews.length
+        : b.reviews.length - a.reviews.length || b.avg - a.avg,
+    );
+  }, [state.ideas, state.reviews, type, sort]);
 
   return (
     <main className="mx-auto min-h-[100svh] w-full max-w-3xl px-4 py-8">
@@ -55,6 +62,19 @@ export default function DiscoverPage() {
             label={IDEA_TYPE_LABELS[t]}
           />
         ))}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-3 text-sm">
+        <span className="text-[var(--mute)]">Orden:</span>
+        <FilterLink
+          active={sort === "rating"}
+          onClick={() => setSort("rating")}
+          label="Mejor nota"
+        />
+        <FilterLink
+          active={sort === "opinions"}
+          onClick={() => setSort("opinions")}
+          label="Más opiniones"
+        />
       </div>
 
       {!ready ? (
