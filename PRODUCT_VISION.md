@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-13 (lanzamiento free: Supabase + correo; ver LAUNCH.md)
+Última actualización: 2026-10-16 (PWA instalable; backlog free en curso uno a uno)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -43,7 +43,8 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Selects reales país → provincia → ciudad → barrio (sin texto libre)
 - [x] **Privacidad de ubicación por grupo**: país / provincia / barrio / dirección exacta (independiente en cada grupo)
 - [x] Amigos de experiencia (solo tras completar algo juntos; no follow abierto)
-- [x] Preparado para crecer: `es-ES`, EUR, PWA/móvil más adelante
+- [x] Preparado para crecer: `es-ES`, EUR; PWA ya instalable (app nativa store = después)
+- [x] **PWA**: manifest + iconos + service worker (offline shell) + prompt de instalación (banner + Perfil)
 
 ### Falta / siguiente en el producto 1 (lanzamiento free)
 - [ ] Nombre final de la marca
@@ -52,9 +53,15 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Avisos email en eventos clave (invite, votar, resultados, gasto) vía Resend free + cola DB
 - [x] Unificar títulos iguales en Descubrir
 - [x] Gasto ligado a una idea desde UI
+- [x] PWA / instalación móvil
 - [ ] Foto en recuerdos
 - [ ] Beneficio jugable real del #1 (romper empate con acción)
-- [ ] PWA / instalación móvil
+- [ ] Ritual semanal «¿qué hacemos?»
+- [ ] Digest semanal in-app (planes, gastos, ranking)
+- [ ] Import por link (Maps / Netflix / Letterboxd / IG → título/lugar)
+- [ ] Álbum simple de recuerdos del grupo
+- [ ] 1 juego de reunión piloto (impostor / adivinar quién soy)
+- [ ] Mejoras Discover / gastos / votos / UI privacidad (si aportan)
 
 ### Pendiente con coste (no free — no bloquear el lanzamiento &lt;10)
 Ver checklist vivo en [`LAUNCH.md`](./LAUNCH.md):
@@ -196,11 +203,11 @@ Beneficios simbólicos del #1 del grupo:
 
 ### 4.3 Inteligencia de planes
 - Mood filters avanzados
-- Ritual semanal “¿qué hacemos?”
-- Import por link (Maps, Netflix, Letterboxd, IG)
+- Ritual semanal “¿qué hacemos?” *(en cola de implementación free)*
+- Import por link (Maps, Netflix, Letterboxd, IG) *(en cola free, básico)*
 - Mapa embebido con pins del grupo
 - Sugerencias smart / IA
-- PWA y luego app móvil nativa
+- [x] PWA instalable (manifest + SW + prompt); app móvil nativa en stores = después
 
 ### 4.4 Marketplace local de habilidades / servicios
 Ejemplo del usuario: alguien sabe arreglar PCs; un vecino busca ayuda barata y de confianza cerca.
@@ -216,11 +223,14 @@ Idea general:
 
 ### 4.5 Otras ideas aportadas en brainstorm
 - Wishlist vs “este finde”
-- Digest semanal (planes, gastos, ranking)
-- Privacidad fuerte por grupo (cuando haya backend real)
+- Digest semanal (planes, gastos, ranking) *(en cola free, in-app)*
+- Privacidad fuerte por grupo — ya hay RLS + UI por grupo; pulido UI pendiente
 - Temporadas / badges temáticos
-- Álbum de recuerdos del grupo
+- Álbum de recuerdos del grupo *(en cola free, simple)*
 - Nota: “ahora no” (veto suave) ya entró al MVP web
+- Foto en recuerdos *(en cola free, siguiente tras PWA)*
+- Beneficio jugable del #1 *(en cola free)*
+- 1 juego de reunión piloto *(en cola free)*
 
 ---
 
@@ -248,7 +258,8 @@ Grupos + ideas + votos secretos + azar + hechos/ratings + Maps link + gastos EUR
 Estado: **slice usable en local** (ver sección 0).
 
 ### Fase 2 — Más juego y retención
-Mood, ritual semanal, import links, mejor historial, PWA, más badges.
+Mood, ritual semanal, import links, mejor historial, más badges.  
+PWA: **hecho** (2026-10-16).
 
 ### Fase 3 — Social ligero
 Descubrimiento por intereses/cercanía/estudios, contenido público puntuable, grupos por hobby.
@@ -272,9 +283,9 @@ Oferta/demanda de skills, reputación por ámbito, cercanía, confianza.
 - [x] Stack / scaffold del MVP web (Next.js)
 - [x] Pantallas base del MVP
 - [x] Reglas iniciales de puntos y badges (iterables)
-- [ ] Si la foto en recuerdos entra ya o en fase 2
+- [ ] Si la foto en recuerdos entra ya o en fase 2 → **entrando ahora** (cola free)
 - [x] Copy base ES con pinceladas AR (seguir puliendo)
-- [ ] Cuándo pasar de localStorage a backend real
+- [x] Backend real: Supabase + dual-write (localStorage solo sin env)
 
 ---
 

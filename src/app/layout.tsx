@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Fraunces } from "next/font/google";
 import { AppProvider } from "@/components/providers/app-provider";
+import { RegisterServiceWorker } from "@/components/pwa/register-sw";
 import "./globals.css";
 import "./landing-mesa.css";
 
@@ -21,12 +22,26 @@ export const metadata: Metadata = {
   description:
     "Guardá planes con tu gente, decidí juntos y controlá qué ven de tu ubicación en cada grupo.",
   applicationName: "Juntada",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Juntada",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#0a4d47",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,7 +51,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${mesaSans.variable} ${mesaDisplay.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-[family-name:var(--font-body)]">
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+          {children}
+          <RegisterServiceWorker />
+        </AppProvider>
       </body>
     </html>
   );

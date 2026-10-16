@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es-ES">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a4d47" />
+    <title>Sin conexión · Juntada</title>
+    <style>
+      :root {
+        --bg: #f3ede4;
+        --ink: #1c1917;
+        --mute: #3f3a36;
+        --pop: #0a4d47;
+        --foam: #fffaf3;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        padding: 1.5rem;
+        font-family: "DM Sans", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse 80% 50% at 10% 0%, #e7b04b33, transparent),
+          var(--bg);
+        color: var(--ink);
+      }
+      main {
+        max-width: 22rem;
+        text-align: center;
+      }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.75rem;
+        font-weight: 600;
+      }
+      p {
+        margin: 0 0 1.25rem;
+        color: var(--mute);
+        line-height: 1.45;
+      }
+      button {
+        appearance: none;
+        border: 1px solid var(--ink);
+        background: var(--ink);
+        color: var(--foam);
+        font: inherit;
+        font-weight: 600;
+        padding: 0.7rem 1.1rem;
+        box-shadow: 0 3px 0 0 var(--pop);
+        cursor: pointer;
+      }
+      button:active {
+        transform: translateY(1px);
+        box-shadow: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sin conexión</h1>
+      <p>
+        Juntada necesita red para cargar tus grupos. Cuando vuelva el wifi o los
+        datos, reintentá.
+      </p>
+      <button type="button" onclick="location.reload()">Reintentar</button>
+    </main>
+  </body>
+</html>

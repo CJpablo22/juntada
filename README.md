@@ -22,6 +22,7 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - Diseño único «Mesa puesta»; catálogo de provincias/localidades para ubicación
 - Dirección con búsqueda + CP + piso/puerta; guardar solo al confirmar
 - Privacidad de ubicación por grupo
+- **PWA**: instalable en el móvil (manifest + service worker + aviso en app/Perfil)
 
 ## Stack
 

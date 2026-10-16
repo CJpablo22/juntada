@@ -8,6 +8,7 @@ import {
   type LocationFormValue,
 } from "@/components/location/location-fields";
 import { useApp } from "@/components/providers/app-provider";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -157,6 +158,8 @@ export default function ProfilePage() {
           <p className="mt-2 text-sm text-[var(--mute)]">{total} puntos</p>
         </div>
       </div>
+
+      <InstallPrompt variant="card" />
 
       <section className="surface-panel space-y-3 p-4">
         <div>

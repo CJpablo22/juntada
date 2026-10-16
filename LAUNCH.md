@@ -56,10 +56,11 @@ Marcado a propósito para no olvidarlo. **No bloquea** el lanzamiento entre voso
 - [ ] Dominio propio (`juntada.com`) + email `noreply@…` bonito.
 - [ ] Subir plan Vercel/Supabase si el free se queda corto.
 - [ ] Backups automáticos / monitoreo más serio.
-- [ ] App nativa (PWA o store) — la web responsive cubre el día 1.
+- [x] **PWA instalable** (manifest + SW + prompt) — hecho 2026-10-16; sigue siendo web.
+- [ ] App nativa en stores (iOS/Android) — opcional más adelante; la PWA cubre el día a día.
 
 ### Producto (visión, no infra)
-Ver también `PRODUCT_VISION.md`: juegos de reunión, Descubrir unificado, fotos, etc.
+Ver también `PRODUCT_VISION.md`: fotos en recuerdos, beneficio #1, ritual/digest, import link, álbum, juego de reunión.
 
 ---
 
