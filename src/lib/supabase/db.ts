@@ -432,8 +432,8 @@ export async function cloudDeleteGroup(
 export async function cloudInsertIdea(
   supabase: Supabase,
   idea: Idea,
-): Promise<void> {
-  const { error } = await supabase.from("ideas").insert({
+): Promise<{ ok: boolean; error?: string }> {
+  const row = {
     id: idea.id,
     group_id: idea.groupId,
     type: idea.type,
@@ -443,7 +443,7 @@ export async function cloudInsertIdea(
     celebrant_name: idea.celebrantName ?? null,
     celebrant_member_id: idea.celebrantMemberId ?? null,
     birthday_kind: idea.birthdayKind ?? null,
-    places: idea.places,
+    places: idea.places ?? [],
     address: idea.address ?? null,
     scheduled_date: idea.scheduledDate ?? null,
     scheduled_time: idea.scheduledTime ?? null,
@@ -454,13 +454,35 @@ export async function cloudInsertIdea(
     proposed_by: idea.proposedBy,
     status: idea.status,
     timing: idea.timing,
-    tags: idea.tags,
-    votes: idea.votes,
-    revealed: idea.revealed,
-    soft_veto_user_ids: idea.softVetoUserIds,
+    tags: idea.tags ?? [],
+    votes: idea.votes ?? {},
+    revealed: idea.revealed ?? false,
+    soft_veto_user_ids: idea.softVetoUserIds ?? [],
     created_at: idea.createdAt,
+  };
+
+  // Preferir RPC (security definer) — evita RLS circular en group_members
+  const { error: rpcError } = await supabase.rpc("insert_idea", {
+    p_idea: row,
   });
-  if (error) console.error("insert idea", error.message);
+  if (!rpcError) return { ok: true };
+
+  // Fallback tabla si aún no corrieron el 017
+  if (
+    !/function|does not exist|schema cache/i.test(rpcError.message)
+  ) {
+    console.error("insert idea rpc", rpcError.message, rpcError.code);
+    return { ok: false, error: rpcError.message };
+  }
+
+  const { error } = await supabase
+    .from("ideas")
+    .upsert(row, { onConflict: "id", ignoreDuplicates: true });
+  if (error) {
+    console.error("insert idea", error.message, error.code, error.details);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
 export async function cloudUpdateIdea(
@@ -542,33 +564,73 @@ export async function cloudInsertReview(
 export async function cloudInsertExpense(
   supabase: Supabase,
   expense: Expense,
-): Promise<void> {
-  const { error } = await supabase.from("expenses").insert({
+): Promise<{ ok: boolean; error?: string }> {
+  const row = {
     id: expense.id,
     group_id: expense.groupId,
     idea_id: expense.ideaId ?? null,
     title: expense.title,
     amount_cents: expense.amountCents,
     paid_by: expense.paidBy,
-    split_between: expense.splitBetween,
+    split_between: expense.splitBetween ?? [],
     created_at: expense.createdAt,
+  };
+
+  const { error: rpcError } = await supabase.rpc("insert_expense", {
+    p_expense: row,
   });
-  if (error) console.error("insert expense", error.message);
+  if (!rpcError) return { ok: true };
+
+  if (
+    !/function|does not exist|schema cache/i.test(rpcError.message)
+  ) {
+    console.error("insert expense rpc", rpcError.message, rpcError.code);
+    return { ok: false, error: rpcError.message };
+  }
+
+  const { error } = await supabase
+    .from("expenses")
+    .upsert(row, { onConflict: "id", ignoreDuplicates: true });
+  if (error) {
+    console.error("insert expense", error.message, error.code, error.details);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
 export async function cloudInsertPoint(
   supabase: Supabase,
   point: PointEvent,
-): Promise<void> {
-  const { error } = await supabase.from("point_events").insert({
+): Promise<{ ok: boolean; error?: string }> {
+  const row = {
     id: point.id,
     group_id: point.groupId,
     user_id: point.userId,
     delta: point.delta,
     reason: point.reason,
     at: point.at,
+  };
+
+  const { error: rpcError } = await supabase.rpc("insert_point_event", {
+    p_point: row,
   });
-  if (error) console.error("insert point", error.message);
+  if (!rpcError) return { ok: true };
+
+  if (
+    !/function|does not exist|schema cache/i.test(rpcError.message)
+  ) {
+    console.error("insert point rpc", rpcError.message, rpcError.code);
+    return { ok: false, error: rpcError.message };
+  }
+
+  const { error } = await supabase
+    .from("point_events")
+    .upsert(row, { onConflict: "id", ignoreDuplicates: true });
+  if (error) {
+    console.error("insert point", error.message, error.code, error.details);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
 export function newCloudId(): string {

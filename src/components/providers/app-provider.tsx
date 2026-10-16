@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -220,6 +221,27 @@ function mergeUsersKeep(a: User[], b: User[]): User[] {
   return [...map.values()];
 }
 
+/** Cloud gana por id; se conservan ítems locales aún no visibles en Postgres (race / RLS lag). */
+function mergeCloudWithLocal(cloud: AppState, local: AppState): AppState {
+  if (local.currentUserId && local.currentUserId !== cloud.currentUserId) {
+    return cloud;
+  }
+  const byId = <T extends { id: string }>(cloudItems: T[], localItems: T[]) => {
+    const ids = new Set(cloudItems.map((x) => x.id));
+    const pending = localItems.filter((x) => !ids.has(x.id));
+    return pending.length === 0 ? cloudItems : [...pending, ...cloudItems];
+  };
+  return {
+    ...cloud,
+    users: mergeUsersKeep(local.users, cloud.users),
+    groups: byId(cloud.groups, local.groups),
+    ideas: byId(cloud.ideas, local.ideas),
+    expenses: byId(cloud.expenses, local.expenses),
+    points: byId(cloud.points, local.points),
+    reviews: byId(cloud.reviews, local.reviews),
+  };
+}
+
 function upsertUser(
   prev: AppState,
   match: (u: User) => boolean,
@@ -246,6 +268,19 @@ function upsertUser(
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(() => createEmpty());
   const [ready, setReady] = useState(false);
+  const readyRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    readyRef.current = ready;
+  }, [ready]);
+  useEffect(() => {
+    userIdRef.current = state.currentUserId;
+  }, [state.currentUserId]);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     let cancelled = false;
@@ -253,12 +288,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     async function applyAuthUser(
       authUser: Parameters<typeof ensureProfileFromAuth>[1],
+      opts?: { replace?: boolean },
     ) {
       const supabase = createSupabaseBrowserClient();
       const profile = await ensureProfileFromAuth(supabase, authUser);
       const cloud = await loadCloudState(supabase, profile);
       if (cancelled) return;
-      setState(cloud);
+      setState((prev) => {
+        if (opts?.replace) return cloud;
+        // Conservar ideas/gastos recién creados si el reload llega antes que el INSERT
+        if (prev.currentUserId === cloud.currentUserId) {
+          return mergeCloudWithLocal(cloud, prev);
+        }
+        return cloud;
+      });
       setReady(true);
     }
 
@@ -285,7 +328,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setState({ ...createEmpty(), currentUserId: null });
           setReady(true);
         } else {
-          await applyAuthUser(authUser);
+          // Boot: fuente de verdad = cloud (merge con cache local del mismo user)
+          const profile = await ensureProfileFromAuth(supabase, authUser);
+          const cloud = await loadCloudState(supabase, profile);
+          if (cancelled) return;
+          if (
+            local.currentUserId === cloud.currentUserId &&
+            (local.ideas.length > 0 ||
+              local.expenses.length > 0 ||
+              local.groups.length > 0)
+          ) {
+            setState(mergeCloudWithLocal(cloud, local));
+          } else {
+            setState(cloud);
+          }
+          setReady(true);
         }
 
         const {
@@ -296,11 +353,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setReady(true);
             return;
           }
-          // Solo recargar mundo en login real. USER_UPDATED no debe pisar estado.
+          // Solo login real con otro user (o primera sesión).
+          // Un SIGNED_IN del mismo user NO debe pisar ideas/gastos en memoria.
           if (event === "SIGNED_IN" && session?.user) {
+            if (
+              readyRef.current &&
+              userIdRef.current === session.user.id
+            ) {
+              return;
+            }
             void (async () => {
               try {
-                await applyAuthUser(session.user);
+                await applyAuthUser(session.user, { replace: true });
               } catch {
                 if (cancelled) return;
                 setState((prev) => {
@@ -568,7 +632,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
 
       if (cloudConfigured) {
-        // Sync en segundo plano; si falla la lectura, no pisamos el grupo local
+        // Sync en segundo plano; NUNCA reemplazar a ciegas (borra ideas/gastos locales)
         void (async () => {
           try {
             const supabase = createSupabaseBrowserClient();
@@ -579,16 +643,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const profile = await ensureProfileFromAuth(supabase, user);
             const cloud = await loadCloudState(supabase, profile);
             setState((prev) => {
-              const hasNew = cloud.groups.some((g) => g.id === id);
-              if (hasNew) return cloud;
-              // Merge: conservar el grupo recién creado
+              const merged = mergeCloudWithLocal(cloud, prev);
+              if (merged.groups.some((g) => g.id === id)) return merged;
               return {
-                ...cloud,
-                groups: [
-                  group,
-                  ...cloud.groups.filter((g) => g.id !== id),
-                ],
-                users: mergeUsersKeep(prev.users, cloud.users),
+                ...merged,
+                groups: [group, ...merged.groups.filter((g) => g.id !== id)],
               };
             });
           } catch (e) {
@@ -768,68 +827,86 @@ export function AppProvider({ children }: { children: ReactNode }) {
       tags: string[];
       timing: IdeaTiming;
     } & IdeaScheduleInput) => {
+      const uid = userIdRef.current;
+      if (!uid) return "";
       const id = cloudConfigured ? newCloudId() : createId("idea");
       const pointId = cloudConfigured ? newCloudId() : createId("pt");
+      const createdAt = new Date().toISOString();
+      const places = (input.places ?? [])
+        .map((p) => ({
+          kind: p.kind ?? ("custom" as const),
+          memberId: p.memberId,
+          name: p.name.trim(),
+          address: p.address.trim(),
+        }))
+        .filter((p) =>
+          p.kind === "member_home"
+            ? Boolean(p.memberId && p.name)
+            : Boolean(p.name && p.address),
+        );
+      const schedule = cleanScheduleInput(input);
+      const idea: Idea = {
+        id,
+        groupId: input.groupId,
+        type: input.type,
+        title: input.title.trim(),
+        notes: input.notes.trim(),
+        movieVenue: input.type === "movie" ? input.movieVenue : undefined,
+        celebrantName:
+          input.type === "birthday"
+            ? input.celebrantName?.trim() || undefined
+            : undefined,
+        celebrantMemberId:
+          input.type === "birthday"
+            ? input.celebrantMemberId?.trim() || undefined
+            : undefined,
+        birthdayKind:
+          input.type === "birthday" ? input.birthdayKind ?? "meal" : undefined,
+        places,
+        address: places[0]?.address || input.address?.trim() || undefined,
+        ...schedule,
+        proposedBy: uid,
+        status: "pending",
+        timing: input.timing,
+        tags: input.tags,
+        votes: {},
+        revealed: false,
+        softVetoUserIds: [],
+        createdAt,
+      };
+      const point = {
+        id: pointId,
+        groupId: input.groupId,
+        userId: uid,
+        delta: POINT_REASONS.propose.delta,
+        reason: POINT_REASONS.propose.label,
+        at: createdAt,
+      };
+
       setState((prev) => {
         if (!prev.currentUserId) return prev;
-        const places = (input.places ?? [])
-          .map((p) => ({
-            kind: p.kind ?? ("custom" as const),
-            memberId: p.memberId,
-            name: p.name.trim(),
-            address: p.address.trim(),
-          }))
-          .filter((p) =>
-            p.kind === "member_home"
-              ? Boolean(p.memberId && p.name)
-              : Boolean(p.name && p.address),
-          );
-        const schedule = cleanScheduleInput(input);
-        const idea: Idea = {
-          id,
-          groupId: input.groupId,
-          type: input.type,
-          title: input.title.trim(),
-          notes: input.notes.trim(),
-          movieVenue: input.type === "movie" ? input.movieVenue : undefined,
-          celebrantName:
-            input.type === "birthday"
-              ? input.celebrantName?.trim() || undefined
-              : undefined,
-          celebrantMemberId:
-            input.type === "birthday"
-              ? input.celebrantMemberId?.trim() || undefined
-              : undefined,
-          birthdayKind:
-            input.type === "birthday" ? input.birthdayKind ?? "meal" : undefined,
-          places,
-          address: places[0]?.address || input.address?.trim() || undefined,
-          ...schedule,
-          proposedBy: prev.currentUserId,
-          status: "pending",
-          timing: input.timing,
-          tags: input.tags,
-          votes: {},
-          revealed: false,
-          softVetoUserIds: [],
-          createdAt: new Date().toISOString(),
+        return {
+          ...prev,
+          ideas: [idea, ...prev.ideas],
+          points: [...prev.points, point],
         };
-        let next: AppState = { ...prev, ideas: [idea, ...prev.ideas] };
-        next = addPoints(
-          next,
-          {
-            groupId: input.groupId,
-            userId: prev.currentUserId,
-            delta: POINT_REASONS.propose.delta,
-            reason: POINT_REASONS.propose.label,
-          },
-          pointId,
-        );
-        if (cloudConfigured) {
+      });
+
+      if (cloudConfigured) {
+        void (async () => {
           const sb = createSupabaseBrowserClient();
-          void cloudInsertIdea(sb, idea);
-          const pt = next.points[next.points.length - 1];
-          void cloudInsertPoint(sb, pt);
+          const ideaRes = await cloudInsertIdea(sb, idea);
+          if (!ideaRes.ok) {
+            console.error(
+              "No se pudo guardar la idea en la nube:",
+              ideaRes.error,
+            );
+            return;
+          }
+          const ptRes = await cloudInsertPoint(sb, point);
+          if (!ptRes.ok) {
+            console.error("No se pudo guardar el punto:", ptRes.error);
+          }
           notifyGroup({
             groupId: input.groupId,
             eventType: "idea_proposed",
@@ -837,9 +914,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             body: `${idea.title} se sumó al grupo. Entrá a votar o guardar.`,
             payload: { ideaId: idea.id, groupId: input.groupId },
           });
-        }
-        return next;
-      });
+        })();
+      }
       return id;
     },
     [],
@@ -1395,54 +1471,72 @@ export function AppProvider({ children }: { children: ReactNode }) {
       paidBy: string;
       splitBetween: string[];
     }) => {
+      const uid = userIdRef.current;
+      if (!uid) return;
+      const linkedIdea = input.ideaId
+        ? stateRef.current.ideas.find((i) => i.id === input.ideaId)
+        : undefined;
+      // El festejado no puede cargar ni ver gastos de su propio cumple
+      if (
+        linkedIdea?.type === "birthday" &&
+        linkedIdea.celebrantMemberId === uid
+      ) {
+        return;
+      }
+      const splitBetween =
+        linkedIdea?.type === "birthday" && linkedIdea.celebrantMemberId
+          ? input.splitBetween.filter(
+              (id) => id !== linkedIdea.celebrantMemberId,
+            )
+          : input.splitBetween;
+      if (splitBetween.length === 0) return;
+
+      const expenseId = cloudConfigured ? newCloudId() : createId("exp");
+      const pointId = cloudConfigured ? newCloudId() : createId("pt");
+      const createdAt = new Date().toISOString();
+      const expense: Expense = {
+        id: expenseId,
+        groupId: input.groupId,
+        ideaId: input.ideaId,
+        title: input.title.trim(),
+        amountCents: input.amountCents,
+        paidBy: input.paidBy,
+        splitBetween,
+        createdAt,
+      };
+      const point = {
+        id: pointId,
+        groupId: input.groupId,
+        userId: uid,
+        delta: POINT_REASONS.expense.delta,
+        reason: POINT_REASONS.expense.label,
+        at: createdAt,
+      };
+
       setState((prev) => {
         if (!prev.currentUserId) return prev;
-        const linkedIdea = input.ideaId
-          ? prev.ideas.find((i) => i.id === input.ideaId)
-          : undefined;
-        // El festejado no puede cargar ni ver gastos de su propio cumple
-        if (
-          linkedIdea?.type === "birthday" &&
-          linkedIdea.celebrantMemberId === prev.currentUserId
-        ) {
-          return prev;
-        }
-        const splitBetween =
-          linkedIdea?.type === "birthday" && linkedIdea.celebrantMemberId
-            ? input.splitBetween.filter(
-                (id) => id !== linkedIdea.celebrantMemberId,
-              )
-            : input.splitBetween;
-        if (splitBetween.length === 0) return prev;
-        const expense: Expense = {
-          id: cloudConfigured ? newCloudId() : createId("exp"),
-          groupId: input.groupId,
-          ideaId: input.ideaId,
-          title: input.title.trim(),
-          amountCents: input.amountCents,
-          paidBy: input.paidBy,
-          splitBetween,
-          createdAt: new Date().toISOString(),
-        };
-        const pointId = cloudConfigured ? newCloudId() : createId("pt");
-        let next: AppState = {
+        return {
           ...prev,
           expenses: [expense, ...prev.expenses],
+          points: [...prev.points, point],
         };
-        next = addPoints(
-          next,
-          {
-            groupId: input.groupId,
-            userId: prev.currentUserId,
-            delta: POINT_REASONS.expense.delta,
-            reason: POINT_REASONS.expense.label,
-          },
-          pointId,
-        );
-        if (cloudConfigured) {
+      });
+
+      if (cloudConfigured) {
+        void (async () => {
           const sb = createSupabaseBrowserClient();
-          void cloudInsertExpense(sb, expense);
-          void cloudInsertPoint(sb, next.points[next.points.length - 1]);
+          const expRes = await cloudInsertExpense(sb, expense);
+          if (!expRes.ok) {
+            console.error(
+              "No se pudo guardar el gasto en la nube:",
+              expRes.error,
+            );
+            return;
+          }
+          const ptRes = await cloudInsertPoint(sb, point);
+          if (!ptRes.ok) {
+            console.error("No se pudo guardar el punto:", ptRes.error);
+          }
           notifyGroup({
             groupId: input.groupId,
             eventType: "expense_added",
@@ -1454,9 +1548,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
               groupId: input.groupId,
             },
           });
-        }
-        return next;
-      });
+        })();
+      }
     },
     [],
   );

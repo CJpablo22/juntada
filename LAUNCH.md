@@ -62,7 +62,7 @@ Marcado a propósito para no olvidarlo. **No bloquea** el lanzamiento entre voso
 
 ### Producto (visión, no infra)
 Ver también `PRODUCT_VISION.md`: más juegos de reunión, temporadas/badges.  
-Backlog free producto 1 (PWA→polish + Web Push): **hecho**. En Supabase corré `014`, `015` y **`016_push_subscriptions.sql`**. En Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (`npm run vapid` para generar el par).
+Backlog free producto 1 (PWA→polish + Web Push): **hecho**. En Supabase corré `014`, `015`, **`016_push_subscriptions.sql`** y **`017_persist_idea_expense.sql`** (persistencia ideas/gastos). En Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (`npm run vapid` para generar el par).
 
 ---
 
