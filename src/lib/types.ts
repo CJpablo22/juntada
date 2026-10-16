@@ -187,7 +187,7 @@ export type Expense = {
   createdAt: string;
 };
 
-export type ExpenseSplitMode = "equal" | "half" | "custom";
+export type ExpenseSplitMode = "equal" | "custom";
 
 export type PointEvent = {
   id: string;

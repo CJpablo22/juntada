@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { AppHeader } from "@/components/shell/app-header";
+import { SyncBanner } from "@/components/shell/sync-banner";
 import { useApp } from "@/components/providers/app-provider";
 import { createClient } from "@/lib/supabase/client";
 
@@ -76,6 +77,7 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-[100svh] flex-col">
       {!onOnboarding ? <AppHeader /> : null}
+      {!onOnboarding ? <SyncBanner /> : null}
       <div className="page-shell flex-1 pb-20 md:pb-8">{children}</div>
       {!onOnboarding ? <InstallPrompt variant="banner" /> : null}
     </div>

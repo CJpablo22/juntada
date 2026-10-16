@@ -128,7 +128,16 @@ type AppContextValue = {
     address?: string;
     tags: string[];
     timing: IdeaTiming;
-  } & IdeaScheduleInput) => string;
+  } & IdeaScheduleInput) => Promise<{
+    id: string;
+    synced: boolean;
+    error?: string;
+  }>;
+  /** Último error de sync a la nube (ideas/gastos). */
+  cloudError: string | null;
+  clearCloudError: () => void;
+  /** Recarga grupos/ideas/gastos desde Postgres. */
+  refreshFromCloud: () => Promise<void>;
   updateIdeaSchedule: (ideaId: string, schedule: IdeaScheduleInput) => void;
   setIdeaTiming: (ideaId: string, timing: IdeaTiming) => void;
   castVote: (ideaId: string, score: number) => void;
@@ -162,7 +171,7 @@ type AppContextValue = {
     paidBy: string;
     splitBetween: string[];
     splitShares?: Record<string, number>;
-  }) => void;
+  }) => Promise<{ synced: boolean; error?: string }>;
   updateProfile: (input: {
     name: string;
     country: string;
@@ -274,9 +283,11 @@ function upsertUser(
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(() => createEmpty());
   const [ready, setReady] = useState(false);
+  const [cloudError, setCloudError] = useState<string | null>(null);
   const readyRef = useRef(false);
   const userIdRef = useRef<string | null>(null);
   const stateRef = useRef(state);
+  const refreshingRef = useRef(false);
 
   useEffect(() => {
     readyRef.current = ready;
@@ -287,6 +298,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  const clearCloudError = useCallback(() => setCloudError(null), []);
+
+  const refreshFromCloud = useCallback(async () => {
+    if (!cloudConfigured || refreshingRef.current) return;
+    refreshingRef.current = true;
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const profile = await ensureProfileFromAuth(supabase, user);
+      const cloud = await loadCloudState(supabase, profile);
+      setState((prev) => {
+        if (prev.currentUserId && prev.currentUserId !== cloud.currentUserId) {
+          return cloud;
+        }
+        // En refresh de foco: la nube gana. No reinyectar basura solo-local
+        // que nunca se sincronizó (eso es lo que engañaba en el celular).
+        return cloud;
+      });
+    } catch (e) {
+      console.error("refreshFromCloud", e);
+    } finally {
+      refreshingRef.current = false;
+    }
+  }, []);
+
+  // Al volver a la app / cada 25s: traer lo que hay en Postgres (otros devices / amigos)
+  useEffect(() => {
+    if (!ready || !cloudConfigured || !state.currentUserId) return;
+    const onVis = () => {
+      if (document.visibilityState === "visible") {
+        void refreshFromCloud();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    const tick = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void refreshFromCloud();
+      }
+    }, 25_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.clearInterval(tick);
+    };
+  }, [ready, state.currentUserId, refreshFromCloud]);
 
   useEffect(() => {
     let cancelled = false;
@@ -334,20 +393,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setState({ ...createEmpty(), currentUserId: null });
           setReady(true);
         } else {
-          // Boot: fuente de verdad = cloud (merge con cache local del mismo user)
+          // Boot: Postgres es la verdad. localStorage solo cache; no reinyectar
+          // ideas fantasmas del celular que nunca se sincronizaron.
           const profile = await ensureProfileFromAuth(supabase, authUser);
           const cloud = await loadCloudState(supabase, profile);
           if (cancelled) return;
-          if (
-            local.currentUserId === cloud.currentUserId &&
-            (local.ideas.length > 0 ||
-              local.expenses.length > 0 ||
-              local.groups.length > 0)
-          ) {
-            setState(mergeCloudWithLocal(cloud, local));
-          } else {
-            setState(cloud);
-          }
+          setState(cloud);
           setReady(true);
         }
 
@@ -819,7 +870,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addIdea = useCallback(
-    (input: {
+    async (input: {
       groupId: string;
       type: IdeaType;
       title: string;
@@ -834,7 +885,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       timing: IdeaTiming;
     } & IdeaScheduleInput) => {
       const uid = userIdRef.current;
-      if (!uid) return "";
+      if (!uid) {
+        return { id: "", synced: false, error: "No hay sesión." };
+      }
       const id = cloudConfigured ? newCloudId() : createId("idea");
       const pointId = cloudConfigured ? newCloudId() : createId("pt");
       const createdAt = new Date().toISOString();
@@ -879,7 +932,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         revealed: false,
         softVetoUserIds: [],
         rsvps: {},
-        // Si es casa de alguien, no guardar link de Maps (se abre la dirección)
         link:
           ideaUsesOnlyMemberHomes(places) && isMapsLink(schedule.link)
             ? undefined
@@ -895,6 +947,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         at: createdAt,
       };
 
+      // Optimista en pantalla
       setState((prev) => {
         if (!prev.currentUserId) return prev;
         return {
@@ -904,31 +957,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
         };
       });
 
-      if (cloudConfigured) {
-        void (async () => {
-          const sb = createSupabaseBrowserClient();
-          const ideaRes = await cloudInsertIdea(sb, idea);
-          if (!ideaRes.ok) {
-            console.error(
-              "No se pudo guardar la idea en la nube:",
-              ideaRes.error,
-            );
-            return;
-          }
-          const ptRes = await cloudInsertPoint(sb, point);
-          if (!ptRes.ok) {
-            console.error("No se pudo guardar el punto:", ptRes.error);
-          }
-          notifyGroup({
-            groupId: input.groupId,
-            eventType: "idea_proposed",
-            title: `Nueva idea: ${idea.title}`,
-            body: `${idea.title} se sumó al grupo. Entrá a votar o guardar.`,
-            payload: { ideaId: idea.id, groupId: input.groupId },
-          });
-        })();
+      if (!cloudConfigured) {
+        return { id, synced: true };
       }
-      return id;
+
+      const sb = createSupabaseBrowserClient();
+      const ideaRes = await cloudInsertIdea(sb, idea);
+      if (!ideaRes.ok) {
+        const msg =
+          ideaRes.error ??
+          "No se pudo guardar la idea en la nube.";
+        setCloudError(msg);
+        // Revertir optimista: si no está en Postgres, no engañar
+        setState((prev) => ({
+          ...prev,
+          ideas: prev.ideas.filter((i) => i.id !== id),
+          points: prev.points.filter((p) => p.id !== pointId),
+        }));
+        return { id: "", synced: false, error: msg };
+      }
+      setCloudError(null);
+      void cloudInsertPoint(sb, point);
+      notifyGroup({
+        groupId: input.groupId,
+        eventType: "idea_proposed",
+        title: `Nueva idea: ${idea.title}`,
+        body: `${idea.title} se sumó al grupo. Entrá a votar o guardar.`,
+        payload: { ideaId: idea.id, groupId: input.groupId },
+      });
+      return { id, synced: true };
     },
     [],
   );
@@ -1514,7 +1571,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const addExpense = useCallback(
-    (input: {
+    async (input: {
       groupId: string;
       ideaId?: string;
       title: string;
@@ -1524,16 +1581,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       splitShares?: Record<string, number>;
     }) => {
       const uid = userIdRef.current;
-      if (!uid) return;
+      if (!uid) {
+        return { synced: false, error: "No hay sesión." };
+      }
       const linkedIdea = input.ideaId
         ? stateRef.current.ideas.find((i) => i.id === input.ideaId)
         : undefined;
-      // El festejado no puede cargar ni ver gastos de su propio cumple
       if (
         linkedIdea?.type === "birthday" &&
         linkedIdea.celebrantMemberId === uid
       ) {
-        return;
+        return {
+          synced: false,
+          error: "No podés cargar gastos de tu propio cumpleaños.",
+        };
       }
       let splitBetween =
         linkedIdea?.type === "birthday" && linkedIdea.celebrantMemberId
@@ -1551,7 +1612,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           (id) => (splitShares![id] ?? 0) > 0,
         );
       }
-      if (splitBetween.length === 0) return;
+      if (splitBetween.length === 0) {
+        return { synced: false, error: "Elegí entre quiénes se parte." };
+      }
 
       const expenseId = cloudConfigured ? newCloudId() : createId("exp");
       const pointId = cloudConfigured ? newCloudId() : createId("pt");
@@ -1588,34 +1651,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
         };
       });
 
-      if (cloudConfigured) {
-        void (async () => {
-          const sb = createSupabaseBrowserClient();
-          const expRes = await cloudInsertExpense(sb, expense);
-          if (!expRes.ok) {
-            console.error(
-              "No se pudo guardar el gasto en la nube:",
-              expRes.error,
-            );
-            return;
-          }
-          const ptRes = await cloudInsertPoint(sb, point);
-          if (!ptRes.ok) {
-            console.error("No se pudo guardar el punto:", ptRes.error);
-          }
-          notifyGroup({
-            groupId: input.groupId,
-            eventType: "expense_added",
-            title: `Gasto: ${expense.title}`,
-            body: "Hay un gasto nuevo en el grupo. Miralo en Saldos.",
-            payload: {
-              expenseId: expense.id,
-              ideaId: expense.ideaId,
-              groupId: input.groupId,
-            },
-          });
-        })();
+      if (!cloudConfigured) {
+        return { synced: true };
       }
+
+      const sb = createSupabaseBrowserClient();
+      const expRes = await cloudInsertExpense(sb, expense);
+      if (!expRes.ok) {
+        const msg = expRes.error ?? "No se pudo guardar el gasto en la nube.";
+        setCloudError(msg);
+        setState((prev) => ({
+          ...prev,
+          expenses: prev.expenses.filter((e) => e.id !== expenseId),
+          points: prev.points.filter((p) => p.id !== pointId),
+        }));
+        return { synced: false, error: msg };
+      }
+      setCloudError(null);
+      void cloudInsertPoint(sb, point);
+      notifyGroup({
+        groupId: input.groupId,
+        eventType: "expense_added",
+        title: `Gasto: ${expense.title}`,
+        body: "Hay un gasto nuevo en el grupo. Miralo en Saldos.",
+        payload: {
+          expenseId: expense.id,
+          ideaId: expense.ideaId,
+          groupId: input.groupId,
+        },
+      });
+      return { synced: true };
     },
     [],
   );
@@ -1783,6 +1848,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ready,
       state,
       currentUser,
+      cloudError,
+      clearCloudError,
+      refreshFromCloud,
       signInAs,
       signInWithEmail,
       signInWithPhone,
@@ -1817,6 +1885,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       ready,
+      cloudError,
+      clearCloudError,
+      refreshFromCloud,
       state,
       currentUser,
       signInAs,

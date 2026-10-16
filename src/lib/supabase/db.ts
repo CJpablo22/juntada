@@ -452,6 +452,16 @@ export async function cloudInsertIdea(
   supabase: Supabase,
   idea: Idea,
 ): Promise<{ ok: boolean; error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      ok: false,
+      error: "Sesión expirada. Cerrá sesión y volvé a entrar.",
+    };
+  }
+
   const row = {
     id: idea.id,
     group_id: idea.groupId,
@@ -470,7 +480,7 @@ export async function cloudInsertIdea(
     date_flexible: idea.dateFlexible ?? false,
     link: idea.link ?? null,
     budget_note: idea.budgetNote ?? null,
-    proposed_by: idea.proposedBy,
+    proposed_by: user.id,
     status: idea.status,
     timing: idea.timing,
     tags: idea.tags ?? [],
@@ -480,26 +490,95 @@ export async function cloudInsertIdea(
     created_at: idea.createdAt,
   };
 
-  // Preferir RPC (security definer) — evita RLS circular en group_members
+  // 1) RPC security definer (017/019)
   const { error: rpcError } = await supabase.rpc("insert_idea", {
     p_idea: row,
   });
-  if (!rpcError) return { ok: true };
-
-  // Fallback tabla si aún no corrieron el 017
-  if (
-    !/function|does not exist|schema cache/i.test(rpcError.message)
-  ) {
-    console.error("insert idea rpc", rpcError.message, rpcError.code);
-    return { ok: false, error: rpcError.message };
+  if (!rpcError) {
+    return verifyIdeaSaved(supabase, idea.id);
   }
 
+  const rpcMissing = /function|does not exist|schema cache/i.test(
+    rpcError.message,
+  );
+  if (!rpcMissing) {
+    console.error("insert idea rpc", rpcError.message, rpcError.code);
+    // Seguir al fallback tabla por si el RPC falla por columnas opcionales
+  }
+
+  // 2) Upsert directo
   const { error } = await supabase
     .from("ideas")
-    .upsert(row, { onConflict: "id", ignoreDuplicates: true });
+    .upsert(row, { onConflict: "id" });
+  if (!error) {
+    return verifyIdeaSaved(supabase, idea.id);
+  }
+
+  // 3) Columnas mínimas (schema 001) si faltan migraciones de schedule/birthday
+  if (/column|schema cache/i.test(error.message)) {
+    const minimal = {
+      id: row.id,
+      group_id: row.group_id,
+      type: row.type,
+      title: row.title,
+      notes: row.notes,
+      movie_venue: row.movie_venue,
+      places: row.places,
+      address: row.address,
+      proposed_by: row.proposed_by,
+      status: row.status,
+      timing: row.timing,
+      tags: row.tags,
+      votes: row.votes,
+      revealed: row.revealed,
+      soft_veto_user_ids: row.soft_veto_user_ids,
+      created_at: row.created_at,
+    };
+    const { error: minErr } = await supabase
+      .from("ideas")
+      .upsert(minimal, { onConflict: "id" });
+    if (!minErr) {
+      return verifyIdeaSaved(supabase, idea.id);
+    }
+    console.error("insert idea minimal", minErr.message);
+    return {
+      ok: false,
+      error: `${minErr.message}. Corré los SQL 017 y 019 en Supabase.`,
+    };
+  }
+
+  console.error("insert idea", error.message, error.code, error.details);
+  const hint = /row-level security|not a group member/i.test(error.message)
+    ? " ¿Estás en el grupo? Probá salir y volver a entrar, o corré el SQL 019."
+    : /function|does not exist/i.test(rpcError.message)
+      ? " Corré supabase/migrations/019_insert_idea_expense_hardened.sql en el SQL Editor."
+      : "";
+  return { ok: false, error: `${error.message}.${hint}` };
+}
+
+async function verifyIdeaSaved(
+  supabase: Supabase,
+  ideaId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase
+    .from("ideas")
+    .select("id")
+    .eq("id", ideaId)
+    .maybeSingle();
   if (error) {
-    console.error("insert idea", error.message, error.code, error.details);
-    return { ok: false, error: error.message };
+    console.error("verify idea", error.message);
+    // Insert pudo haber andado; SELECT falló por RLS — avisar
+    return {
+      ok: false,
+      error: `Guardado dudoso (no se pudo verificar): ${error.message}`,
+    };
+  }
+  if (!data) {
+    return {
+      ok: false,
+      error:
+        "La idea no quedó en la nube. Corré el SQL 019 en Supabase o revisá que seas miembro del grupo.",
+    };
   }
   return { ok: true };
 }
@@ -600,6 +679,16 @@ export async function cloudInsertExpense(
   supabase: Supabase,
   expense: Expense,
 ): Promise<{ ok: boolean; error?: string }> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      ok: false,
+      error: "Sesión expirada. Cerrá sesión y volvé a entrar.",
+    };
+  }
+
   const row = {
     id: expense.id,
     group_id: expense.groupId,
@@ -615,21 +704,68 @@ export async function cloudInsertExpense(
   const { error: rpcError } = await supabase.rpc("insert_expense", {
     p_expense: row,
   });
-  if (!rpcError) return { ok: true };
+  if (!rpcError) {
+    return verifyExpenseSaved(supabase, expense.id);
+  }
 
-  if (
-    !/function|does not exist|schema cache/i.test(rpcError.message)
-  ) {
+  const rpcMissing = /function|does not exist|schema cache/i.test(
+    rpcError.message,
+  );
+  if (!rpcMissing) {
     console.error("insert expense rpc", rpcError.message, rpcError.code);
-    return { ok: false, error: rpcError.message };
   }
 
   const { error } = await supabase
     .from("expenses")
-    .upsert(row, { onConflict: "id", ignoreDuplicates: true });
+    .upsert(row, { onConflict: "id" });
+  if (!error) {
+    return verifyExpenseSaved(supabase, expense.id);
+  }
+
+  // Sin columna split_shares
+  if (/split_shares|column|schema cache/i.test(error.message)) {
+    const { split_shares: _s, ...withoutShares } = row;
+    const { error: e2 } = await supabase
+      .from("expenses")
+      .upsert(withoutShares, { onConflict: "id" });
+    if (!e2) return verifyExpenseSaved(supabase, expense.id);
+    console.error("insert expense fallback", e2.message);
+    return {
+      ok: false,
+      error: `${e2.message}. Corré los SQL 017–019 en Supabase.`,
+    };
+  }
+
+  console.error("insert expense", error.message, error.code, error.details);
+  const hint = /row-level security|not a group member/i.test(error.message)
+    ? " ¿Estás en el grupo? Corré el SQL 019."
+    : rpcMissing
+      ? " Corré supabase/migrations/019_insert_idea_expense_hardened.sql."
+      : "";
+  return { ok: false, error: `${error.message}.${hint}` };
+}
+
+async function verifyExpenseSaved(
+  supabase: Supabase,
+  expenseId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("id")
+    .eq("id", expenseId)
+    .maybeSingle();
   if (error) {
-    console.error("insert expense", error.message, error.code, error.details);
-    return { ok: false, error: error.message };
+    return {
+      ok: false,
+      error: `Guardado dudoso (no se pudo verificar): ${error.message}`,
+    };
+  }
+  if (!data) {
+    return {
+      ok: false,
+      error:
+        "El gasto no quedó en la nube. Corré el SQL 019 o revisá membresía del grupo.",
+    };
   }
   return { ok: true };
 }

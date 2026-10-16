@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { UserAvatar } from "@/components/ui/user-chip";
 import {
   buildEqualShares,
-  buildHalfShares,
   computeBalances,
   expenseShares,
   normalizeShares,
@@ -78,36 +77,15 @@ export default function ExpensesPage() {
       ? selectedIdea.celebrantMemberId
       : undefined;
 
-  const eligibleMemberIds = useMemo(() => {
-    if (!group) return [];
-    return group.memberIds.filter((id) => id !== celebrantIdForSelected);
-  }, [group, celebrantIdForSelected]);
-
   useEffect(() => {
     if (!celebrantIdForSelected) return;
     setSplit((prev) => prev.filter((id) => id !== celebrantIdForSelected));
   }, [celebrantIdForSelected]);
 
-  useEffect(() => {
-    if (splitMode !== "half") return;
-    setSplit((prev) => {
-      const eligible = prev.filter((id) =>
-        eligibleMemberIds.includes(id),
-      );
-      if (eligible.length === 2) return eligible;
-      if (eligible.length > 2) return eligible.slice(0, 2);
-      const filler = eligibleMemberIds.filter((id) => !eligible.includes(id));
-      return [...eligible, ...filler].slice(0, 2);
-    });
-  }, [splitMode, eligibleMemberIds]);
-
   const amountCents = parseEuroToCents(amount) ?? 0;
 
   const previewShares = useMemo(() => {
     if (amountCents <= 0) return {};
-    if (splitMode === "half" && split.length === 2) {
-      return buildHalfShares(amountCents, split[0], split[1]);
-    }
     if (splitMode === "custom") {
       const draft: Record<string, number> = {};
       for (const id of split) {
@@ -159,16 +137,6 @@ export default function ExpensesPage() {
 
   function toggleSplit(userId: string) {
     if (celebrantIdForSelected && userId === celebrantIdForSelected) return;
-    if (splitMode === "half") {
-      setSplit((prev) => {
-        if (prev.includes(userId)) {
-          return prev.filter((id) => id !== userId);
-        }
-        if (prev.length >= 2) return [prev[1], userId];
-        return [...prev, userId];
-      });
-      return;
-    }
     setSplit((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
@@ -176,7 +144,7 @@ export default function ExpensesPage() {
     );
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const cents = parseEuroToCents(amount);
     if (!title.trim() || cents == null || cents <= 0) {
@@ -201,13 +169,7 @@ export default function ExpensesPage() {
       : [...split];
     let splitShares: Record<string, number> | undefined;
 
-    if (splitMode === "half") {
-      if (splitBetween.length !== 2) {
-        setError("En «A medias» elegí exactamente 2 personas.");
-        return;
-      }
-      splitShares = buildHalfShares(cents, splitBetween[0], splitBetween[1]);
-    } else if (splitMode === "custom") {
+    if (splitMode === "custom") {
       const draft: Record<string, number> = {};
       for (const id of splitBetween) {
         const part = parseEuroToCents(customDraft[id] ?? "");
@@ -234,7 +196,7 @@ export default function ExpensesPage() {
       splitShares = buildEqualShares(cents, splitBetween);
     }
 
-    addExpense({
+    const result = await addExpense({
       groupId: group!.id,
       ideaId: ideaId || undefined,
       title,
@@ -243,6 +205,10 @@ export default function ExpensesPage() {
       splitBetween,
       splitShares,
     });
+    if (!result.synced) {
+      setError(result.error ?? "No se pudo guardar el gasto en la nube.");
+      return;
+    }
     setTitle("");
     setAmount("");
     setIdeaId("");
@@ -264,7 +230,7 @@ export default function ExpensesPage() {
           Gastos del grupo
         </h1>
         <p className="mt-2 text-[var(--brand-mute)]">
-          Solo euros por ahora (España). Partí por igual, a medias o a mano.
+          Solo euros por ahora (España). Partí por igual o con importes a mano.
         </p>
         {hiddenBirthdayPlans.length > 0 ? (
           <p className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--wash)] px-3 py-2 text-sm text-[var(--mute)]">
@@ -348,11 +314,10 @@ export default function ExpensesPage() {
 
           <div className="space-y-2">
             <Label>Cómo se parte</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {(
                 [
                   ["equal", "Por igual"],
-                  ["half", "A medias"],
                   ["custom", "A mano"],
                 ] as const
               ).map(([mode, label]) => (
@@ -373,17 +338,13 @@ export default function ExpensesPage() {
             </div>
             <p className="text-xs text-[var(--mute)]">
               {splitMode === "equal"
-                ? "Mismo importe para cada persona marcada."
-                : splitMode === "half"
-                  ? "Exactamente dos personas, 50/50."
-                  : "Poné el importe de cada uno (tienen que sumar el total)."}
+                ? "Mismo importe para cada persona marcada (si son 2, queda a medias)."
+                : "Poné el importe de cada uno (tienen que sumar el total)."}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>
-              {splitMode === "half" ? "Las 2 personas" : "Se parte entre"}
-            </Label>
+            <Label>Se parte entre</Label>
             <div className="flex flex-wrap gap-2">
               {group.memberIds.map((id) => {
                 const user = state.users.find((u) => u.id === id);

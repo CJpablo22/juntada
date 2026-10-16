@@ -721,10 +721,16 @@ export default function GroupPage() {
               members={members.filter(Boolean) as User[]}
               currentUser={currentUser}
               defaultTiming={shelf === "soon" ? "soon" : "catalog"}
-              onSubmit={(data) => {
-                const id = addIdea({ groupId: group.id, ...data });
+              onSubmit={async (data) => {
+                const result = await addIdea({ groupId: group.id, ...data });
+                if (!result.synced || !result.id) {
+                  throw new Error(
+                    result.error ??
+                      "No se pudo guardar en la nube. Revisá el aviso arriba.",
+                  );
+                }
                 setOpenIdea(false);
-                router.push(`/app/group/${group.id}/idea/${id}`);
+                router.push(`/app/group/${group.id}/idea/${result.id}`);
               }}
             />
           ) : null}
@@ -999,7 +1005,7 @@ function NewIdeaDialog({
     places: IdeaPlace[];
     tags: string[];
     timing: IdeaTiming;
-  } & IdeaScheduleInput) => void;
+  } & IdeaScheduleInput) => void | Promise<void>;
 }) {
   const [type, setType] = useState<IdeaType>("movie");
   const [movieVenue, setMovieVenue] = useState<MovieVenue>("home");
@@ -1022,6 +1028,7 @@ function NewIdeaDialog({
   const [titleTouched, setTitleTouched] = useState(false);
   const [importUrl, setImportUrl] = useState("");
   const [importHint, setImportHint] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -1031,6 +1038,7 @@ function NewIdeaDialog({
       setTitleTouched(false);
       setImportUrl("");
       setImportHint("");
+      setSaving(false);
     }
   }, [open, defaultTiming]);
 
@@ -1137,8 +1145,9 @@ function NewIdeaDialog({
     titleTouched,
   ]);
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (saving) return;
     if (!title.trim()) {
       setError("Poné un título.");
       return;
@@ -1179,41 +1188,52 @@ function NewIdeaDialog({
       type,
       type === "movie" ? movieVenue : undefined,
     );
-    onSubmit({
-      type,
-      title,
-      notes,
-      movieVenue: type === "movie" ? movieVenue : undefined,
-      celebrantName: resolvedCelebrantName,
-      celebrantMemberId: resolvedCelebrantMemberId,
-      birthdayKind: type === "birthday" ? birthdayKind : undefined,
-      places: needs ? cleanPlaces(places, members) : [],
-      timing,
-      tags: tagInput
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      ...schedule,
-      link:
-        (needs && ideaUsesOnlyMemberHomes(cleanPlaces(places, members)) &&
-          isMapsLink(schedule.link))
-          ? undefined
-          : schedule.link,
-    });
-    setTitle("");
-    setNotes("");
-    setPlaces([{ kind: "custom", name: "", address: "" }]);
-    setSchedule({});
-    setTagInput("");
+    setSaving(true);
     setError("");
-    setMovieVenue("home");
-    setBirthdayKind("meal");
-    setBirthdayVenue("home");
-    setCelebrantMode("other");
-    setCelebrantMemberId("");
-    setCelebrantName("");
-    setTitleTouched(false);
-    setTiming(defaultTiming);
+    try {
+      await onSubmit({
+        type,
+        title,
+        notes,
+        movieVenue: type === "movie" ? movieVenue : undefined,
+        celebrantName: resolvedCelebrantName,
+        celebrantMemberId: resolvedCelebrantMemberId,
+        birthdayKind: type === "birthday" ? birthdayKind : undefined,
+        places: needs ? cleanPlaces(places, members) : [],
+        timing,
+        tags: tagInput
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        ...schedule,
+        link:
+          needs &&
+          ideaUsesOnlyMemberHomes(cleanPlaces(places, members)) &&
+          isMapsLink(schedule.link)
+            ? undefined
+            : schedule.link,
+      });
+      setTitle("");
+      setNotes("");
+      setPlaces([{ kind: "custom", name: "", address: "" }]);
+      setSchedule({});
+      setTagInput("");
+      setError("");
+      setMovieVenue("home");
+      setBirthdayKind("meal");
+      setBirthdayVenue("home");
+      setCelebrantMode("other");
+      setCelebrantMemberId("");
+      setCelebrantName("");
+      setTitleTouched(false);
+      setTiming(defaultTiming);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudo guardar la idea.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   const needsPlaces = ideaNeedsPlaces(
@@ -1559,11 +1579,12 @@ function NewIdeaDialog({
           {error && !needsPlaces ? (
             <p className="text-sm text-[var(--pop)]">{error}</p>
           ) : null}
-          <Button
-            type="submit"
-            className="w-full"
-          >
-            {timing === "catalog" ? "Guardar en catálogo" : "Meter en Pronto"}
+          <Button type="submit" className="w-full" disabled={saving}>
+            {saving
+              ? "Guardando en la nube…"
+              : timing === "catalog"
+                ? "Guardar en catálogo"
+                : "Meter en Pronto"}
           </Button>
         </form>
       </DialogContent>
