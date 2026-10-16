@@ -62,7 +62,7 @@ Marcado a propósito para no olvidarlo. **No bloquea** el lanzamiento entre voso
 
 ### Producto (visión, no infra)
 Ver también `PRODUCT_VISION.md`: más juegos de reunión, temporadas/badges.  
-Backlog free producto 1 (PWA→polish + Web Push): **hecho**. En Supabase corré `014`–`018` y **`019_insert_idea_expense_hardened.sql`** (sync ideas/gastos entre devices). En Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (`npm run vapid` para generar el par).
+Backlog free producto 1 (PWA→polish + Web Push): **hecho**. En Supabase corré `014`–`019` y **`020_fix_group_members_rls_recursion.sql`** (fix *infinite recursion* en group_members). En Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (`npm run vapid` para generar el par).
 
 ---
 

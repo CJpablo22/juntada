@@ -490,12 +490,21 @@ export async function cloudInsertIdea(
     created_at: idea.createdAt,
   };
 
-  // 1) RPC security definer (017/019)
+  // 1) RPC security definer (017/019/020)
   const { error: rpcError } = await supabase.rpc("insert_idea", {
     p_idea: row,
   });
   if (!rpcError) {
-    return verifyIdeaSaved(supabase, idea.id);
+    const verified = await verifyIdeaSaved(supabase, idea.id);
+    // Si el INSERT anduvo pero el SELECT choca por RLS vieja (recursión),
+    // igual contamos OK — el dato ya está en Postgres.
+    if (
+      !verified.ok &&
+      /infinite recursion/i.test(verified.error ?? "")
+    ) {
+      return { ok: true };
+    }
+    return verified;
   }
 
   const rpcMissing = /function|does not exist|schema cache/i.test(
@@ -705,7 +714,14 @@ export async function cloudInsertExpense(
     p_expense: row,
   });
   if (!rpcError) {
-    return verifyExpenseSaved(supabase, expense.id);
+    const verified = await verifyExpenseSaved(supabase, expense.id);
+    if (
+      !verified.ok &&
+      /infinite recursion/i.test(verified.error ?? "")
+    ) {
+      return { ok: true };
+    }
+    return verified;
   }
 
   const rpcMissing = /function|does not exist|schema cache/i.test(

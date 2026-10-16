@@ -19,8 +19,11 @@ export function SyncBanner() {
           <p className="text-[var(--mute)]">{cloudError}</p>
           <p className="text-xs text-[var(--mute)]">
             Sin esto, solo lo ves en este celular. En Supabase → SQL Editor
-            corré <code className="text-[var(--ink)]">019_insert_idea_expense_hardened.sql</code>{" "}
-            (y el 017/018 si faltan).
+            corré{" "}
+            <code className="text-[var(--ink)]">
+              020_fix_group_members_rls_recursion.sql
+            </code>{" "}
+            (arregla el error de recursión). Si faltan, también 017–019.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
