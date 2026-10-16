@@ -3,7 +3,16 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowRight, CalendarClock, Copy, MapPin, Plus, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarClock,
+  Copy,
+  Images,
+  MapPin,
+  Plus,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { LotteryButton } from "@/components/ideas/lottery-button";
 import {
   PlaceFields,
@@ -277,6 +286,22 @@ export default function GroupPage() {
             >
               <Wallet className="size-4" />
               Gastos
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/app/group/${group.id}/album`)}
+            >
+              <Images className="size-4" />
+              Álbum
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                router.push(`/app/group/${group.id}/games/impostor`)
+              }
+            >
+              <Sparkles className="size-4" />
+              Impostor
             </Button>
             <Button
               variant="outline"

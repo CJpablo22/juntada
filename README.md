@@ -28,6 +28,7 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - Ritual semanal «¿qué hacemos?» con mood y finalistas de Pronto
 - Digest semanal in-app (hechos, gastos, ranking) en Hechas
 - Importar idea pegando link (Maps / Netflix / Letterboxd / IG)
+- Álbum de recuerdos del grupo + juego presencial «El impostor»
 
 ## Stack
 

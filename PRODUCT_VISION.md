@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-16 (PWA…digest; backlog free uno a uno)
+Última actualización: 2026-10-16 (backlog free: PWA→álbum+impostor; polish pendiente)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
