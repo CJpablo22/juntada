@@ -131,6 +131,11 @@ export type Idea = {
   softVetoUserIds: string[];
   /** userId -> yes | no (asistencia) */
   rsvps?: Record<string, RsvpStatus>;
+  /**
+   * Alternativas de lugar/fecha/hora. Máx 4, 1 por persona.
+   * No se pisan entre sí: se proponen y se elige con preferVotes.
+   */
+  planOptions?: PlanOption[];
   doneRating?: number;
   doneNote?: string;
   /** JPEG data URL (or Storage URL) of the memory photo */
@@ -139,6 +144,23 @@ export type Idea = {
 };
 
 export type RsvpStatus = "yes" | "no";
+
+/** Una propuesta concreta de dónde / cuándo para una idea. */
+export type PlanOption = {
+  id: string;
+  proposedBy: string;
+  placeName?: string;
+  placeAddress?: string;
+  /** Si es casa de un miembro */
+  memberHomeId?: string;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  createdAt: string;
+  /** userIds que prefieren esta opción (1 voto por persona en total) */
+  preferVotes: string[];
+};
+
+export const MAX_PLAN_OPTIONS = 4;
 
 /** Campos de cuándo / extras al crear o editar una idea */
 export type IdeaScheduleInput = {

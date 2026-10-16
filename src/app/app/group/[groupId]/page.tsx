@@ -22,6 +22,7 @@ import {
 } from "@/components/ideas/place-fields";
 import { ScheduleFields } from "@/components/ideas/schedule-fields";
 import { WeeklyRitual } from "@/components/ideas/weekly-ritual";
+import { GroupPushStatus } from "@/components/group/push-status";
 import { WeeklyDigestCard } from "@/components/group/weekly-digest";
 import { useApp } from "@/components/providers/app-provider";
 import { Badge } from "@/components/ui/badge";
@@ -275,6 +276,14 @@ export default function GroupPage() {
             <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
               {group.name}
             </h1>
+            <div className="mt-2">
+              <GroupPushStatus
+                groupId={group.id}
+                members={members.filter(
+                  (m): m is NonNullable<typeof m> => Boolean(m),
+                )}
+              />
+            </div>
           </div>
           <div className="btn-stack sm:shrink-0">
             <Button variant="outline" onClick={copyInvite}>

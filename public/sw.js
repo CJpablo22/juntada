@@ -1,5 +1,5 @@
 /* Juntada PWA — shell cache + offline + Web Push (iOS/Android). */
-const CACHE = "juntada-shell-v2";
+const CACHE = "juntada-shell-v3";
 const PRECACHE = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -77,28 +77,48 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   let data = {
-    title: "Juntada",
-    body: "Tenés un aviso nuevo",
+    title: "Aviso del grupo",
+    body: "Abrí Juntada para ver el detalle",
     url: "/app/notifications",
     tag: "juntada",
   };
   try {
     if (event.data) {
       const parsed = event.data.json();
-      data = { ...data, ...parsed };
+      if (parsed && typeof parsed === "object") {
+        if (typeof parsed.title === "string" && parsed.title.trim()) {
+          data.title = parsed.title.trim();
+        }
+        if (typeof parsed.body === "string" && parsed.body.trim()) {
+          data.body = parsed.body.trim();
+        } else if (typeof parsed.body === "string") {
+          data.body = "Abrí Juntada para ver el detalle";
+        }
+        if (typeof parsed.url === "string" && parsed.url.trim()) {
+          data.url = parsed.url.trim();
+        }
+        if (typeof parsed.tag === "string" && parsed.tag.trim()) {
+          data.tag = parsed.tag.trim();
+        }
+      }
     }
   } catch {
     try {
       const text = event.data && event.data.text();
-      if (text) data.body = text;
+      if (text && text.trim()) data.body = text.trim();
     } catch {
       /* ignore */
     }
   }
 
+  // Evitar "Juntada from Juntada" en iOS: título ≠ nombre de la app si el body vacío
+  const title =
+    data.title && data.title !== "Juntada" ? data.title : "Aviso del grupo";
+  const body = data.body || "Abrí Juntada para ver el detalle";
+
   event.waitUntil(
-    self.registration.showNotification(data.title || "Juntada", {
-      body: data.body || "",
+    self.registration.showNotification(title, {
+      body,
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       tag: data.tag || "juntada",

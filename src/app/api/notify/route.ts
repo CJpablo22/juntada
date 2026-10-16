@@ -81,12 +81,21 @@ export async function POST(request: NextRequest) {
     if (userIds.length) {
       const ideaId =
         typeof body.payload?.ideaId === "string" ? body.payload.ideaId : "";
-      const url = ideaId
-        ? `/app/group/${body.groupId}/idea/${ideaId}`
-        : "/app/notifications";
+      const expenseId =
+        typeof body.payload?.expenseId === "string"
+          ? body.payload.expenseId
+          : "";
+      let url = "/app/notifications";
+      if (ideaId) {
+        url = `/app/group/${body.groupId}/idea/${ideaId}`;
+      } else if (expenseId || body.eventType === "expense_added") {
+        url = `/app/group/${body.groupId}/expenses`;
+      }
+      const pushBody =
+        text.trim() || "Abrí Juntada para ver el detalle del grupo.";
       push = await sendPushToUsers(userIds, {
-        title,
-        body: text,
+        title: title === "Juntada" ? "Aviso del grupo" : title,
+        body: pushBody,
         url,
         tag: `juntada-${body.eventType}`,
       });

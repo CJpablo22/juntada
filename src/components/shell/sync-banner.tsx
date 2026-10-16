@@ -23,7 +23,9 @@ export function SyncBanner() {
             <code className="text-[var(--ink)]">
               020_fix_group_members_rls_recursion.sql
             </code>{" "}
-            (arregla el error de recursión). Si faltan, también 017–019.
+            y{" "}
+            <code className="text-[var(--ink)]">021_plan_options.sql</code>{" "}
+            (opciones de lugar/fecha). Si faltan, también 017–019.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">

@@ -215,6 +215,7 @@ function normalizeIdea(idea: Partial<Idea> & { id: string; title: string }): Ide
     revealed: idea.revealed ?? false,
     softVetoUserIds: idea.softVetoUserIds ?? [],
     rsvps: idea.rsvps,
+    planOptions: idea.planOptions ?? [],
     doneRating: idea.doneRating,
     doneNote: idea.doneNote,
     donePhotoUrl: idea.donePhotoUrl || undefined,

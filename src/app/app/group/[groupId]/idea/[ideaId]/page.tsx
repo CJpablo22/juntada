@@ -15,6 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { MemoryPhotoField } from "@/components/ideas/memory-photo-field";
+import { PlanOptionsSection } from "@/components/ideas/plan-options";
 import { ScheduleFields } from "@/components/ideas/schedule-fields";
 import { ScorePicker } from "@/components/ideas/score-picker";
 import { useApp } from "@/components/providers/app-provider";
@@ -52,6 +53,9 @@ export default function IdeaDetailPage() {
     addReview,
     setIdeaTiming,
     updateIdeaSchedule,
+    addPlanOption,
+    votePlanOption,
+    removePlanOption,
   } = useApp();
   const [doneRating, setDoneRating] = useState(5);
   const [doneNote, setDoneNote] = useState("");
@@ -152,6 +156,16 @@ export default function IdeaDetailPage() {
     idea.status === "chosen" ||
     idea.status === "in_progress" ||
     (idea.status === "pending" && idea.timing === "soon");
+  const isProposer = Boolean(
+    idea && currentUser && idea.proposedBy === currentUser.id,
+  );
+  const canTouchOptions = Boolean(
+    idea && idea.status !== "done" && idea.status !== "archived",
+  );
+  const optionMembers = useMemo(
+    () => members.filter((m): m is NonNullable<typeof m> => Boolean(m)),
+    [members],
+  );
 
   function onVote(score: number) {
     castVote(idea!.id, score);
@@ -297,13 +311,26 @@ export default function IdeaDetailPage() {
         ) : null}
       </div>
 
+      {canTouchOptions ? (
+        <PlanOptionsSection
+          options={idea.planOptions ?? []}
+          members={optionMembers}
+          currentUserId={currentUser.id}
+          ideaProposerId={idea.proposedBy}
+          canEdit={canTouchOptions}
+          onAdd={(input) => addPlanOption({ ideaId: idea.id, ...input })}
+          onVote={(optionId) => votePlanOption(idea.id, optionId)}
+          onRemove={(optionId) => removePlanOption(idea.id, optionId)}
+        />
+      ) : null}
+
       <section className="surface-panel space-y-3 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
             <CalendarClock className="size-4 text-[var(--pop)]" />
-            Cuándo y extras
+            Extras del plan
           </p>
-          {idea.status !== "done" ? (
+          {idea.status !== "done" && isProposer ? (
             <Button
               type="button"
               variant="outline"
@@ -318,7 +345,14 @@ export default function IdeaDetailPage() {
           ) : null}
         </div>
 
-        {editingSchedule ? (
+        {!isProposer && idea.status !== "done" ? (
+          <p className="text-xs text-[var(--mute)]">
+            Solo quien propuso la idea edita link y presupuesto. Para otro
+            lugar o horario, usá «Proponer otra» arriba.
+          </p>
+        ) : null}
+
+        {editingSchedule && isProposer ? (
           <form
             className="space-y-4"
             onSubmit={(e) => {
@@ -335,17 +369,20 @@ export default function IdeaDetailPage() {
               omitMapsLink={ideaUsesOnlyMemberHomes(idea.places)}
             />
             <Button type="submit" className="w-full sm:w-auto">
-              Guardar cuándo
+              Guardar extras
             </Button>
           </form>
         ) : (
           <div className="space-y-2 text-sm text-[var(--mute)]">
             {formatIdeaSchedule(idea) ? (
               <p className="font-medium text-[var(--ink)]">
-                {formatIdeaSchedule(idea)}
+                Fecha base: {formatIdeaSchedule(idea)}
               </p>
             ) : (
-              <p>Todavía no hay fecha ni hora. Podés agregarlas cuando quieran.</p>
+              <p>
+                Sin fecha base fijada. Las propuestas viven en las opciones de
+                arriba; al elegir el plan gana la más votada.
+              </p>
             )}
             {idea.budgetNote ? (
               <p className="inline-flex items-center gap-1.5">

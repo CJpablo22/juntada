@@ -30,14 +30,24 @@ import {
   cloudKickMember,
   cloudLeaveGroup,
   cloudRenameGroup,
+  cloudAddPlanOption,
   cloudCastVote,
+  cloudGroupPushUserIds,
+  cloudRemovePlanOption,
   cloudRevealVotes,
   cloudSetRsvp,
   cloudToggleSoftVeto,
   cloudUpdateIdea,
+  cloudVotePlanOption,
   loadCloudState,
   newCloudId,
 } from "@/lib/supabase/db";
+import {
+  optionToPlaces,
+  seedPlanOptionFromIdea,
+  winningPlanOption,
+} from "@/lib/plan-options";
+import { formatEuro } from "@/lib/money";
 import {
   ensureProfileFromAuth,
   updateProfileRow,
@@ -59,11 +69,12 @@ import type {
   IdeaTiming,
   IdeaType,
   MovieVenue,
+  PlanOption,
   Review,
   RsvpStatus,
   User,
 } from "@/lib/types";
-import { cleanScheduleInput } from "@/lib/types";
+import { MAX_PLAN_OPTIONS, cleanScheduleInput } from "@/lib/types";
 import { isMapsLink } from "@/lib/maps";
 import { ideaUsesOnlyMemberHomes } from "@/lib/places";
 
@@ -142,6 +153,25 @@ type AppContextValue = {
   setIdeaTiming: (ideaId: string, timing: IdeaTiming) => void;
   castVote: (ideaId: string, score: number) => void;
   setRsvp: (ideaId: string, status: RsvpStatus) => void;
+  addPlanOption: (input: {
+    ideaId: string;
+    placeName?: string;
+    placeAddress?: string;
+    memberHomeId?: string;
+    scheduledDate?: string;
+    scheduledTime?: string;
+  }) => Promise<{ ok: boolean; error?: string }>;
+  votePlanOption: (
+    ideaId: string,
+    optionId: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
+  removePlanOption: (
+    ideaId: string,
+    optionId: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
+  /** Aplica la opción ganadora a lugar/fecha de la idea (al elegir). */
+  applyWinningOption: (ideaId: string) => void;
+  loadGroupPushUserIds: (groupId: string) => Promise<string[]>;
   toggleSoftVeto: (ideaId: string) => void;
   revealVotes: (ideaId: string) => void;
   chooseIdea: (ideaId: string) => void;
@@ -932,12 +962,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         revealed: false,
         softVetoUserIds: [],
         rsvps: {},
+        planOptions: [],
         link:
           ideaUsesOnlyMemberHomes(places) && isMapsLink(schedule.link)
             ? undefined
             : schedule.link,
         createdAt,
       };
+      const seedId = cloudConfigured ? newCloudId() : createId("opt");
+      const seed = seedPlanOptionFromIdea(idea, seedId);
+      if (seed) idea.planOptions = [seed];
+
       const point = {
         id: pointId,
         groupId: input.groupId,
@@ -977,12 +1012,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { id: "", synced: false, error: msg };
       }
       setCloudError(null);
+      if (seed) {
+        const opts = await cloudAddPlanOption(sb, idea.id, seed);
+        if (opts) {
+          setState((prev) => ({
+            ...prev,
+            ideas: prev.ideas.map((i) =>
+              i.id === idea.id ? { ...i, planOptions: opts } : i,
+            ),
+          }));
+        }
+      }
       void cloudInsertPoint(sb, point);
+      const groupName =
+        stateRef.current.groups.find((g) => g.id === input.groupId)?.name ??
+        "el grupo";
+      const who =
+        stateRef.current.users.find((u) => u.id === uid)?.name ?? "Alguien";
       notifyGroup({
         groupId: input.groupId,
         eventType: "idea_proposed",
-        title: `Nueva idea: ${idea.title}`,
-        body: `${idea.title} se sumó al grupo. Entrá a votar o guardar.`,
+        title: `Nueva idea · ${idea.title}`,
+        body: `${who} la sumó en ${groupName}. Tocá para ver opciones.`,
         payload: { ideaId: idea.id, groupId: input.groupId },
       });
       return { id, synced: true };
@@ -993,12 +1044,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateIdeaSchedule = useCallback(
     (ideaId: string, scheduleInput: IdeaScheduleInput) => {
       const schedule = cleanScheduleInput(scheduleInput);
+      const uid = userIdRef.current;
       setState((prev) => {
         const idea = prev.ideas.find((i) => i.id === ideaId);
+        // Solo el creador edita el núcleo (link/presupuesto/fecha base).
+        // El resto propone opciones, no pisa.
+        if (!idea || !uid || idea.proposedBy !== uid) return prev;
         const link =
-          idea &&
-          ideaUsesOnlyMemberHomes(idea.places) &&
-          isMapsLink(schedule.link)
+          ideaUsesOnlyMemberHomes(idea.places) && isMapsLink(schedule.link)
             ? undefined
             : schedule.link;
         const nextIdeas = prev.ideas.map((i) =>
@@ -1029,6 +1082,226 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const addPlanOption = useCallback(
+    async (input: {
+      ideaId: string;
+      placeName?: string;
+      placeAddress?: string;
+      memberHomeId?: string;
+      scheduledDate?: string;
+      scheduledTime?: string;
+    }) => {
+      const uid = userIdRef.current;
+      if (!uid) return { ok: false, error: "No hay sesión." };
+      const idea = stateRef.current.ideas.find((i) => i.id === input.ideaId);
+      if (!idea) return { ok: false, error: "Idea no encontrada." };
+      if (idea.status === "done" || idea.status === "archived") {
+        return { ok: false, error: "Esta idea ya no admite opciones." };
+      }
+      const existing = idea.planOptions ?? [];
+      if (existing.length >= MAX_PLAN_OPTIONS) {
+        return { ok: false, error: "Máximo 4 opciones. Elegí entre las que hay." };
+      }
+      if (existing.some((o) => o.proposedBy === uid)) {
+        return {
+          ok: false,
+          error: "Ya propusiste una opción. Sacala si querés cambiar.",
+        };
+      }
+      const placeName = input.placeName?.trim() || undefined;
+      const placeAddress = input.placeAddress?.trim() || undefined;
+      const scheduledDate = input.scheduledDate?.trim() || undefined;
+      const scheduledTime = input.scheduledTime?.trim() || undefined;
+      if (!placeName && !placeAddress && !scheduledDate && !scheduledTime) {
+        return { ok: false, error: "Poné un lugar o una fecha/hora." };
+      }
+      const option: PlanOption = {
+        id: cloudConfigured ? newCloudId() : createId("opt"),
+        proposedBy: uid,
+        placeName,
+        placeAddress,
+        memberHomeId: input.memberHomeId?.trim() || undefined,
+        scheduledDate,
+        scheduledTime,
+        createdAt: new Date().toISOString(),
+        preferVotes: [],
+      };
+      setState((prev) => ({
+        ...prev,
+        ideas: prev.ideas.map((i) =>
+          i.id === input.ideaId
+            ? { ...i, planOptions: [...(i.planOptions ?? []), option] }
+            : i,
+        ),
+      }));
+      if (cloudConfigured) {
+        const cloud = await cloudAddPlanOption(
+          createSupabaseBrowserClient(),
+          input.ideaId,
+          option,
+        );
+        if (!cloud) {
+          setState((prev) => ({
+            ...prev,
+            ideas: prev.ideas.map((i) =>
+              i.id === input.ideaId
+                ? {
+                    ...i,
+                    planOptions: (i.planOptions ?? []).filter(
+                      (o) => o.id !== option.id,
+                    ),
+                  }
+                : i,
+            ),
+          }));
+          return {
+            ok: false,
+            error: "No se pudo guardar la opción. ¿Corriste el SQL 021?",
+          };
+        }
+        setState((prev) => ({
+          ...prev,
+          ideas: prev.ideas.map((i) =>
+            i.id === input.ideaId ? { ...i, planOptions: cloud } : i,
+          ),
+        }));
+      }
+      const who =
+        stateRef.current.users.find((u) => u.id === uid)?.name ?? "Alguien";
+      notifyGroup({
+        groupId: idea.groupId,
+        eventType: "generic",
+        title: `Nueva opción · ${idea.title}`,
+        body: `${who} propuso otro lugar o horario. Tocá para votar.`,
+        payload: { ideaId: idea.id, groupId: idea.groupId },
+      });
+      return { ok: true };
+    },
+    [],
+  );
+
+  const votePlanOption = useCallback(
+    async (ideaId: string, optionId: string) => {
+      const uid = userIdRef.current;
+      if (!uid) return { ok: false, error: "No hay sesión." };
+      setState((prev) => ({
+        ...prev,
+        ideas: prev.ideas.map((i) => {
+          if (i.id !== ideaId) return i;
+          const opts = (i.planOptions ?? []).map((o) => ({
+            ...o,
+            preferVotes: o.preferVotes.filter((id) => id !== uid),
+          }));
+          return {
+            ...i,
+            planOptions: opts.map((o) =>
+              o.id === optionId
+                ? { ...o, preferVotes: [...o.preferVotes, uid] }
+                : o,
+            ),
+          };
+        }),
+      }));
+      if (cloudConfigured) {
+        const cloud = await cloudVotePlanOption(
+          createSupabaseBrowserClient(),
+          ideaId,
+          optionId,
+        );
+        if (!cloud) {
+          return { ok: false, error: "No se pudo guardar tu voto." };
+        }
+        setState((prev) => ({
+          ...prev,
+          ideas: prev.ideas.map((i) =>
+            i.id === ideaId ? { ...i, planOptions: cloud } : i,
+          ),
+        }));
+      }
+      return { ok: true };
+    },
+    [],
+  );
+
+  const removePlanOption = useCallback(
+    async (ideaId: string, optionId: string) => {
+      const uid = userIdRef.current;
+      if (!uid) return { ok: false, error: "No hay sesión." };
+      const idea = stateRef.current.ideas.find((i) => i.id === ideaId);
+      const opt = idea?.planOptions?.find((o) => o.id === optionId);
+      if (!idea || !opt) return { ok: false, error: "Opción no encontrada." };
+      if (opt.proposedBy !== uid && idea.proposedBy !== uid) {
+        return { ok: false, error: "Solo podés sacar la tuya." };
+      }
+      setState((prev) => ({
+        ...prev,
+        ideas: prev.ideas.map((i) =>
+          i.id === ideaId
+            ? {
+                ...i,
+                planOptions: (i.planOptions ?? []).filter(
+                  (o) => o.id !== optionId,
+                ),
+              }
+            : i,
+        ),
+      }));
+      if (cloudConfigured) {
+        const cloud = await cloudRemovePlanOption(
+          createSupabaseBrowserClient(),
+          ideaId,
+          optionId,
+        );
+        if (!cloud) {
+          return { ok: false, error: "No se pudo borrar en la nube." };
+        }
+        setState((prev) => ({
+          ...prev,
+          ideas: prev.ideas.map((i) =>
+            i.id === ideaId ? { ...i, planOptions: cloud } : i,
+          ),
+        }));
+      }
+      return { ok: true };
+    },
+    [],
+  );
+
+  const applyWinningOption = useCallback((ideaId: string) => {
+    setState((prev) => {
+      const idea = prev.ideas.find((i) => i.id === ideaId);
+      if (!idea) return prev;
+      const win = winningPlanOption(idea.planOptions ?? [], idea.proposedBy);
+      if (!win) return prev;
+      const places = optionToPlaces(win);
+      const next = prev.ideas.map((i) =>
+        i.id === ideaId
+          ? {
+              ...i,
+              places: places.length ? places : i.places,
+              address: places[0]?.address || i.address,
+              scheduledDate: win.scheduledDate ?? i.scheduledDate,
+              scheduledTime: win.scheduledTime ?? i.scheduledTime,
+            }
+          : i,
+      );
+      if (cloudConfigured) {
+        void cloudUpdateIdea(createSupabaseBrowserClient(), ideaId, {
+          places: places.length ? places : undefined,
+          address: places[0]?.address ?? null,
+          scheduled_date: win.scheduledDate ?? null,
+          scheduled_time: win.scheduledTime ?? null,
+        });
+      }
+      return { ...prev, ideas: next };
+    });
+  }, []);
+
+  const loadGroupPushUserIds = useCallback(async (groupId: string) => {
+    if (!cloudConfigured) return [];
+    return cloudGroupPushUserIds(createSupabaseBrowserClient(), groupId);
+  }, []);
 
   const setIdeaTiming = useCallback((ideaId: string, timing: IdeaTiming) => {
     setState((prev) => {
@@ -1185,6 +1458,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const idea = prev.ideas.find((i) => i.id === ideaId);
       if (!idea || idea.status === "done" || idea.status === "in_progress")
         return prev;
+      const win = winningPlanOption(idea.planOptions ?? [], idea.proposedBy);
+      const winPlaces = win ? optionToPlaces(win) : [];
       const pointId = cloudConfigured ? newCloudId() : createId("pt");
       let next: AppState = {
         ...prev,
@@ -1196,6 +1471,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
               status: "chosen",
               revealed: true,
               timing: "soon",
+              ...(win
+                ? {
+                    places: winPlaces.length ? winPlaces : i.places,
+                    address: winPlaces[0]?.address || i.address,
+                    scheduledDate: win.scheduledDate ?? i.scheduledDate,
+                    scheduledTime: win.scheduledTime ?? i.scheduledTime,
+                  }
+                : {}),
             };
           // Solo deselige otra "elegida"; no toca las que están en proceso
           if (i.status === "chosen") return { ...i, status: "pending" };
@@ -1216,17 +1499,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const sb = createSupabaseBrowserClient();
         void cloudRevealVotes(sb, ideaId);
         for (const i of next.ideas.filter((x) => x.groupId === idea.groupId)) {
-          void cloudUpdateIdea(sb, i.id, {
+          const patch: Record<string, unknown> = {
             status: i.status,
             timing: i.timing,
-          });
+          };
+          if (i.id === ideaId && win) {
+            if (winPlaces.length) patch.places = winPlaces;
+            patch.address = winPlaces[0]?.address ?? null;
+            patch.scheduled_date = win.scheduledDate ?? null;
+            patch.scheduled_time = win.scheduledTime ?? null;
+          }
+          void cloudUpdateIdea(sb, i.id, patch);
         }
         void cloudInsertPoint(sb, next.points[next.points.length - 1]);
+        const whenBit =
+          win?.scheduledDate || win?.scheduledTime
+            ? " La opción más votada quedó fijada."
+            : " Coordiná día y hora si falta.";
         notifyGroup({
           groupId: idea.groupId,
           eventType: "idea_chosen",
-          title: `Elegido: ${idea.title}`,
-          body: "El grupo ya tiene plan. Coordiná día y hora.",
+          title: `Elegido · ${idea.title}`,
+          body: `El grupo ya tiene plan.${whenBit}`,
           payload: { ideaId, groupId: idea.groupId },
         });
       }
@@ -1672,8 +1966,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notifyGroup({
         groupId: input.groupId,
         eventType: "expense_added",
-        title: `Gasto: ${expense.title}`,
-        body: "Hay un gasto nuevo en el grupo. Miralo en Saldos.",
+        title: `Gasto · ${expense.title}`,
+        body: `${formatEuro(expense.amountCents)} en el grupo. Abrí Saldos.`,
         payload: {
           expenseId: expense.id,
           ideaId: expense.ideaId,
@@ -1869,6 +2163,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setIdeaTiming,
       castVote,
       setRsvp,
+      addPlanOption,
+      votePlanOption,
+      removePlanOption,
+      applyWinningOption,
+      loadGroupPushUserIds,
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
@@ -1908,6 +2207,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setIdeaTiming,
       castVote,
       setRsvp,
+      addPlanOption,
+      votePlanOption,
+      removePlanOption,
+      applyWinningOption,
+      loadGroupPushUserIds,
       toggleSoftVeto,
       revealVotes,
       chooseIdea,

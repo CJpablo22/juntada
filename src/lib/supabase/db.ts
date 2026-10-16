@@ -12,10 +12,12 @@ import type {
   IdeaType,
   MovieVenue,
   PointEvent,
+  PlanOption,
   Review,
   RsvpStatus,
   User,
 } from "@/lib/types";
+import { normalizePlanOptions } from "@/lib/plan-options";
 import { rowToUser, type ProfileRow } from "@/lib/supabase/profile";
 
 type Supabase = ReturnType<typeof createClient>;
@@ -57,6 +59,7 @@ type IdeaRow = {
   revealed: boolean;
   soft_veto_user_ids: string[] | null;
   rsvps: Record<string, string> | null;
+  plan_options: unknown;
   done_rating: number | null;
   done_note: string | null;
   done_photo_url: string | null;
@@ -149,6 +152,7 @@ function mapIdea(row: IdeaRow): Idea {
     revealed: row.revealed,
     softVetoUserIds: row.soft_veto_user_ids ?? [],
     rsvps: normalizeRsvps(row.rsvps),
+    planOptions: normalizePlanOptions(row.plan_options),
     doneRating: row.done_rating ?? undefined,
     doneNote: row.done_note ?? undefined,
     donePhotoUrl: row.done_photo_url ?? undefined,
@@ -638,6 +642,76 @@ export async function cloudSetRsvp(
     return null;
   }
   return normalizeRsvps(data as Record<string, string> | null) ?? {};
+}
+
+export async function cloudAddPlanOption(
+  supabase: Supabase,
+  ideaId: string,
+  option: PlanOption,
+): Promise<PlanOption[] | null> {
+  const { data, error } = await supabase.rpc("add_plan_option", {
+    p_idea_id: ideaId,
+    p_option: {
+      id: option.id,
+      placeName: option.placeName ?? "",
+      placeAddress: option.placeAddress ?? "",
+      memberHomeId: option.memberHomeId ?? "",
+      scheduledDate: option.scheduledDate ?? "",
+      scheduledTime: option.scheduledTime ?? "",
+      createdAt: option.createdAt,
+    },
+  });
+  if (error) {
+    console.error("add_plan_option", error.message);
+    return null;
+  }
+  return normalizePlanOptions(data);
+}
+
+export async function cloudVotePlanOption(
+  supabase: Supabase,
+  ideaId: string,
+  optionId: string,
+): Promise<PlanOption[] | null> {
+  const { data, error } = await supabase.rpc("vote_plan_option", {
+    p_idea_id: ideaId,
+    p_option_id: optionId,
+  });
+  if (error) {
+    console.error("vote_plan_option", error.message);
+    return null;
+  }
+  return normalizePlanOptions(data);
+}
+
+export async function cloudRemovePlanOption(
+  supabase: Supabase,
+  ideaId: string,
+  optionId: string,
+): Promise<PlanOption[] | null> {
+  const { data, error } = await supabase.rpc("remove_plan_option", {
+    p_idea_id: ideaId,
+    p_option_id: optionId,
+  });
+  if (error) {
+    console.error("remove_plan_option", error.message);
+    return null;
+  }
+  return normalizePlanOptions(data);
+}
+
+export async function cloudGroupPushUserIds(
+  supabase: Supabase,
+  groupId: string,
+): Promise<string[]> {
+  const { data, error } = await supabase.rpc("group_push_user_ids", {
+    p_group_id: groupId,
+  });
+  if (error) {
+    console.error("group_push_user_ids", error.message);
+    return [];
+  }
+  return ((data as string[] | null) ?? []).filter(Boolean);
 }
 
 export async function cloudRevealVotes(
