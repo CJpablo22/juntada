@@ -1,7 +1,7 @@
 /**
- * Notificaciones in-app.
- * Los mails de eventos están cancelados de momento (ver LAUNCH.md).
- * Canal futuro: whatsapp / push / email opcional.
+ * Notificaciones in-app + Web Push (PWA, gratis).
+ * Mails de eventos cancelados de momento (ver LAUNCH.md).
+ * WhatsApp = pendiente de coste.
  */
 
 export type NotificationChannel = "in_app" | "email" | "whatsapp" | "push";
@@ -30,8 +30,8 @@ export type AppNotification = {
 
 /** Canales listos hoy vs pendientes */
 export const NOTIFICATION_CHANNELS = {
-  ready: ["in_app"] as const,
-  pending: ["email", "whatsapp", "push"] as const,
+  ready: ["in_app", "push"] as const,
+  pending: ["email", "whatsapp"] as const,
 };
 
 /** Ya no enviamos correo: todo queda en la bandeja in-app. */

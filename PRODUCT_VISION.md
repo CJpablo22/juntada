@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-16 (backlog free de producto 1 cerrado: PWA→polish)
+Última actualización: 2026-10-16 (Web Push gratis iOS/Android PWA)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -45,6 +45,7 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Amigos de experiencia (solo tras completar algo juntos; no follow abierto)
 - [x] Preparado para crecer: `es-ES`, EUR; PWA ya instalable (app nativa store = después)
 - [x] **PWA**: manifest + iconos + service worker (offline shell) + prompt de instalación (banner + Perfil)
+- [x] **Web Push gratis** (Android Chrome + iPhone PWA iOS 16.4+): VAPID + `push_subscriptions` (`016`) + Perfil «Activar avisos»
 - [x] **Foto en recuerdos**: al marcar hecho / valorar (compresión JPEG en cliente; columna `done_photo_url` / `photo_url`; migración `014`)
 - [x] **Privilegio del #1 (Capitán)**: romper empate en Pronto 1×/semana (`015_captain_tie_break.sql` + UI)
 - [x] **Ritual semanal «¿qué hacemos?»**: finalistas de Pronto + filtros de mood (jue–dom)
@@ -76,7 +77,8 @@ Ver checklist vivo en [`LAUNCH.md`](./LAUNCH.md):
 - [ ] Login SMS / teléfono (Twilio u otro; € por SMS)
 - [ ] Sign in with Apple / iCloud (Apple Developer ~99 USD/año)
 - [ ] Notificaciones WhatsApp (Meta Business + plantillas)
-- [ ] Push nativo (cuando exista app iOS/Android)
+- [x] Web Push PWA (gratis; iOS/Android) — 2026-10-16
+- [ ] Push nativo de stores (App Store / Play) — opcional; la PWA ya cubre avisos
 - [ ] Dominio propio + from de correo `@juntada…`
 - [ ] Planes de pago Vercel/Supabase si se supera el free tier
 

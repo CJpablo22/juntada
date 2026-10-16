@@ -50,7 +50,8 @@ Marcado a propósito para no olvidarlo. **No bloquea** el lanzamiento entre voso
 
 ### Notificaciones
 - [ ] **WhatsApp** (Meta Business + plantillas + proveedor) — no es free real.
-- [ ] **Push nativo** cuando exista la app iOS/Android (mismo backend de eventos).
+- [x] **Web Push PWA** (gratis, iOS + Android) — hecho 2026-10-16; VAPID + migración `016`.
+- [ ] Push nativo de App Store / Play — opcional; la PWA ya cubre avisos.
 
 ### Producto / ops
 - [ ] Dominio propio (`juntada.com`) + email `noreply@…` bonito.
@@ -61,7 +62,7 @@ Marcado a propósito para no olvidarlo. **No bloquea** el lanzamiento entre voso
 
 ### Producto (visión, no infra)
 Ver también `PRODUCT_VISION.md`: más juegos de reunión, temporadas/badges.  
-Backlog free producto 1 (PWA→polish): **hecho**. En Supabase corré `014` y `015` si el proyecto ya existía.
+Backlog free producto 1 (PWA→polish + Web Push): **hecho**. En Supabase corré `014`, `015` y **`016_push_subscriptions.sql`**. En Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (`npm run vapid` para generar el par).
 
 ---
 

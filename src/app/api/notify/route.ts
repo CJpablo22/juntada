@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { sendPushToUsers } from "@/lib/push/send";
 
 type Body = {
   groupId: string;
@@ -19,7 +20,7 @@ type Body = {
 };
 
 /**
- * Encola avisos in-app para el grupo. No manda correo.
+ * Encola avisos in-app para el grupo y, si hay VAPID + suscripciones, Web Push.
  */
 export async function POST(request: NextRequest) {
   let body: Body;
@@ -46,11 +47,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
     }
 
+    const title = body.title.trim();
+    const text = body.body ?? "";
+
     const { data, error } = await supabase.rpc("enqueue_group_notifications", {
       p_group_id: body.groupId,
       p_event_type: body.eventType,
-      p_title: body.title.trim(),
-      p_body: body.body ?? "",
+      p_title: title,
+      p_body: text,
       p_payload: body.payload ?? {},
       p_exclude_self: body.excludeSelf ?? true,
     });
@@ -64,11 +68,35 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const rows = (data ?? []) as unknown[];
+    const rows = (data ?? []) as { id?: string; user_id?: string }[];
+    const userIds = [
+      ...new Set(
+        rows
+          .map((r) => r.user_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0),
+      ),
+    ];
+
+    let push = { sent: 0, failed: 0, skipped: "not_attempted" };
+    if (userIds.length) {
+      const ideaId =
+        typeof body.payload?.ideaId === "string" ? body.payload.ideaId : "";
+      const url = ideaId
+        ? `/app/group/${body.groupId}/idea/${ideaId}`
+        : "/app/notifications";
+      push = await sendPushToUsers(userIds, {
+        title,
+        body: text,
+        url,
+        tag: `juntada-${body.eventType}`,
+      });
+    }
+
     return NextResponse.json({
       ok: true,
       queued: rows.length,
       channel: "in_app",
+      push,
     });
   } catch (e) {
     console.error("[notify]", e);

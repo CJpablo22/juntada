@@ -9,6 +9,7 @@ import {
 } from "@/components/location/location-fields";
 import { useApp } from "@/components/providers/app-provider";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { PushSettings } from "@/components/pwa/push-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -160,6 +161,7 @@ export default function ProfilePage() {
       </div>
 
       <InstallPrompt variant="card" />
+      <PushSettings />
 
       <section className="surface-panel space-y-3 p-4">
         <div>

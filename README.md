@@ -23,6 +23,7 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - Dirección con búsqueda + CP + piso/puerta; guardar solo al confirmar
 - Privacidad de ubicación por grupo
 - **PWA**: instalable en el móvil (manifest + service worker + aviso en app/Perfil)
+- **Web Push gratis** (Android + iPhone PWA): Perfil → Activar avisos; requiere VAPID en Vercel + migración `016`
 - Foto opcional al marcar un plan como hecho (comprimida en el dispositivo)
 - Privilegio del Capitán (#1): romper empates en Pronto 1×/semana
 - Ritual semanal «¿qué hacemos?» con mood y finalistas de Pronto

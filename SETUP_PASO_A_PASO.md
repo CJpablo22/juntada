@@ -65,8 +65,11 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
    Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
-9. Corré también `003`–`014` y **`015_captain_tie_break.sql`** (fotos + privilegio Capitán).  
-10. En Vercel agregá **`SUPABASE_SERVICE_ROLE_KEY`** (solo server, sin `NEXT_PUBLIC_`) para poder entrar con @usuario sin filtrar el email.  
+9. Corré también `003`–`015` y **`016_push_subscriptions.sql`** (fotos, Capitán, Web Push).  
+10. En Vercel agregá **`SUPABASE_SERVICE_ROLE_KEY`** (solo server, sin `NEXT_PUBLIC_`) para login con @usuario **y** para enviar push al grupo.  
+10b. Web Push (gratis): en la máquina corré `npm run vapid` y pegá en Vercel  
+    `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y opcional `VAPID_SUBJECT=mailto:avisos@juntada.app`.  
+    En el móvil: Perfil → **Activar avisos push** (en iPhone, primero «Añadir a pantalla de inicio»).  
 11. Auth → Providers → Email: activá Email y **dejá Confirm email ON** (mail de registro sí).  
     Los avisos del grupo **no** van por mail: solo in-app.  
 12. Auth → Emails → **Confirm signup** — Subject: `Confirmá tu cuenta en Juntada`. Body con enlace:
