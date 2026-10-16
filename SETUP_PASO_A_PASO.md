@@ -65,10 +65,11 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
    Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
-9. Corré también `003`–`009` (grupos estables + gestión), **`010`–`011`** (fecha/hora + cumpleaños) y **`012_birthday_expense_privacy.sql`** (el festejado no ve gastos de su cumple).  
-10. Auth → Providers → Email: activá Email y **dejá Confirm email ON** (mail de registro sí).  
+9. Corré también `003`–`012` y **`013_security_hardening.sql`** (cierra perfiles, ownership, reviews, votos, rate limits).  
+10. En Vercel agregá **`SUPABASE_SERVICE_ROLE_KEY`** (solo server, sin `NEXT_PUBLIC_`) para poder entrar con @usuario sin filtrar el email.  
+11. Auth → Providers → Email: activá Email y **dejá Confirm email ON** (mail de registro sí).  
     Los avisos del grupo **no** van por mail: solo in-app.  
-11. Auth → Emails → **Confirm signup** — Subject: `Confirmá tu cuenta en Juntada`. Body con enlace:
+12. Auth → Emails → **Confirm signup** — Subject: `Confirmá tu cuenta en Juntada`. Body con enlace:
 ```html
 <h2>Confirmá tu cuenta</h2>
 <p>Tocá el enlace para activar Juntada:</p>
@@ -203,6 +204,7 @@ Si preferís, **salteá Resend** y lo hacemos después.
 | `NEXT_PUBLIC_SUPABASE_URL` | tu Project URL de Supabase | Production, Preview, Development |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | tu anon key `eyJ...` | Production, Preview, Development |
 | `NEXT_PUBLIC_APP_URL` | dejalá vacía un momento **o** poné un placeholder; la corregimos tras el primer deploy | Production |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role (Project Settings → API) — **nunca** pública | Production, Preview, Development |
 
 6. Click **Deploy**.  
 7. Esperá a que diga **Ready** (2–3 minutos).  

@@ -2,6 +2,7 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
+import { safeInternalPath } from "@/lib/safe-path";
 
 /**
  * Canjea el magic link (token_hash PKCE) y escribe la sesión en cookies
@@ -11,9 +12,10 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const nextPath = searchParams.get("next") ?? "/app/onboarding";
-  const next = nextPath.startsWith("/") ? nextPath : "/app/onboarding";
-
+  const next = safeInternalPath(
+    searchParams.get("next"),
+    "/app/onboarding",
+  );
   const success = NextResponse.redirect(new URL(next, origin));
   const failure = NextResponse.redirect(
     new URL("/enter?error=auth&mode=login", origin),

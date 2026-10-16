@@ -14,6 +14,7 @@ import {
   isValidUsernameFormat,
   normalizeUsername,
 } from "@/lib/display-name";
+import { safeInternalPath } from "@/lib/safe-path";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,7 @@ function EnterForm() {
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const nextPath = searchParams.get("next") || "/app";
+  const nextPath = safeInternalPath(searchParams.get("next"), "/app");
 
   useEffect(() => {
     if (searchParams.get("error") === "auth") {
@@ -62,7 +63,7 @@ function EnterForm() {
       router.replace("/app/onboarding");
       return;
     }
-    router.replace(nextPath.startsWith("/") ? nextPath : "/app");
+    router.replace(nextPath);
   }, [ready, currentUser, router, nextPath]);
 
   function goAfterAuth(profileComplete: boolean) {
@@ -187,46 +188,42 @@ function EnterForm() {
 
     setBusy(true);
     try {
-      const supabase = createClient();
-      let emailToUse = id.toLowerCase();
-      if (!id.includes("@")) {
-        const { data: resolved, error: resolveErr } = await supabase.rpc(
-          "login_email_for_username",
-          { p_username: normalizeUsername(id) },
-        );
-        if (resolveErr || !resolved) {
-          setError("No encontramos ese usuario.");
-          return;
-        }
-        emailToUse = String(resolved);
-      }
-
-      const { error: signErr } = await supabase.auth.signInWithPassword({
-        email: emailToUse,
-        password,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, password, next: nextPath }),
       });
-      if (signErr) {
-        const msg = signErr.message.toLowerCase();
-        if (
-          msg.includes("invalid login") ||
-          msg.includes("invalid credentials")
-        ) {
-          setError(
-            "Correo o contraseña incorrectos, o todavía no confirmaste el mail. Revisá tu bandeja (y spam), tocá el enlace de confirmación y probá de nuevo.",
-          );
-        } else if (msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        next?: string;
+      };
+      if (!res.ok || !data.ok) {
+        if (data.error === "email_not_confirmed") {
           setError(
             "Todavía no confirmaste el correo. Abrí el mail de Juntada, tocá el enlace y después entrá acá.",
           );
+        } else if (data.error === "username_login_unavailable") {
+          setError(
+            data.message ||
+              "Login con @usuario no disponible. Entrá con tu correo.",
+          );
+        } else if (data.error === "invalid_credentials") {
+          setError(
+            "Correo/usuario o contraseña incorrectos, o todavía no confirmaste el mail.",
+          );
         } else {
-          setError(signErr.message);
+          setError(data.message || "No se pudo entrar.");
         }
         return;
       }
-      // AppProvider escucha SIGNED_IN y carga perfil; onboarding lo decide el layout
-      router.push("/app");
+      const supabase = createClient();
+      await supabase.auth.getSession();
+      goAfterAuth(true);
+      router.replace(safeInternalPath(data.next, nextPath));
     } catch (err) {
-      setError(String(err));
+      setError(err instanceof Error ? err.message : "No se pudo entrar.");
     } finally {
       setBusy(false);
     }

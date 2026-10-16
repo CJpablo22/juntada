@@ -228,15 +228,27 @@ async function loadCloudStateWithIds(
   const otherIds = [...memberUserIds].filter((id) => id !== currentUser.id);
   let users: User[] = [currentUser];
   if (otherIds.length > 0) {
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("*")
-      .in("id", otherIds);
-    if (profilesError) console.error("peer profiles", profilesError.message);
-    users = [
-      currentUser,
-      ...((profiles as ProfileRow[] | null) ?? []).map(rowToUser),
-    ];
+    // RPC: solo pares de grupo, sin email/teléfono
+    const { data: peers, error: peersError } = await supabase.rpc(
+      "get_peer_profiles",
+      { p_ids: otherIds },
+    );
+    if (peersError) {
+      console.error("peer profiles", peersError.message);
+    } else {
+      users = [
+        currentUser,
+        ...((peers as ProfileRow[] | null) ?? []).map((row) =>
+          rowToUser({
+            ...row,
+            email: null,
+            phone: null,
+            instagram: null,
+            tiktok: null,
+          }),
+        ),
+      ];
+    }
   }
 
   const [
@@ -433,8 +445,55 @@ export async function cloudUpdateIdea(
   ideaId: string,
   patch: Record<string, unknown>,
 ): Promise<void> {
-  const { error } = await supabase.from("ideas").update(patch).eq("id", ideaId);
+  // votos / revelado / veto van por RPC (trigger bloquea update directo)
+  const {
+    votes: _votes,
+    revealed: _revealed,
+    soft_veto_user_ids: _veto,
+    ...safePatch
+  } = patch;
+  if (Object.keys(safePatch).length === 0) return;
+  const { error } = await supabase
+    .from("ideas")
+    .update(safePatch)
+    .eq("id", ideaId);
   if (error) console.error("update idea", error.message);
+}
+
+export async function cloudCastVote(
+  supabase: Supabase,
+  ideaId: string,
+  score: number,
+): Promise<void> {
+  const { error } = await supabase.rpc("cast_vote", {
+    p_idea_id: ideaId,
+    p_score: score,
+  });
+  if (error) console.error("cast_vote", error.message);
+}
+
+export async function cloudRevealVotes(
+  supabase: Supabase,
+  ideaId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("reveal_idea_votes", {
+    p_idea_id: ideaId,
+  });
+  if (error) console.error("reveal_idea_votes", error.message);
+}
+
+export async function cloudToggleSoftVeto(
+  supabase: Supabase,
+  ideaId: string,
+): Promise<string[] | null> {
+  const { data, error } = await supabase.rpc("toggle_soft_veto", {
+    p_idea_id: ideaId,
+  });
+  if (error) {
+    console.error("toggle_soft_veto", error.message);
+    return null;
+  }
+  return (data as string[] | null) ?? [];
 }
 
 export async function cloudInsertReview(

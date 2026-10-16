@@ -24,6 +24,9 @@ import {
   cloudKickMember,
   cloudLeaveGroup,
   cloudRenameGroup,
+  cloudCastVote,
+  cloudRevealVotes,
+  cloudToggleSoftVeto,
   cloudUpdateIdea,
   loadCloudState,
   newCloudId,
@@ -927,7 +930,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       if (cloudConfigured) {
         const sb = createSupabaseBrowserClient();
-        void cloudUpdateIdea(sb, ideaId, { votes });
+        void cloudCastVote(sb, ideaId, score);
         if (!already) {
           void cloudInsertPoint(sb, next.points[next.points.length - 1]);
           const memberCount =
@@ -962,9 +965,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { ...i, softVetoUserIds };
       });
       if (cloudConfigured) {
-        void cloudUpdateIdea(createSupabaseBrowserClient(), ideaId, {
-          soft_veto_user_ids: softVetoUserIds,
-        });
+        void cloudToggleSoftVeto(createSupabaseBrowserClient(), ideaId);
       }
       return { ...prev, ideas };
     });
@@ -973,9 +974,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const revealVotes = useCallback((ideaId: string) => {
     setState((prev) => {
       if (cloudConfigured) {
-        void cloudUpdateIdea(createSupabaseBrowserClient(), ideaId, {
-          revealed: true,
-        });
+        void cloudRevealVotes(createSupabaseBrowserClient(), ideaId);
       }
       return {
         ...prev,
@@ -1020,10 +1019,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
       if (cloudConfigured) {
         const sb = createSupabaseBrowserClient();
+        void cloudRevealVotes(sb, ideaId);
         for (const i of next.ideas.filter((x) => x.groupId === idea.groupId)) {
           void cloudUpdateIdea(sb, i.id, {
             status: i.status,
-            revealed: i.revealed,
             timing: i.timing,
           });
         }
@@ -1051,10 +1050,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : i,
       );
       if (cloudConfigured) {
-        void cloudUpdateIdea(createSupabaseBrowserClient(), ideaId, {
+        const sb = createSupabaseBrowserClient();
+        void cloudRevealVotes(sb, ideaId);
+        void cloudUpdateIdea(sb, ideaId, {
           status: "in_progress",
           timing: "soon",
-          revealed: true,
         });
         notifyGroup({
           groupId: idea.groupId,
@@ -1116,10 +1116,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
       if (cloudConfigured) {
         const sb = createSupabaseBrowserClient();
+        void cloudRevealVotes(sb, winner.id);
         for (const i of next.ideas.filter((x) => x.groupId === groupId)) {
           void cloudUpdateIdea(sb, i.id, {
             status: i.status,
-            revealed: i.revealed,
             timing: i.timing,
           });
         }
@@ -1204,9 +1204,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
         if (cloudConfigured) {
           const sb = createSupabaseBrowserClient();
+          void cloudRevealVotes(sb, ideaId);
           void cloudUpdateIdea(sb, ideaId, {
             status: "done",
-            revealed: true,
             done_rating: rating,
             done_note: note.trim(),
           });
