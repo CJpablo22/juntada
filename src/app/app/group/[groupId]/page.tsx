@@ -26,6 +26,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/ui/user-chip";
+import {
+  captainCanBreakTie,
+  ideaAverage,
+  soleCaptainId,
+} from "@/lib/captain";
 import { badgeForRank, rankMembers } from "@/lib/points";
 import { getVisibleLocationForViewer } from "@/lib/privacy";
 import {
@@ -58,6 +63,7 @@ export default function GroupPage() {
     addIdea,
     pickRandomIdea,
     setIdeaTiming,
+    breakTieAsCaptain,
     leaveGroup,
     renameGroup,
     kickMember,
@@ -72,6 +78,7 @@ export default function GroupPage() {
   const [renameValue, setRenameValue] = useState("");
   const [mgmtError, setMgmtError] = useState("");
   const [mgmtBusy, setMgmtBusy] = useState(false);
+  const [captainMsg, setCaptainMsg] = useState("");
 
   const group = state.groups.find((g) => g.id === params.groupId);
   const isOwner = Boolean(
@@ -138,6 +145,23 @@ export default function GroupPage() {
   const ranking = group
     ? rankMembers(group.memberIds, state.points, group.id)
     : [];
+
+  const captainId = group
+    ? soleCaptainId(group.memberIds, state.points, group.id)
+    : null;
+
+  const captainTie = useMemo(() => {
+    if (!group || !currentUser) return null;
+    const check = captainCanBreakTie({
+      memberIds: group.memberIds,
+      points: state.points,
+      groupId: group.id,
+      userId: currentUser.id,
+      lastTieBreakWeek: group.lastCaptainTieBreakWeek,
+      ideas: state.ideas,
+    });
+    return check.ok ? check : null;
+  }, [group, currentUser, state.points, state.ideas]);
 
   const needsVote = useMemo(() => {
     if (!group || !currentUser) return null;
@@ -574,6 +598,57 @@ export default function GroupPage() {
         </section>
       ) : null}
 
+      {shelf === "soon" && captainTie ? (
+        <section className="border border-[var(--ink)] bg-[var(--mesa-foam)] p-4 shadow-[0_3px_0_0_var(--pop)]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--pop)]">
+            Privilegio del Capitán
+          </p>
+          <h2 className="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold text-[var(--ink)]">
+            Hay empate — rompelo vos
+          </h2>
+          <p className="mt-1 text-sm text-[var(--mute)]">
+            Sos el #1 del grupo. Elegí una de estas ideas empatadas (1 vez por
+            semana).
+          </p>
+          <ul className="mt-3 space-y-2">
+            {captainTie.tied.map((idea) => {
+              const avg = ideaAverage(idea);
+              return (
+                <li
+                  key={idea.id}
+                  className="flex flex-wrap items-center justify-between gap-2 border border-[var(--line)] bg-white px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[var(--ink)]">{idea.title}</p>
+                    <p className="text-xs text-[var(--mute)]">
+                      Media {avg != null ? avg.toFixed(1) : "—"}/5
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      const err = breakTieAsCaptain(idea.id);
+                      if (err) {
+                        setCaptainMsg(err);
+                        return;
+                      }
+                      setCaptainMsg(`Elegiste «${idea.title}». Plan listo.`);
+                      setShelf("soon");
+                    }}
+                  >
+                    Elegir esta
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+          {captainMsg ? (
+            <p className="mt-3 text-sm text-[var(--pop)]">{captainMsg}</p>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -797,12 +872,13 @@ export default function GroupPage() {
       <aside className="surface-panel p-4">
         <p className="font-semibold text-[var(--ink)]">Puntos del grupo</p>
         <p className="mt-1 text-xs text-[var(--mute)]">
-          Se ganan al proponer, cerrar gastos o cuando una idea sale bien.
+          El #1 (Capitán) puede romper un empate en Pronto una vez por semana.
         </p>
         <ul className="mt-3 space-y-3">
           {ranking.map((row, index) => {
             const user = state.users.find((u) => u.id === row.userId);
             if (!user) return null;
+            const isCaptain = captainId === row.userId && index === 0;
             return (
               <li
                 key={row.userId}
@@ -816,9 +892,13 @@ export default function GroupPage() {
                   <span>
                     <span className="block text-sm font-medium">
                       {user.name}
+                      {isCaptain ? (
+                        <span className="ml-1 text-[var(--pop)]">★</span>
+                      ) : null}
                     </span>
                     <span className="block text-xs text-[var(--mute)]">
                       {badgeForRank(index, row.points)}
+                      {isCaptain ? " · rompe empates" : ""}
                     </span>
                   </span>
                 </span>

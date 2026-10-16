@@ -60,8 +60,8 @@ Marcado a propósito para no olvidarlo. **No bloquea** el lanzamiento entre voso
 - [ ] App nativa en stores (iOS/Android) — opcional más adelante; la PWA cubre el día a día.
 
 ### Producto (visión, no infra)
-Ver también `PRODUCT_VISION.md`: beneficio #1, ritual/digest, import link, álbum, juego de reunión.  
-Fotos en recuerdos: **hecho** (correr `014_memory_photos.sql` en Supabase si el proyecto ya existía).
+Ver también `PRODUCT_VISION.md`: ritual/digest, import link, álbum, juego de reunión.  
+Fotos + privilegio Capitán: **hecho** (correr `014` y `015` en Supabase si el proyecto ya existía).
 
 ---
 

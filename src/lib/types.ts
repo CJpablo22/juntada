@@ -88,6 +88,8 @@ export type Group = {
   /** Dueño: puede renombrar, expulsar y eliminar */
   createdBy?: string;
   createdAt: string;
+  /** ISO week YYYY-Www when captain last broke a tie */
+  lastCaptainTieBreakWeek?: string;
 };
 
 export type Idea = {

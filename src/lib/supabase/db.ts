@@ -26,6 +26,7 @@ type GroupRow = {
   invite_code: string;
   created_by: string | null;
   created_at: string;
+  last_captain_tie_break_week?: string | null;
 };
 
 type MemberRow = { group_id: string; user_id: string };
@@ -97,7 +98,25 @@ function mapGroup(row: GroupRow, memberIds: string[]): Group {
     memberIds,
     createdBy: row.created_by ?? undefined,
     createdAt: row.created_at,
+    lastCaptainTieBreakWeek: row.last_captain_tie_break_week ?? undefined,
   };
+}
+
+/** Capitán rompe empate (RPC security definer). */
+export async function cloudCaptainBreakTie(
+  supabase: Supabase,
+  groupId: string,
+  ideaId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await supabase.rpc("captain_break_tie", {
+    p_group_id: groupId,
+    p_idea_id: ideaId,
+  });
+  if (error) {
+    console.error("captain_break_tie", error.message);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
 function mapIdea(row: IdeaRow): Idea {

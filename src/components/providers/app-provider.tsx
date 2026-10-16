@@ -9,11 +9,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  captainCanBreakTie,
+  isoWeekKey,
+} from "@/lib/captain";
 import { createId, createInviteCode } from "@/lib/id";
 import { POINT_REASONS } from "@/lib/points";
 import { loadState, resetState, saveState } from "@/lib/storage";
 import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
+  cloudCaptainBreakTie,
   cloudCreateGroup,
   cloudDeleteGroup,
   cloudInsertExpense,
@@ -125,6 +130,8 @@ type AppContextValue = {
   toggleSoftVeto: (ideaId: string) => void;
   revealVotes: (ideaId: string) => void;
   chooseIdea: (ideaId: string) => void;
+  /** Capitán #1 rompe empate en Pronto (1×/semana). */
+  breakTieAsCaptain: (ideaId: string) => string | null;
   markInProgress: (ideaId: string) => void;
   pickRandomIdea: (groupId: string) => string | null;
   markDone: (
@@ -1043,6 +1050,95 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const breakTieAsCaptain = useCallback((ideaId: string): string | null => {
+    let error: string | null = null;
+    setState((prev) => {
+      if (!prev.currentUserId) {
+        error = "Tenés que estar logueado.";
+        return prev;
+      }
+      const idea = prev.ideas.find((i) => i.id === ideaId);
+      if (!idea) {
+        error = "No encontramos esa idea.";
+        return prev;
+      }
+      const group = prev.groups.find((g) => g.id === idea.groupId);
+      if (!group) {
+        error = "No encontramos el grupo.";
+        return prev;
+      }
+      const check = captainCanBreakTie({
+        memberIds: group.memberIds,
+        points: prev.points,
+        groupId: group.id,
+        userId: prev.currentUserId,
+        lastTieBreakWeek: group.lastCaptainTieBreakWeek,
+        ideas: prev.ideas,
+      });
+      if (!check.ok) {
+        error = check.reason;
+        return prev;
+      }
+      if (!check.tied.some((t) => t.id === ideaId)) {
+        error = "Esa idea no está en el empate.";
+        return prev;
+      }
+
+      const week = isoWeekKey();
+      const pointId = cloudConfigured ? newCloudId() : createId("pt");
+      let next: AppState = {
+        ...prev,
+        groups: prev.groups.map((g) =>
+          g.id === group.id
+            ? { ...g, lastCaptainTieBreakWeek: week }
+            : g,
+        ),
+        ideas: prev.ideas.map((i) => {
+          if (i.groupId !== group.id) return i;
+          if (i.id === ideaId)
+            return {
+              ...i,
+              status: "chosen",
+              revealed: true,
+              timing: "soon",
+            };
+          if (i.status === "chosen") return { ...i, status: "pending" };
+          return i;
+        }),
+      };
+      next = addPoints(
+        next,
+        {
+          groupId: group.id,
+          userId: idea.proposedBy,
+          delta: POINT_REASONS.chosen.delta,
+          reason: "El Capitán rompió el empate",
+        },
+        pointId,
+      );
+
+      if (cloudConfigured) {
+        const sb = createSupabaseBrowserClient();
+        void cloudCaptainBreakTie(sb, group.id, ideaId).then((res) => {
+          if (!res.ok) {
+            // Local already applied; cloud RPC may fail if migration missing.
+            console.error(res.error);
+          }
+        });
+        void cloudInsertPoint(sb, next.points[next.points.length - 1]);
+        notifyGroup({
+          groupId: group.id,
+          eventType: "idea_chosen",
+          title: `Capitán eligió: ${idea.title}`,
+          body: "El #1 del grupo rompió el empate. ¡Plan listo!",
+          payload: { ideaId, groupId: group.id, captainBreak: true },
+        });
+      }
+      return next;
+    });
+    return error;
+  }, []);
+
   const markInProgress = useCallback((ideaId: string) => {
     setState((prev) => {
       const idea = prev.ideas.find((i) => i.id === ideaId);
@@ -1543,6 +1639,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
+      breakTieAsCaptain,
       markInProgress,
       pickRandomIdea,
       markDone,
@@ -1577,6 +1674,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
+      breakTieAsCaptain,
       markInProgress,
       pickRandomIdea,
       markDone,
