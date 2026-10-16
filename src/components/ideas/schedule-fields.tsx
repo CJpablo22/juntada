@@ -3,6 +3,7 @@
 import { CalendarClock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isMapsLink } from "@/lib/maps";
 import {
   DURATION_OPTIONS,
   type IdeaScheduleInput,
@@ -14,11 +15,14 @@ export function ScheduleFields({
   onChange,
   className,
   compact = false,
+  /** Si el plan es en casa de alguien: no pedir link de Maps (se abre la dirección). */
+  omitMapsLink = false,
 }: {
   value: IdeaScheduleInput;
   onChange: (next: IdeaScheduleInput) => void;
   className?: string;
   compact?: boolean;
+  omitMapsLink?: boolean;
 }) {
   const durationValue =
     value.durationMinutes &&
@@ -131,16 +135,30 @@ export function ScheduleFields({
       </label>
 
       <div className="space-y-1.5">
-        <Label htmlFor="idea-link">Link útil</Label>
+        <Label htmlFor="idea-link">
+          {omitMapsLink ? "Link útil (sin Maps)" : "Link útil"}
+        </Label>
+        {omitMapsLink ? (
+          <p className="text-xs text-[var(--mute)]">
+            Maps abre solo la casa elegida. Acá podés poner trailer, reserva o
+            entradas — no otro mapa.
+          </p>
+        ) : null}
         <Input
           id="idea-link"
           type="url"
           inputMode="url"
-          value={value.link ?? ""}
-          onChange={(e) =>
-            onChange({ ...value, link: e.target.value || undefined })
+          value={omitMapsLink && isMapsLink(value.link) ? "" : (value.link ?? "")}
+          onChange={(e) => {
+            const next = e.target.value || undefined;
+            if (omitMapsLink && isMapsLink(next)) return;
+            onChange({ ...value, link: next });
+          }}
+          placeholder={
+            omitMapsLink
+              ? "Trailer, reserva, entradas…"
+              : "Trailer, reserva, mapa, entradas…"
           }
-          placeholder="Trailer, reserva, mapa, entradas…"
           className="field-input"
         />
       </div>

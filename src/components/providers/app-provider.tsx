@@ -32,6 +32,7 @@ import {
   cloudRenameGroup,
   cloudCastVote,
   cloudRevealVotes,
+  cloudSetRsvp,
   cloudToggleSoftVeto,
   cloudUpdateIdea,
   loadCloudState,
@@ -59,9 +60,12 @@ import type {
   IdeaType,
   MovieVenue,
   Review,
+  RsvpStatus,
   User,
 } from "@/lib/types";
 import { cleanScheduleInput } from "@/lib/types";
+import { isMapsLink } from "@/lib/maps";
+import { ideaUsesOnlyMemberHomes } from "@/lib/places";
 
 const cloudConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -128,6 +132,7 @@ type AppContextValue = {
   updateIdeaSchedule: (ideaId: string, schedule: IdeaScheduleInput) => void;
   setIdeaTiming: (ideaId: string, timing: IdeaTiming) => void;
   castVote: (ideaId: string, score: number) => void;
+  setRsvp: (ideaId: string, status: RsvpStatus) => void;
   toggleSoftVeto: (ideaId: string) => void;
   revealVotes: (ideaId: string) => void;
   chooseIdea: (ideaId: string) => void;
@@ -156,6 +161,7 @@ type AppContextValue = {
     amountCents: number;
     paidBy: string;
     splitBetween: string[];
+    splitShares?: Record<string, number>;
   }) => void;
   updateProfile: (input: {
     name: string;
@@ -872,6 +878,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         votes: {},
         revealed: false,
         softVetoUserIds: [],
+        rsvps: {},
+        // Si es casa de alguien, no guardar link de Maps (se abre la dirección)
+        link:
+          ideaUsesOnlyMemberHomes(places) && isMapsLink(schedule.link)
+            ? undefined
+            : schedule.link,
         createdAt,
       };
       const point = {
@@ -925,6 +937,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (ideaId: string, scheduleInput: IdeaScheduleInput) => {
       const schedule = cleanScheduleInput(scheduleInput);
       setState((prev) => {
+        const idea = prev.ideas.find((i) => i.id === ideaId);
+        const link =
+          idea &&
+          ideaUsesOnlyMemberHomes(idea.places) &&
+          isMapsLink(schedule.link)
+            ? undefined
+            : schedule.link;
         const nextIdeas = prev.ideas.map((i) =>
           i.id === ideaId
             ? {
@@ -933,7 +952,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 scheduledTime: schedule.scheduledTime,
                 durationMinutes: schedule.durationMinutes,
                 dateFlexible: schedule.dateFlexible,
-                link: schedule.link,
+                link,
                 budgetNote: schedule.budgetNote,
               }
             : i,
@@ -944,7 +963,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             scheduled_time: schedule.scheduledTime ?? null,
             duration_minutes: schedule.durationMinutes ?? null,
             date_flexible: schedule.dateFlexible ?? false,
-            link: schedule.link ?? null,
+            link: link ?? null,
             budget_note: schedule.budgetNote ?? null,
           });
         }
@@ -1037,6 +1056,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
+  }, []);
+
+  const setRsvp = useCallback((ideaId: string, status: RsvpStatus) => {
+    const uid = userIdRef.current;
+    if (!uid) return;
+    setState((prev) => {
+      const idea = prev.ideas.find((i) => i.id === ideaId);
+      if (!idea || idea.status === "archived") return prev;
+      const rsvps = { ...(idea.rsvps ?? {}), [uid]: status };
+      return {
+        ...prev,
+        ideas: prev.ideas.map((i) =>
+          i.id === ideaId ? { ...i, rsvps } : i,
+        ),
+      };
+    });
+    if (cloudConfigured) {
+      void (async () => {
+        const cloud = await cloudSetRsvp(
+          createSupabaseBrowserClient(),
+          ideaId,
+          status,
+        );
+        if (!cloud) return;
+        setState((prev) => ({
+          ...prev,
+          ideas: prev.ideas.map((i) =>
+            i.id === ideaId ? { ...i, rsvps: cloud } : i,
+          ),
+        }));
+      })();
+    }
   }, []);
 
   const toggleSoftVeto = useCallback((ideaId: string) => {
@@ -1470,6 +1521,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       amountCents: number;
       paidBy: string;
       splitBetween: string[];
+      splitShares?: Record<string, number>;
     }) => {
       const uid = userIdRef.current;
       if (!uid) return;
@@ -1483,12 +1535,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ) {
         return;
       }
-      const splitBetween =
+      let splitBetween =
         linkedIdea?.type === "birthday" && linkedIdea.celebrantMemberId
           ? input.splitBetween.filter(
               (id) => id !== linkedIdea.celebrantMemberId,
             )
           : input.splitBetween;
+      let splitShares = input.splitShares;
+      if (splitShares && linkedIdea?.celebrantMemberId) {
+        const { [linkedIdea.celebrantMemberId]: _drop, ...rest } = splitShares;
+        splitShares = rest;
+      }
+      if (splitShares && Object.keys(splitShares).length > 0) {
+        splitBetween = Object.keys(splitShares).filter(
+          (id) => (splitShares![id] ?? 0) > 0,
+        );
+      }
       if (splitBetween.length === 0) return;
 
       const expenseId = cloudConfigured ? newCloudId() : createId("exp");
@@ -1502,6 +1564,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         amountCents: input.amountCents,
         paidBy: input.paidBy,
         splitBetween,
+        splitShares:
+          splitShares && Object.keys(splitShares).length > 0
+            ? splitShares
+            : undefined,
         createdAt,
       };
       const point = {
@@ -1734,6 +1800,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateIdeaSchedule,
       setIdeaTiming,
       castVote,
+      setRsvp,
       toggleSoftVeto,
       revealVotes,
       chooseIdea,
@@ -1769,6 +1836,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateIdeaSchedule,
       setIdeaTiming,
       castVote,
+      setRsvp,
       toggleSoftVeto,
       revealVotes,
       chooseIdea,

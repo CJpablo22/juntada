@@ -129,12 +129,16 @@ export type Idea = {
   votes: Record<string, number>;
   revealed: boolean;
   softVetoUserIds: string[];
+  /** userId -> yes | no (asistencia) */
+  rsvps?: Record<string, RsvpStatus>;
   doneRating?: number;
   doneNote?: string;
   /** JPEG data URL (or Storage URL) of the memory photo */
   donePhotoUrl?: string;
   createdAt: string;
 };
+
+export type RsvpStatus = "yes" | "no";
 
 /** Campos de cuándo / extras al crear o editar una idea */
 export type IdeaScheduleInput = {
@@ -175,8 +179,15 @@ export type Expense = {
   amountCents: number;
   paidBy: string;
   splitBetween: string[];
+  /**
+   * Céntimos que le tocan a cada persona.
+   * Si falta o está vacío → partes iguales entre splitBetween.
+   */
+  splitShares?: Record<string, number>;
   createdAt: string;
 };
+
+export type ExpenseSplitMode = "equal" | "half" | "custom";
 
 export type PointEvent = {
   id: string;

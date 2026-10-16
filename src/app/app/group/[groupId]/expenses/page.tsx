@@ -9,13 +9,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserAvatar } from "@/components/ui/user-chip";
-import { computeBalances, suggestSettlements } from "@/lib/balances";
+import {
+  buildEqualShares,
+  buildHalfShares,
+  computeBalances,
+  expenseShares,
+  normalizeShares,
+  suggestSettlements,
+} from "@/lib/balances";
 import {
   expensesVisibleToUser,
   isBirthdayCelebrant,
   isIdeaExpenseHiddenFromUser,
 } from "@/lib/birthday-privacy";
 import { formatEuro, parseEuroToCents } from "@/lib/money";
+import type { ExpenseSplitMode } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export default function ExpensesPage() {
   const params = useParams<{ groupId: string }>();
@@ -26,6 +35,8 @@ export default function ExpensesPage() {
   const [amount, setAmount] = useState("");
   const [paidBy, setPaidBy] = useState("");
   const [split, setSplit] = useState<string[]>([]);
+  const [splitMode, setSplitMode] = useState<ExpenseSplitMode>("equal");
+  const [customDraft, setCustomDraft] = useState<Record<string, string>>({});
   const [ideaId, setIdeaId] = useState("");
   const [error, setError] = useState("");
 
@@ -67,10 +78,48 @@ export default function ExpensesPage() {
       ? selectedIdea.celebrantMemberId
       : undefined;
 
+  const eligibleMemberIds = useMemo(() => {
+    if (!group) return [];
+    return group.memberIds.filter((id) => id !== celebrantIdForSelected);
+  }, [group, celebrantIdForSelected]);
+
   useEffect(() => {
     if (!celebrantIdForSelected) return;
     setSplit((prev) => prev.filter((id) => id !== celebrantIdForSelected));
   }, [celebrantIdForSelected]);
+
+  useEffect(() => {
+    if (splitMode !== "half") return;
+    setSplit((prev) => {
+      const eligible = prev.filter((id) =>
+        eligibleMemberIds.includes(id),
+      );
+      if (eligible.length === 2) return eligible;
+      if (eligible.length > 2) return eligible.slice(0, 2);
+      const filler = eligibleMemberIds.filter((id) => !eligible.includes(id));
+      return [...eligible, ...filler].slice(0, 2);
+    });
+  }, [splitMode, eligibleMemberIds]);
+
+  const amountCents = parseEuroToCents(amount) ?? 0;
+
+  const previewShares = useMemo(() => {
+    if (amountCents <= 0) return {};
+    if (splitMode === "half" && split.length === 2) {
+      return buildHalfShares(amountCents, split[0], split[1]);
+    }
+    if (splitMode === "custom") {
+      const draft: Record<string, number> = {};
+      for (const id of split) {
+        const cents = parseEuroToCents(customDraft[id] ?? "");
+        if (cents != null && cents > 0) draft[id] = cents;
+      }
+      return normalizeShares(amountCents, draft);
+    }
+    return buildEqualShares(amountCents, split);
+  }, [amountCents, splitMode, split, customDraft]);
+
+  const previewSum = Object.values(previewShares).reduce((s, n) => s + n, 0);
 
   const balances = useMemo(
     () => (group ? computeBalances(expenses, group.memberIds) : {}),
@@ -110,6 +159,16 @@ export default function ExpensesPage() {
 
   function toggleSplit(userId: string) {
     if (celebrantIdForSelected && userId === celebrantIdForSelected) return;
+    if (splitMode === "half") {
+      setSplit((prev) => {
+        if (prev.includes(userId)) {
+          return prev.filter((id) => id !== userId);
+        }
+        if (prev.length >= 2) return [prev[1], userId];
+        return [...prev, userId];
+      });
+      return;
+    }
     setSplit((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
@@ -124,8 +183,8 @@ export default function ExpensesPage() {
       setError("Revisá título e importe en euros.");
       return;
     }
-    if (!paidBy || split.length === 0) {
-      setError("Elegí quién pagó y entre quiénes se parte.");
+    if (!paidBy) {
+      setError("Elegí quién pagó.");
       return;
     }
     if (
@@ -136,19 +195,59 @@ export default function ExpensesPage() {
       setError("No podés cargar gastos de tu propio cumpleaños.");
       return;
     }
+
+    let splitBetween = celebrantIdForSelected
+      ? split.filter((id) => id !== celebrantIdForSelected)
+      : [...split];
+    let splitShares: Record<string, number> | undefined;
+
+    if (splitMode === "half") {
+      if (splitBetween.length !== 2) {
+        setError("En «A medias» elegí exactamente 2 personas.");
+        return;
+      }
+      splitShares = buildHalfShares(cents, splitBetween[0], splitBetween[1]);
+    } else if (splitMode === "custom") {
+      const draft: Record<string, number> = {};
+      for (const id of splitBetween) {
+        const part = parseEuroToCents(customDraft[id] ?? "");
+        if (part != null && part > 0) draft[id] = part;
+      }
+      if (Object.keys(draft).length === 0) {
+        setError("Poné cuánto le toca a cada uno.");
+        return;
+      }
+      const sum = Object.values(draft).reduce((s, n) => s + n, 0);
+      if (Math.abs(sum - cents) > 1) {
+        setError(
+          `Los importes suman ${formatEuro(sum)} y el gasto es ${formatEuro(cents)}. Ajustalos.`,
+        );
+        return;
+      }
+      splitShares = normalizeShares(cents, draft);
+      splitBetween = Object.keys(splitShares);
+    } else {
+      if (splitBetween.length === 0) {
+        setError("Elegí entre quiénes se parte.");
+        return;
+      }
+      splitShares = buildEqualShares(cents, splitBetween);
+    }
+
     addExpense({
       groupId: group!.id,
       ideaId: ideaId || undefined,
       title,
       amountCents: cents,
       paidBy,
-      splitBetween: celebrantIdForSelected
-        ? split.filter((id) => id !== celebrantIdForSelected)
-        : split,
+      splitBetween,
+      splitShares,
     });
     setTitle("");
     setAmount("");
     setIdeaId("");
+    setCustomDraft({});
+    setSplitMode("equal");
     setError("");
   }
 
@@ -165,7 +264,7 @@ export default function ExpensesPage() {
           Gastos del grupo
         </h1>
         <p className="mt-2 text-[var(--brand-mute)]">
-          Solo euros por ahora (España). Gastos de un plan o sueltos.
+          Solo euros por ahora (España). Partí por igual, a medias o a mano.
         </p>
         {hiddenBirthdayPlans.length > 0 ? (
           <p className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--wash)] px-3 py-2 text-sm text-[var(--mute)]">
@@ -246,8 +345,45 @@ export default function ExpensesPage() {
               })}
             </select>
           </div>
+
           <div className="space-y-2">
-            <Label>Se parte entre</Label>
+            <Label>Cómo se parte</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ["equal", "Por igual"],
+                  ["half", "A medias"],
+                  ["custom", "A mano"],
+                ] as const
+              ).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setSplitMode(mode)}
+                  className={cn(
+                    "min-h-11 border px-2 py-2 text-xs font-semibold sm:text-sm",
+                    splitMode === mode
+                      ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                      : "border-[var(--line)] bg-white text-[var(--ink)]",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-[var(--mute)]">
+              {splitMode === "equal"
+                ? "Mismo importe para cada persona marcada."
+                : splitMode === "half"
+                  ? "Exactamente dos personas, 50/50."
+                  : "Poné el importe de cada uno (tienen que sumar el total)."}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>
+              {splitMode === "half" ? "Las 2 personas" : "Se parte entre"}
+            </Label>
             <div className="flex flex-wrap gap-2">
               {group.memberIds.map((id) => {
                 const user = state.users.find((u) => u.id === id);
@@ -281,6 +417,72 @@ export default function ExpensesPage() {
               })}
             </div>
           </div>
+
+          {splitMode === "custom" && split.length > 0 ? (
+            <div className="space-y-2 rounded-xl border border-[var(--line)] bg-[var(--wash)] p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+                Importe por persona
+              </p>
+              <ul className="space-y-2">
+                {split.map((id) => {
+                  const user = state.users.find((u) => u.id === id);
+                  return (
+                    <li
+                      key={id}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <span className="text-sm text-[var(--ink)]">
+                        {user?.name ?? id}
+                      </span>
+                      <Input
+                        value={customDraft[id] ?? ""}
+                        onChange={(e) =>
+                          setCustomDraft((prev) => ({
+                            ...prev,
+                            [id]: e.target.value,
+                          }))
+                        }
+                        placeholder="0,00"
+                        inputMode="decimal"
+                        className="h-9 w-28 rounded-lg text-right"
+                        aria-label={`Importe de ${user?.name ?? id}`}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+              {amountCents > 0 ? (
+                <p
+                  className={cn(
+                    "text-xs",
+                    Math.abs(previewSum - amountCents) <= 1
+                      ? "text-[var(--mute)]"
+                      : "text-[var(--pop)]",
+                  )}
+                >
+                  Suma: {formatEuro(previewSum)} / total{" "}
+                  {formatEuro(amountCents)}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {amountCents > 0 && Object.keys(previewShares).length > 0 ? (
+            <div className="rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-xs text-[var(--mute)]">
+              <p className="font-semibold text-[var(--ink)]">Vista previa</p>
+              <ul className="mt-1 space-y-0.5">
+                {Object.entries(previewShares).map(([id, cents]) => (
+                  <li key={id} className="flex justify-between gap-2">
+                    <span>
+                      {state.users.find((u) => u.id === id)?.name ?? id}
+                    </span>
+                    <span>{formatEuro(cents)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           {error ? (
             <p className="text-sm text-[var(--brand-pop)]">{error}</p>
           ) : null}
@@ -367,6 +569,14 @@ export default function ExpensesPage() {
               const linked = expense.ideaId
                 ? state.ideas.find((i) => i.id === expense.ideaId)
                 : undefined;
+              const shares = expenseShares(expense);
+              const shareLabel = Object.entries(shares)
+                .map(([id, cents]) => {
+                  const name =
+                    state.users.find((u) => u.id === id)?.name ?? id;
+                  return `${name} ${formatEuro(cents)}`;
+                })
+                .join(" · ");
               return (
                 <li
                   key={expense.id}
@@ -377,9 +587,11 @@ export default function ExpensesPage() {
                       {expense.title}
                     </p>
                     <p className="text-xs text-[var(--brand-mute)]">
-                      Pagó {payer?.name ?? "—"} ·{" "}
-                      {expense.splitBetween.length} personas
+                      Pagó {payer?.name ?? "—"}
                       {linked ? ` · ${linked.title}` : ""}
+                    </p>
+                    <p className="mt-0.5 text-xs text-[var(--mute)]">
+                      {shareLabel}
                     </p>
                   </div>
                   <p className="font-semibold">{formatEuro(expense.amountCents)}</p>

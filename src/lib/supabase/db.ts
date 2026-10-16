@@ -13,6 +13,7 @@ import type {
   MovieVenue,
   PointEvent,
   Review,
+  RsvpStatus,
   User,
 } from "@/lib/types";
 import { rowToUser, type ProfileRow } from "@/lib/supabase/profile";
@@ -55,6 +56,7 @@ type IdeaRow = {
   votes: Record<string, number> | null;
   revealed: boolean;
   soft_veto_user_ids: string[] | null;
+  rsvps: Record<string, string> | null;
   done_rating: number | null;
   done_note: string | null;
   done_photo_url: string | null;
@@ -78,6 +80,7 @@ type ExpenseRow = {
   amount_cents: number;
   paid_by: string;
   split_between: string[] | null;
+  split_shares: Record<string, number> | null;
   created_at: string;
 };
 type PointRow = {
@@ -145,11 +148,23 @@ function mapIdea(row: IdeaRow): Idea {
     votes: row.votes ?? {},
     revealed: row.revealed,
     softVetoUserIds: row.soft_veto_user_ids ?? [],
+    rsvps: normalizeRsvps(row.rsvps),
     doneRating: row.done_rating ?? undefined,
     doneNote: row.done_note ?? undefined,
     donePhotoUrl: row.done_photo_url ?? undefined,
     createdAt: row.created_at,
   };
+}
+
+function normalizeRsvps(
+  raw: Record<string, string> | null | undefined,
+): Record<string, RsvpStatus> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: Record<string, RsvpStatus> = {};
+  for (const [id, status] of Object.entries(raw)) {
+    if (status === "yes" || status === "no") out[id] = status;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /** Carga el mundo del usuario autenticado desde Postgres. */
@@ -318,6 +333,10 @@ async function loadCloudStateWithIds(
       amountCents: e.amount_cents,
       paidBy: e.paid_by,
       splitBetween: e.split_between ?? [],
+      splitShares:
+        e.split_shares && Object.keys(e.split_shares).length > 0
+          ? e.split_shares
+          : undefined,
       createdAt: e.created_at,
     }),
   );
@@ -517,6 +536,22 @@ export async function cloudCastVote(
   if (error) console.error("cast_vote", error.message);
 }
 
+export async function cloudSetRsvp(
+  supabase: Supabase,
+  ideaId: string,
+  status: RsvpStatus,
+): Promise<Record<string, RsvpStatus> | null> {
+  const { data, error } = await supabase.rpc("set_rsvp", {
+    p_idea_id: ideaId,
+    p_status: status,
+  });
+  if (error) {
+    console.error("set_rsvp", error.message);
+    return null;
+  }
+  return normalizeRsvps(data as Record<string, string> | null) ?? {};
+}
+
 export async function cloudRevealVotes(
   supabase: Supabase,
   ideaId: string,
@@ -573,6 +608,7 @@ export async function cloudInsertExpense(
     amount_cents: expense.amountCents,
     paid_by: expense.paidBy,
     split_between: expense.splitBetween ?? [],
+    split_shares: expense.splitShares ?? {},
     created_at: expense.createdAt,
   };
 

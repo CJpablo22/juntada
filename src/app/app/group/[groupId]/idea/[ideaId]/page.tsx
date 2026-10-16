@@ -23,7 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/ui/user-chip";
-import { mapsUrl } from "@/lib/maps";
+import { isMapsLink, mapsUrl } from "@/lib/maps";
+import { ideaUsesOnlyMemberHomes } from "@/lib/places";
 import {
   BIRTHDAY_KIND_LABELS,
   IDEA_TYPE_LABELS,
@@ -42,6 +43,7 @@ export default function IdeaDetailPage() {
     state,
     currentUser,
     castVote,
+    setRsvp,
     toggleSoftVeto,
     revealVotes,
     chooseIdea,
@@ -327,7 +329,11 @@ export default function IdeaDetailPage() {
               setTimeout(() => setScheduleSaved(false), 1600);
             }}
           >
-            <ScheduleFields value={scheduleDraft} onChange={setScheduleDraft} />
+            <ScheduleFields
+              value={scheduleDraft}
+              onChange={setScheduleDraft}
+              omitMapsLink={ideaUsesOnlyMemberHomes(idea.places)}
+            />
             <Button type="submit" className="w-full sm:w-auto">
               Guardar cuándo
             </Button>
@@ -347,7 +353,10 @@ export default function IdeaDetailPage() {
                 {idea.budgetNote}
               </p>
             ) : null}
-            {idea.link ? (
+            {idea.link &&
+            !(
+              ideaUsesOnlyMemberHomes(idea.places) && isMapsLink(idea.link)
+            ) ? (
               <a
                 href={idea.link}
                 target="_blank"
@@ -371,6 +380,87 @@ export default function IdeaDetailPage() {
           </div>
         )}
       </section>
+
+      {idea.status !== "archived" ? (
+        <section className="surface-panel space-y-3 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
+            ¿Vas?
+          </p>
+          <p className="text-sm text-[var(--mute)]">
+            Marcá si asistís para que el grupo sepa cuántos son.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant={
+                currentUser && idea.rsvps?.[currentUser.id] === "yes"
+                  ? "default"
+                  : "outline"
+              }
+              onClick={() => setRsvp(idea.id, "yes")}
+            >
+              Voy
+            </Button>
+            <Button
+              type="button"
+              variant={
+                currentUser && idea.rsvps?.[currentUser.id] === "no"
+                  ? "secondary"
+                  : "outline"
+              }
+              onClick={() => setRsvp(idea.id, "no")}
+            >
+              No voy
+            </Button>
+          </div>
+          <ul className="space-y-2 border-t border-[var(--line)] pt-3">
+            {members.map((m) => {
+              if (!m) return null;
+              const status = idea.rsvps?.[m.id];
+              return (
+                <li
+                  key={m.id}
+                  className="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <UserAvatar user={m} size="sm" className="size-6 text-[10px]" />
+                    {m.name}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold",
+                      status === "yes"
+                        ? "text-[var(--ink)]"
+                        : status === "no"
+                          ? "text-[var(--mute)]"
+                          : "text-[var(--mute)] opacity-70",
+                    )}
+                  >
+                    {status === "yes"
+                      ? "Va"
+                      : status === "no"
+                        ? "No va"
+                        : "Sin marcar"}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          {(() => {
+            const yes = members.filter(
+              (m) => m && idea.rsvps?.[m.id] === "yes",
+            ).length;
+            const no = members.filter(
+              (m) => m && idea.rsvps?.[m.id] === "no",
+            ).length;
+            return (
+              <p className="text-xs text-[var(--mute)]">
+                {yes} van · {no} no · {members.length - yes - no} sin marcar
+              </p>
+            );
+          })()}
+        </section>
+      ) : null}
 
       {idea.status !== "done" && idea.status !== "in_progress" ? (
         <section className="surface-panel space-y-3 p-4">

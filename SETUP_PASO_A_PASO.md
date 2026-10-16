@@ -65,7 +65,7 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
    Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
-9. Corré también `003`–`015`, **`016_push_subscriptions.sql`** (fotos, Capitán, Web Push) y **`017_persist_idea_expense.sql`** (ideas/gastos que no se borren).  
+9. Corré también `003`–`015`, **`016_push_subscriptions.sql`** (fotos, Capitán, Web Push), **`017_persist_idea_expense.sql`** (ideas/gastos que no se borren) y **`018_rsvp_and_split_shares.sql`** (asistencia + repartos a medida).  
 10. En Vercel agregá **`SUPABASE_SERVICE_ROLE_KEY`** (solo server, sin `NEXT_PUBLIC_`) para login con @usuario **y** para enviar push al grupo.  
 10b. Web Push (gratis): en la máquina corré `npm run vapid` y pegá en Vercel  
     `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y opcional `VAPID_SUBJECT=mailto:avisos@juntada.app`.  

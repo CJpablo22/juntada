@@ -60,7 +60,8 @@ import {
   type User,
 } from "@/lib/types";
 import { parseImportLink } from "@/lib/import-link";
-import { memberHomePlace } from "@/lib/places";
+import { isMapsLink } from "@/lib/maps";
+import { ideaUsesOnlyMemberHomes, memberHomePlace } from "@/lib/places";
 import { cn } from "@/lib/utils";
 
 type ShelfFilter = "catalog" | "soon" | "done";
@@ -1042,9 +1043,19 @@ function NewIdeaDialog({
     setTitle(parsed.title);
     setTitleTouched(true);
     setNotes(parsed.notes);
-    setSchedule((s) => ({ ...s, link: parsed.link }));
+    const homeMode =
+      (type === "movie" && movieVenue === "home") ||
+      (type === "birthday" && birthdayVenue === "home") ||
+      ideaUsesOnlyMemberHomes(places);
+    // En casa de alguien no pisamos con un link de Maps
+    if (!(homeMode && isMapsLink(parsed.link))) {
+      setSchedule((s) => ({ ...s, link: parsed.link }));
+    }
     if (parsed.type) setType(parsed.type);
-    if (parsed.placeName || parsed.placeAddress) {
+    if (
+      !homeMode &&
+      (parsed.placeName || parsed.placeAddress)
+    ) {
       setPlaces([
         {
           kind: "custom",
@@ -1053,7 +1064,11 @@ function NewIdeaDialog({
         },
       ]);
     }
-    setImportHint(`Listo: rellené ${parsed.type ? IDEA_TYPE_LABELS[parsed.type] : "plan"} «${parsed.title}». Revisá y guardá.`);
+    setImportHint(
+      homeMode && isMapsLink(parsed.link)
+        ? `Listo el título. Como es en casa, Maps no se pega: se usa la dirección del grupo.`
+        : `Listo: rellené ${parsed.type ? IDEA_TYPE_LABELS[parsed.type] : "plan"} «${parsed.title}». Revisá y guardá.`,
+    );
   }
 
   useEffect(() => {
@@ -1062,6 +1077,9 @@ function NewIdeaDialog({
         setPlaces([
           { kind: "member_home", name: "", address: "", memberId: undefined },
         ]);
+        setSchedule((s) =>
+          isMapsLink(s.link) ? { ...s, link: undefined } : s,
+        );
       } else {
         setPlaces([{ kind: "custom", name: "", address: "" }]);
       }
@@ -1070,6 +1088,9 @@ function NewIdeaDialog({
     if (type === "birthday") {
       if (birthdayVenue === "home") {
         setPlaces([memberHomePlace(currentUser)]);
+        setSchedule((s) =>
+          isMapsLink(s.link) ? { ...s, link: undefined } : s,
+        );
       } else {
         setPlaces([{ kind: "custom", name: "", address: "" }]);
       }
@@ -1085,6 +1106,12 @@ function NewIdeaDialog({
     }
     setPlaces([{ kind: "custom", name: "", address: "" }]);
   }, [type, movieVenue, birthdayVenue, currentUser]);
+
+  // Si eligen casa de alguien en modo lugares, sacamos link de Maps
+  useEffect(() => {
+    if (!ideaUsesOnlyMemberHomes(places)) return;
+    setSchedule((s) => (isMapsLink(s.link) ? { ...s, link: undefined } : s));
+  }, [places]);
 
   useEffect(() => {
     if (type !== "birthday" || titleTouched) return;
@@ -1167,6 +1194,11 @@ function NewIdeaDialog({
         .map((t) => t.trim())
         .filter(Boolean),
       ...schedule,
+      link:
+        (needs && ideaUsesOnlyMemberHomes(cleanPlaces(places, members)) &&
+          isMapsLink(schedule.link))
+          ? undefined
+          : schedule.link,
     });
     setTitle("");
     setNotes("");
@@ -1196,6 +1228,8 @@ function NewIdeaDialog({
         : type === "birthday" && birthdayVenue === "home"
           ? "home"
           : "places";
+  const omitMapsLink =
+    placeMode === "home" || ideaUsesOnlyMemberHomes(places);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1507,7 +1541,11 @@ function NewIdeaDialog({
             </p>
           ) : null}
 
-          <ScheduleFields value={schedule} onChange={setSchedule} />
+          <ScheduleFields
+            value={schedule}
+            onChange={setSchedule}
+            omitMapsLink={omitMapsLink}
+          />
 
           <div className="space-y-1.5">
             <Label htmlFor="tags">Tags (opcional, separados por coma)</Label>            <Input

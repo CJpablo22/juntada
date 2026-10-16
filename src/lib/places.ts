@@ -82,6 +82,16 @@ export function validatePlaces(
   return null;
 }
 
+/** True si el plan es solo en casa(s) del grupo (sin sitio custom). */
+export function ideaUsesOnlyMemberHomes(places: IdeaPlace[] | undefined): boolean {
+  const real = (places ?? []).filter((p) =>
+    p.kind === "member_home"
+      ? Boolean(p.memberId)
+      : Boolean(p.name?.trim() && p.address?.trim()),
+  );
+  return real.length > 0 && real.every((p) => p.kind === "member_home");
+}
+
 export function cleanPlaces(
   places: IdeaPlace[],
   members: User[],
