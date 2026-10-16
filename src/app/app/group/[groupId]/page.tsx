@@ -690,6 +690,14 @@ export default function GroupPage() {
               return (
                 <li key={idea.id} className="py-3">
                   <div className="flex flex-wrap items-start gap-3">
+                    {idea.donePhotoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={idea.donePhotoUrl}
+                        alt=""
+                        className="mt-1 size-14 shrink-0 border border-[var(--line)] object-cover"
+                      />
+                    ) : null}
                     <button
                       type="button"
                       onClick={() =>

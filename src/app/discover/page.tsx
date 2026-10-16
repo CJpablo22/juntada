@@ -66,12 +66,27 @@ export default function DiscoverPage() {
         </div>
       ) : (
         <ul className="mt-8 divide-y divide-[var(--line)] border-y border-[var(--line)]">
-          {entries.map((row) => (
+          {entries.map((row) => {
+            const photo =
+              row.reviews.find((r) => r.photoUrl)?.photoUrl ??
+              state.ideas.find(
+                (i) => i.id === row.canonicalIdeaId && i.donePhotoUrl,
+              )?.donePhotoUrl;
+            return (
             <li key={row.key}>
               <Link
                 href={`/discover/${row.canonicalIdeaId}`}
-                className="block py-4 hover:bg-white/50"
+                className="flex gap-3 py-4 hover:bg-white/50"
               >
+                {photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photo}
+                    alt=""
+                    className="size-16 shrink-0 border border-[var(--line)] object-cover"
+                  />
+                ) : null}
+                <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-2 text-sm">
                   <span className="text-[var(--mute)]">
                     {IDEA_TYPE_LABELS[row.type]}
@@ -95,9 +110,11 @@ export default function DiscoverPage() {
                     “{row.reviews[0].comment}”
                   </p>
                 ) : null}
+                </div>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </main>

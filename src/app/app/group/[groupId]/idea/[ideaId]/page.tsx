@@ -14,6 +14,7 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
+import { MemoryPhotoField } from "@/components/ideas/memory-photo-field";
 import { ScheduleFields } from "@/components/ideas/schedule-fields";
 import { ScorePicker } from "@/components/ideas/score-picker";
 import { useApp } from "@/components/providers/app-provider";
@@ -52,9 +53,11 @@ export default function IdeaDetailPage() {
   } = useApp();
   const [doneRating, setDoneRating] = useState(5);
   const [doneNote, setDoneNote] = useState("");
+  const [donePhoto, setDonePhoto] = useState<string | null>(null);
   const [publicVisible, setPublicVisible] = useState(true);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [reviewPhoto, setReviewPhoto] = useState<string | null>(null);
   const [flash, setFlash] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [scheduleDraft, setScheduleDraft] = useState<IdeaScheduleInput>({});
@@ -156,7 +159,7 @@ export default function IdeaDetailPage() {
 
   function onDone(e: FormEvent) {
     e.preventDefault();
-    markDone(idea!.id, doneRating, doneNote, publicVisible);
+    markDone(idea!.id, doneRating, doneNote, publicVisible, donePhoto);
   }
 
   function onReview(e: FormEvent) {
@@ -166,8 +169,10 @@ export default function IdeaDetailPage() {
       rating: reviewRating,
       comment: reviewComment,
       publicVisible,
+      photoUrl: reviewPhoto,
     });
     setReviewComment("");
+    setReviewPhoto(null);
   }
 
   return (
@@ -548,6 +553,7 @@ export default function IdeaDetailPage() {
                 className="min-h-24"
               />
             </div>
+            <MemoryPhotoField value={donePhoto} onChange={setDonePhoto} />
             <label className="flex items-center gap-2 text-sm text-[var(--ink)]">
               <input
                 type="checkbox"
@@ -569,6 +575,19 @@ export default function IdeaDetailPage() {
 
       {idea.status === "done" ? (
         <>
+          {idea.donePhotoUrl ? (
+            <section className="surface-panel overflow-hidden p-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={idea.donePhotoUrl}
+                alt={`Recuerdo de ${idea.title}`}
+                className="max-h-80 w-full object-cover"
+              />
+              <p className="px-4 py-3 text-sm text-[var(--mute)]">
+                Recuerdo del plan
+              </p>
+            </section>
+          ) : null}
           <section className="surface-panel p-4">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
@@ -622,6 +641,14 @@ export default function IdeaDetailPage() {
                           {review.comment}
                         </p>
                       ) : null}
+                      {review.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={review.photoUrl}
+                          alt=""
+                          className="mt-2 max-h-48 w-full border border-[var(--line)] object-cover"
+                        />
+                      ) : null}
                     </li>
                   );
                 })
@@ -640,6 +667,11 @@ export default function IdeaDetailPage() {
                 onChange={(e) => setReviewComment(e.target.value)}
                 placeholder="Qué te pareció…"
                 className="min-h-24"
+              />
+              <MemoryPhotoField
+                value={reviewPhoto}
+                onChange={setReviewPhoto}
+                label="Foto (opcional)"
               />
               <label className="flex items-center gap-2 text-sm">
                 <input

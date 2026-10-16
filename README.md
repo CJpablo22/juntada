@@ -23,6 +23,7 @@ Sin variables de Supabase, la app corre en **modo local** (`localStorage` + usua
 - Dirección con búsqueda + CP + piso/puerta; guardar solo al confirmar
 - Privacidad de ubicación por grupo
 - **PWA**: instalable en el móvil (manifest + service worker + aviso en app/Perfil)
+- Foto opcional al marcar un plan como hecho (comprimida en el dispositivo)
 
 ## Stack
 

@@ -129,6 +129,8 @@ export type Idea = {
   softVetoUserIds: string[];
   doneRating?: number;
   doneNote?: string;
+  /** JPEG data URL (or Storage URL) of the memory photo */
+  donePhotoUrl?: string;
   createdAt: string;
 };
 
@@ -158,6 +160,8 @@ export type Review = {
   rating: number;
   comment: string;
   publicVisible: boolean;
+  /** Optional memory photo (JPEG data URL or Storage URL) */
+  photoUrl?: string;
   createdAt: string;
 };
 

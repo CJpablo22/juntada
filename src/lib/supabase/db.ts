@@ -56,6 +56,7 @@ type IdeaRow = {
   soft_veto_user_ids: string[] | null;
   done_rating: number | null;
   done_note: string | null;
+  done_photo_url: string | null;
   created_at: string;
 };
 type ReviewRow = {
@@ -65,6 +66,7 @@ type ReviewRow = {
   rating: number;
   comment: string;
   public_visible: boolean;
+  photo_url: string | null;
   created_at: string;
 };
 type ExpenseRow = {
@@ -126,6 +128,7 @@ function mapIdea(row: IdeaRow): Idea {
     softVetoUserIds: row.soft_veto_user_ids ?? [],
     doneRating: row.done_rating ?? undefined,
     doneNote: row.done_note ?? undefined,
+    donePhotoUrl: row.done_photo_url ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -282,6 +285,7 @@ async function loadCloudStateWithIds(
       rating: r.rating,
       comment: r.comment,
       publicVisible: r.public_visible,
+      photoUrl: r.photo_url ?? undefined,
       createdAt: r.created_at,
     }));
   }
@@ -508,6 +512,7 @@ export async function cloudInsertReview(
       rating: review.rating,
       comment: review.comment,
       public_visible: review.publicVisible,
+      photo_url: review.photoUrl ?? null,
       created_at: review.createdAt,
     },
     { onConflict: "id" },

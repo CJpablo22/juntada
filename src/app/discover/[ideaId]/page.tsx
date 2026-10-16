@@ -116,6 +116,14 @@ export default function DiscoverDetailPage() {
                   {review.comment}
                 </p>
               ) : null}
+              {review.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={review.photoUrl}
+                  alt=""
+                  className="mt-3 max-h-56 w-full border border-[var(--line)] object-cover"
+                />
+              ) : null}
             </article>
           );
         })}

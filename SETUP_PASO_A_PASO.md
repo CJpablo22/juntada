@@ -65,7 +65,7 @@ Comprobación: en GitHub, abriendo el repo, tenés que ver archivos como `README
 8. **Si ya habías corrido el 001 antes** (proyecto ya creado): abrí también  
    `supabase/migrations/002_profile_identity.sql`, pegalo en una **nueva query** y **Run**.  
    Eso guarda en el perfil el correo / teléfono / Apple con el que entrás.  
-9. Corré también `003`–`012` y **`013_security_hardening.sql`** (cierra perfiles, ownership, reviews, votos, rate limits).  
+9. Corré también `003`–`013` y **`014_memory_photos.sql`** (fotos en recuerdos).  
 10. En Vercel agregá **`SUPABASE_SERVICE_ROLE_KEY`** (solo server, sin `NEXT_PUBLIC_`) para poder entrar con @usuario sin filtrar el email.  
 11. Auth → Providers → Email: activá Email y **dejá Confirm email ON** (mail de registro sí).  
     Los avisos del grupo **no** van por mail: solo in-app.  

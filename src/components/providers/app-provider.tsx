@@ -132,12 +132,14 @@ type AppContextValue = {
     rating: number,
     note: string,
     publicVisible?: boolean,
+    photoUrl?: string | null,
   ) => void;
   addReview: (input: {
     ideaId: string;
     rating: number;
     comment: string;
     publicVisible?: boolean;
+    photoUrl?: string | null;
   }) => void;
   addExpense: (input: {
     groupId: string;
@@ -1145,11 +1147,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rating: number,
       note: string,
       publicVisible = true,
+      photoUrl: string | null = null,
     ) => {
       setState((prev) => {
         const idea = prev.ideas.find((i) => i.id === ideaId);
         if (!idea || !prev.currentUserId) return prev;
         const reviewId = cloudConfigured ? newCloudId() : createId("rev");
+        const photo = photoUrl?.trim() || undefined;
         const review: Review = {
           id: reviewId,
           ideaId,
@@ -1157,6 +1161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           rating,
           comment: note.trim(),
           publicVisible,
+          photoUrl: photo,
           createdAt: new Date().toISOString(),
         };
         let next: AppState = {
@@ -1169,6 +1174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   revealed: true,
                   doneRating: rating,
                   doneNote: note.trim(),
+                  donePhotoUrl: photo ?? i.donePhotoUrl,
                 }
               : i,
           ),
@@ -1211,6 +1217,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             status: "done",
             done_rating: rating,
             done_note: note.trim(),
+            done_photo_url: photo ?? null,
           });
           void cloudInsertReview(sb, review);
           const newPts = next.points.slice(-(rating >= 4 ? 2 : 1));
@@ -1228,11 +1235,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rating: number;
       comment: string;
       publicVisible?: boolean;
+      photoUrl?: string | null;
     }) => {
       setState((prev) => {
         if (!prev.currentUserId) return prev;
         const idea = prev.ideas.find((i) => i.id === input.ideaId);
         if (!idea || idea.status !== "done") return prev;
+        const photo = input.photoUrl?.trim() || undefined;
         const review: Review = {
           id: cloudConfigured ? newCloudId() : createId("rev"),
           ideaId: input.ideaId,
@@ -1240,13 +1249,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
           rating: input.rating,
           comment: input.comment.trim(),
           publicVisible: input.publicVisible ?? true,
+          photoUrl: photo,
           createdAt: new Date().toISOString(),
         };
+        let ideas = prev.ideas;
+        if (photo && !idea.donePhotoUrl) {
+          ideas = prev.ideas.map((i) =>
+            i.id === input.ideaId ? { ...i, donePhotoUrl: photo } : i,
+          );
+          if (cloudConfigured) {
+            void cloudUpdateIdea(createSupabaseBrowserClient(), input.ideaId, {
+              done_photo_url: photo,
+            });
+          }
+        }
         if (cloudConfigured) {
           void cloudInsertReview(createSupabaseBrowserClient(), review);
         }
         return {
           ...prev,
+          ideas,
           reviews: [
             ...prev.reviews.filter(
               (r) =>

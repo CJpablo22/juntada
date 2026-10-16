@@ -3,7 +3,7 @@
 Documento vivo del brainstorming.  
 Cuando se pida: resumir **ideas aplicadas hasta ahora** vs **ideas para futuro**.
 
-Última actualización: 2026-10-16 (PWA instalable; backlog free en curso uno a uno)
+Última actualización: 2026-10-16 (PWA + foto en recuerdos; backlog free uno a uno)
 
 **Producto en construcción ahora:** producto **#1** (grupos + catálogo + decisión) con un primer slice de **Descubrir** (valoraciones públicas).  
 Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
@@ -45,6 +45,7 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Amigos de experiencia (solo tras completar algo juntos; no follow abierto)
 - [x] Preparado para crecer: `es-ES`, EUR; PWA ya instalable (app nativa store = después)
 - [x] **PWA**: manifest + iconos + service worker (offline shell) + prompt de instalación (banner + Perfil)
+- [x] **Foto en recuerdos**: al marcar hecho / valorar (compresión JPEG en cliente; columna `done_photo_url` / `photo_url`; migración `014`)
 
 ### Falta / siguiente en el producto 1 (lanzamiento free)
 - [ ] Nombre final de la marca
@@ -54,7 +55,7 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Unificar títulos iguales en Descubrir
 - [x] Gasto ligado a una idea desde UI
 - [x] PWA / instalación móvil
-- [ ] Foto en recuerdos
+- [x] Foto en recuerdos
 - [ ] Beneficio jugable real del #1 (romper empate con acción)
 - [ ] Ritual semanal «¿qué hacemos?»
 - [ ] Digest semanal in-app (planes, gastos, ranking)
@@ -158,7 +159,7 @@ Campos útiles v1:
 - Marcar como hecho
 - Rating post-experiencia
 - Nota corta / recuerdo
-- (Foto opcional si sale barato; si no, fase 2)
+- [x] Foto opcional en recuerdo (comprimida en cliente; sin Storage de pago)
 
 ### 3.6 Gastos (simple)
 - Gasto ligado a plan o suelto
@@ -228,8 +229,8 @@ Idea general:
 - Temporadas / badges temáticos
 - Álbum de recuerdos del grupo *(en cola free, simple)*
 - Nota: “ahora no” (veto suave) ya entró al MVP web
-- Foto en recuerdos *(en cola free, siguiente tras PWA)*
-- Beneficio jugable del #1 *(en cola free)*
+- [x] Foto en recuerdos (2026-10-16)
+- Beneficio jugable del #1 *(en cola free, siguiente)*
 - 1 juego de reunión piloto *(en cola free)*
 
 ---
@@ -283,7 +284,7 @@ Oferta/demanda de skills, reputación por ámbito, cercanía, confianza.
 - [x] Stack / scaffold del MVP web (Next.js)
 - [x] Pantallas base del MVP
 - [x] Reglas iniciales de puntos y badges (iterables)
-- [ ] Si la foto en recuerdos entra ya o en fase 2 → **entrando ahora** (cola free)
+- [x] Foto en recuerdos: **hecho** (cola free)
 - [x] Copy base ES con pinceladas AR (seguir puliendo)
 - [x] Backend real: Supabase + dual-write (localStorage solo sin env)
 
