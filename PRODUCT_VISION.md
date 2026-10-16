@@ -48,6 +48,8 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] **Foto en recuerdos**: al marcar hecho / valorar (compresión JPEG en cliente; columna `done_photo_url` / `photo_url`; migración `014`)
 - [x] **Privilegio del #1 (Capitán)**: romper empate en Pronto 1×/semana (`015_captain_tie_break.sql` + UI)
 - [x] **Ritual semanal «¿qué hacemos?»**: finalistas de Pronto + filtros de mood (jue–dom)
+- [x] **Digest semanal in-app**: hechos / gastos / ranking en la pestaña Hechas
+- [x] **Import por link**: pegar Maps / Netflix / Letterboxd / IG → título/lugar (sin APIs de pago)
 
 ### Falta / siguiente en el producto 1 (lanzamiento free)
 - [ ] Nombre final de la marca
@@ -60,7 +62,7 @@ Producto #2 completo (red social) y #3 (marketplace skills) siguen en backlog.
 - [x] Foto en recuerdos
 - [x] Beneficio jugable real del #1 (romper empate con acción)
 - [x] Ritual semanal «¿qué hacemos?»
-- [ ] Digest semanal in-app (planes, gastos, ranking)
+- [x] Digest semanal in-app (planes, gastos, ranking)
 - [ ] Import por link (Maps / Netflix / Letterboxd / IG → título/lugar)
 - [ ] Álbum simple de recuerdos del grupo
 - [ ] 1 juego de reunión piloto (impostor / adivinar quién soy)
@@ -227,7 +229,7 @@ Idea general:
 
 ### 4.5 Otras ideas aportadas en brainstorm
 - Wishlist vs “este finde”
-- Digest semanal (planes, gastos, ranking) *(en cola free, in-app)*
+- [x] Digest semanal (planes, gastos, ranking) in-app (2026-10-16)
 - Privacidad fuerte por grupo — ya hay RLS + UI por grupo; pulido UI pendiente
 - Temporadas / badges temáticos
 - Álbum de recuerdos del grupo *(en cola free, simple)*

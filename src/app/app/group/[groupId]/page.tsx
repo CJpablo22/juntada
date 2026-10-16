@@ -50,6 +50,7 @@ import {
   type MovieVenue,
   type User,
 } from "@/lib/types";
+import { parseImportLink } from "@/lib/import-link";
 import { memberHomePlace } from "@/lib/places";
 import { cn } from "@/lib/utils";
 
@@ -979,6 +980,8 @@ function NewIdeaDialog({
   const [tagInput, setTagInput] = useState("");
   const [error, setError] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
+  const [importHint, setImportHint] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -986,8 +989,33 @@ function NewIdeaDialog({
       setSchedule({});
       setError("");
       setTitleTouched(false);
+      setImportUrl("");
+      setImportHint("");
     }
   }, [open, defaultTiming]);
+
+  function applyImportLink(raw: string) {
+    const parsed = parseImportLink(raw);
+    if (!parsed) {
+      setImportHint("No pude leer ese link. Pegá una URL completa.");
+      return;
+    }
+    setTitle(parsed.title);
+    setTitleTouched(true);
+    setNotes(parsed.notes);
+    setSchedule((s) => ({ ...s, link: parsed.link }));
+    if (parsed.type) setType(parsed.type);
+    if (parsed.placeName || parsed.placeAddress) {
+      setPlaces([
+        {
+          kind: "custom",
+          name: parsed.placeName ?? "",
+          address: parsed.placeAddress ?? parsed.placeName ?? "",
+        },
+      ]);
+    }
+    setImportHint(`Listo: rellené ${parsed.type ? IDEA_TYPE_LABELS[parsed.type] : "plan"} «${parsed.title}». Revisá y guardá.`);
+  }
 
   useEffect(() => {
     if (type === "movie") {
@@ -1141,6 +1169,36 @@ function NewIdeaDialog({
           <DialogTitle>Nueva idea</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2 border border-[var(--line)] bg-[var(--wash)] p-3">
+            <Label htmlFor="importUrl">Pegar link (opcional)</Label>
+            <p className="text-xs text-[var(--mute)]">
+              Maps, Netflix, Letterboxd, Instagram u otra URL — rellena título y
+              lugar sin APIs de pago.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                id="importUrl"
+                value={importUrl}
+                onChange={(e) => setImportUrl(e.target.value)}
+                onBlur={() => {
+                  if (importUrl.trim()) applyImportLink(importUrl);
+                }}
+                placeholder="https://maps.google.com/…"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => applyImportLink(importUrl)}
+              >
+                Importar
+              </Button>
+            </div>
+            {importHint ? (
+              <p className="text-xs text-[var(--pop)]">{importHint}</p>
+            ) : null}
+          </div>
           <div>
             <p className="mb-2 text-sm text-[var(--mute)]">
               ¿La guardan para después o la quieren decidir ya?
