@@ -271,15 +271,15 @@ export default function GroupPage() {
         >
           ← Grupos
         </Link>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mt-2 space-y-4">
           <div className="min-w-0">
             <p className="text-sm text-[var(--mute)]">
               {GROUP_KIND_LABELS[group.kind]} · {members.length} personas
             </p>
-            <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
+            <h1 className="mt-0.5 break-words text-2xl font-bold tracking-tight text-[var(--ink)] sm:text-3xl">
               {group.name}
             </h1>
-            <div className="mt-2">
+            <div className="mt-2 max-w-xl">
               <GroupPushStatus
                 groupId={group.id}
                 members={members.filter(
@@ -288,36 +288,47 @@ export default function GroupPage() {
               />
             </div>
           </div>
-          <div className="btn-stack sm:shrink-0">
-            <Button variant="outline" onClick={copyInvite}>
-              <Copy className="size-4" />
-              {copied ? "Código copiado" : `Invitar · ${group.inviteCode}`}
+          {/* Siempre debajo del título: en iPad el row + btn-stack se pisaba. */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
+            <Button
+              variant="outline"
+              className="w-full justify-center lg:w-auto"
+              onClick={copyInvite}
+            >
+              <Copy className="size-4 shrink-0" />
+              <span className="truncate">
+                {copied ? "Código copiado" : `Invitar · ${group.inviteCode}`}
+              </span>
             </Button>
             <Button
               variant="outline"
+              className="w-full justify-center lg:w-auto"
               onClick={() => router.push(`/app/group/${group.id}/expenses`)}
             >
-              <Wallet className="size-4" />
+              <Wallet className="size-4 shrink-0" />
               Gastos
             </Button>
             <Button
               variant="outline"
+              className="w-full justify-center lg:w-auto"
               onClick={() => router.push(`/app/group/${group.id}/album`)}
             >
-              <Images className="size-4" />
+              <Images className="size-4 shrink-0" />
               Álbum
             </Button>
             <Button
               variant="outline"
+              className="w-full justify-center lg:w-auto"
               onClick={() =>
                 router.push(`/app/group/${group.id}/games/impostor`)
               }
             >
-              <Sparkles className="size-4" />
+              <Sparkles className="size-4 shrink-0" />
               Impostor
             </Button>
             <Button
               variant="outline"
+              className="w-full justify-center lg:w-auto"
               onClick={() => {
                 setRenameValue(group.name);
                 setMgmtError("");
@@ -326,100 +337,100 @@ export default function GroupPage() {
             >
               Gestionar
             </Button>
-            <Dialog
-              open={openSettings}
-              onOpenChange={(o) => {
-                setOpenSettings(o);
-                setMgmtError("");
-                if (o) setRenameValue(group.name);
-              }}
-            >
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Gestionar grupo</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  {isOwner ? (
-                    <form
-                      className="space-y-2"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        setMgmtBusy(true);
-                        setMgmtError("");
-                        const r = await renameGroup(group.id, renameValue);
-                        setMgmtBusy(false);
-                        if (!r.ok) {
-                          setMgmtError(r.error || "No se pudo renombrar");
-                          return;
-                        }
-                        setOpenSettings(false);
-                      }}
-                    >
-                      <Label htmlFor="rename">Cambiar nombre</Label>
-                      <Input
-                        id="rename"
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        className="field-input"
-                      />
-                      <Button type="submit" disabled={mgmtBusy} size="sm">
-                        Guardar nombre
-                      </Button>
-                    </form>
-                  ) : null}
-
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    disabled={mgmtBusy}
-                    onClick={async () => {
-                      if (!window.confirm("¿Salir de este grupo?")) return;
+          </div>
+          <Dialog
+            open={openSettings}
+            onOpenChange={(o) => {
+              setOpenSettings(o);
+              setMgmtError("");
+              if (o) setRenameValue(group.name);
+            }}
+          >
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Gestionar grupo</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {isOwner ? (
+                  <form
+                    className="space-y-2"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
                       setMgmtBusy(true);
-                      const r = await leaveGroup(group.id);
+                      setMgmtError("");
+                      const r = await renameGroup(group.id, renameValue);
                       setMgmtBusy(false);
                       if (!r.ok) {
-                        setMgmtError(r.error || "No se pudo salir");
+                        setMgmtError(r.error || "No se pudo renombrar");
+                        return;
+                      }
+                      setOpenSettings(false);
+                    }}
+                  >
+                    <Label htmlFor="rename">Cambiar nombre</Label>
+                    <Input
+                      id="rename"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      className="field-input"
+                    />
+                    <Button type="submit" disabled={mgmtBusy} size="sm">
+                      Guardar nombre
+                    </Button>
+                  </form>
+                ) : null}
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={mgmtBusy}
+                  onClick={async () => {
+                    if (!window.confirm("¿Salir de este grupo?")) return;
+                    setMgmtBusy(true);
+                    const r = await leaveGroup(group.id);
+                    setMgmtBusy(false);
+                    if (!r.ok) {
+                      setMgmtError(r.error || "No se pudo salir");
+                      return;
+                    }
+                    router.replace("/app");
+                  }}
+                >
+                  Salir del grupo
+                </Button>
+
+                {isOwner ? (
+                  <Button
+                    variant="ghost"
+                    className="w-full text-[var(--pop)]"
+                    disabled={mgmtBusy}
+                    onClick={async () => {
+                      if (
+                        !window.confirm(
+                          "¿Eliminar el grupo y todo su contenido? No se puede deshacer.",
+                        )
+                      )
+                        return;
+                      setMgmtBusy(true);
+                      const r = await deleteGroup(group.id);
+                      setMgmtBusy(false);
+                      if (!r.ok) {
+                        setMgmtError(r.error || "No se pudo eliminar");
                         return;
                       }
                       router.replace("/app");
                     }}
                   >
-                    Salir del grupo
+                    Eliminar grupo
                   </Button>
+                ) : null}
 
-                  {isOwner ? (
-                    <Button
-                      variant="ghost"
-                      className="w-full text-[var(--pop)]"
-                      disabled={mgmtBusy}
-                      onClick={async () => {
-                        if (
-                          !window.confirm(
-                            "¿Eliminar el grupo y todo su contenido? No se puede deshacer.",
-                          )
-                        )
-                          return;
-                        setMgmtBusy(true);
-                        const r = await deleteGroup(group.id);
-                        setMgmtBusy(false);
-                        if (!r.ok) {
-                          setMgmtError(r.error || "No se pudo eliminar");
-                          return;
-                        }
-                        router.replace("/app");
-                      }}
-                    >
-                      Eliminar grupo
-                    </Button>
-                  ) : null}
-
-                  {mgmtError ? (
-                    <p className="text-sm text-[var(--pop)]">{mgmtError}</p>
-                  ) : null}
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                {mgmtError ? (
+                  <p className="text-sm text-[var(--pop)]">{mgmtError}</p>
+                ) : null}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="mt-3">
@@ -716,8 +727,8 @@ export default function GroupPage() {
       ) : null}
 
       <section className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
+        <div className="space-y-3">
+          <div className="min-w-0">
             <h2 className="text-lg font-semibold text-[var(--ink)]">
               {shelf === "catalog"
                 ? "Ideas guardadas"
@@ -734,11 +745,11 @@ export default function GroupPage() {
             </p>
           </div>
           {shelf !== "done" ? (
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--ink)]">
                 <input
                   type="checkbox"
-                  className="size-4 accent-[var(--pop)]"
+                  className="size-4 shrink-0 accent-[var(--pop)]"
                   checked={brainstorm}
                   onChange={(e) => {
                     const on = e.target.checked;
@@ -748,30 +759,32 @@ export default function GroupPage() {
                 />
                 Lluvia de ideas
               </label>
-              <NewIdeaDialog
-                open={openIdea}
-                onOpenChange={setOpenIdea}
-                members={members.filter(Boolean) as User[]}
-                currentUser={currentUser}
-                defaultTiming={shelf === "soon" ? "soon" : "catalog"}
-                onSubmit={async (data) => {
-                  const result = await addIdea({ groupId: group.id, ...data });
-                  if (!result.synced || !result.id) {
-                    throw new Error(
-                      result.error ??
-                        "No se pudo guardar en la nube. Revisá el aviso arriba.",
-                    );
-                  }
-                  setOpenIdea(false);
-                  router.push(`/app/group/${group.id}/idea/${result.id}`);
-                }}
-              />
+              <div className="w-full sm:w-auto">
+                <NewIdeaDialog
+                  open={openIdea}
+                  onOpenChange={setOpenIdea}
+                  members={members.filter(Boolean) as User[]}
+                  currentUser={currentUser}
+                  defaultTiming={shelf === "soon" ? "soon" : "catalog"}
+                  onSubmit={async (data) => {
+                    const result = await addIdea({ groupId: group.id, ...data });
+                    if (!result.synced || !result.id) {
+                      throw new Error(
+                        result.error ??
+                          "No se pudo guardar en la nube. Revisá el aviso arriba.",
+                      );
+                    }
+                    setOpenIdea(false);
+                    router.push(`/app/group/${group.id}/idea/${result.id}`);
+                  }}
+                />
+              </div>
             </div>
           ) : null}
         </div>
 
         {shelf !== "done" ? (
-          <p className="text-sm text-[var(--mute)] break-words border border-dashed border-[var(--line)] bg-[var(--wash)] px-3 py-2">
+          <p className="text-sm text-[var(--mute)] break-words border border-dashed border-[var(--line)] bg-[var(--wash)] px-3 py-2.5">
             {brainstorm ? (
               <>
                 <strong className="text-[var(--ink)]">Lluvia activa:</strong>{" "}
@@ -779,7 +792,10 @@ export default function GroupPage() {
               </>
             ) : (
               <>
-                Si es <strong className="text-[var(--ink)]">otra serie, día o lugar</strong>{" "}
+                Si es{" "}
+                <strong className="text-[var(--ink)]">
+                  otra serie, día o lugar
+                </strong>{" "}
                 de algo que ya está, abrí esa idea y usá «Proponer otra» — no
                 crees una idea nueva. Activá «Lluvia de ideas» solo para tirar
                 ideas sueltas.
@@ -871,7 +887,9 @@ export default function GroupPage() {
                       : idea.timing === "soon" && idea.revealed
                         ? `${voteCount} votos revelados`
                         : idea.timing === "catalog"
-                          ? "En catálogo · podés pasarla a Pronto"
+                          ? idea.proposedBy === currentUser.id
+                            ? "En catálogo · vos podés pasarla a Pronto"
+                            : "En catálogo · proponé alternativas adentro"
                           : "Hecha";
 
               return (

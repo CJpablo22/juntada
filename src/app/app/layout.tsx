@@ -78,7 +78,8 @@ export default function AppShellLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-[100svh] flex-col">
       {!onOnboarding ? <AppHeader /> : null}
       {!onOnboarding ? <SyncBanner /> : null}
-      <div className="page-shell flex-1 pb-20 md:pb-8">{children}</div>
+      {/* Bottom nav hasta lg: hace falta padding abajo también en iPad (~768–1023). */}
+      <div className="page-shell flex-1 pb-24 lg:pb-8">{children}</div>
       {!onOnboarding ? <InstallPrompt variant="banner" /> : null}
     </div>
   );

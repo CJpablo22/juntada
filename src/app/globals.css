@@ -270,22 +270,19 @@
     max-width: 64rem;
     margin-inline: auto;
     padding-inline: 1rem;
-    /* Bottom nav visible hasta lg (incluye iPad portrait) */
-    padding-block: 1rem 5.75rem;
+    padding-block: 1rem 0;
     overflow-x: clip;
   }
 
   @media (min-width: 768px) {
     .page-shell {
-      padding-inline: 1.25rem;
-      padding-block: 1.35rem 5.75rem;
+      padding-inline: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .page-shell {
-      padding-inline: 1.5rem;
-      padding-block: 1.75rem 2.5rem;
+      padding-inline: 1.75rem;
     }
   }
 
