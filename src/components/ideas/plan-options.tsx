@@ -13,13 +13,16 @@ import {
 } from "@/lib/plan-options";
 import { memberHomePlace } from "@/lib/places";
 import {
+  IDEA_TYPE_LABELS,
   MAX_PLAN_OPTIONS,
+  type IdeaType,
   type PlanOption,
   type User,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type Draft = {
+  title: string;
   placeName: string;
   placeAddress: string;
   memberHomeId: string;
@@ -28,6 +31,7 @@ type Draft = {
 };
 
 const emptyDraft = (): Draft => ({
+  title: "",
   placeName: "",
   placeAddress: "",
   memberHomeId: "",
@@ -35,12 +39,30 @@ const emptyDraft = (): Draft => ({
   scheduledTime: "",
 });
 
-/** Propuestas de lugar/fecha/hora + preferencia. Máx 4, 1 por persona. */
+function titlePlaceholder(type: IdeaType): string {
+  switch (type) {
+    case "series":
+      return "Otra serie…";
+    case "movie":
+      return "Otra película…";
+    case "food":
+      return "Otro sitio / plan de comida…";
+    case "visit":
+      return "Otro lugar a visitar…";
+    case "birthday":
+      return "Otra forma de festejar…";
+    default:
+      return "Otra propuesta…";
+  }
+}
+
+/** Alternativas dentro de la misma idea (qué / dónde / cuándo) + Me gusta. */
 export function PlanOptionsSection({
   options,
   members,
   currentUserId,
   ideaProposerId,
+  ideaType,
   canEdit,
   currentPlaceHint,
   onAdd,
@@ -51,10 +73,11 @@ export function PlanOptionsSection({
   members: User[];
   currentUserId: string;
   ideaProposerId: string;
+  ideaType: IdeaType;
   canEdit: boolean;
-  /** Lugar/fecha ya puestos en la idea (si aún no hay opciones). */
   currentPlaceHint?: string | null;
   onAdd: (input: {
+    title?: string;
     placeName?: string;
     placeAddress?: string;
     memberHomeId?: string;
@@ -77,6 +100,7 @@ export function PlanOptionsSection({
   const preferredId = myPreferredOptionId(options, currentUserId);
   const atCap = options.length >= MAX_PLAN_OPTIONS;
   const canPropose = canEdit && !myOption && !atCap;
+  const typeLabel = IDEA_TYPE_LABELS[ideaType].toLowerCase();
 
   const sorted = useMemo(() => {
     return [...options].sort((a, b) => {
@@ -99,6 +123,7 @@ export function PlanOptionsSection({
     setError("");
     setBusy(true);
     const result = await onAdd({
+      title: draft.title,
       placeName: draft.placeName,
       placeAddress: draft.placeAddress,
       memberHomeId: draft.memberHomeId || undefined,
@@ -139,32 +164,27 @@ export function PlanOptionsSection({
     <section className="surface-panel space-y-3 p-4">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
-          Dónde y cuándo
+          Alternativas · misma idea
         </p>
-        <p className="mt-1 text-sm text-[var(--mute)]">
-          Cada uno propone{" "}
-          <strong className="font-medium text-[var(--ink)]">una</strong> opción
-          (lugar, fecha u hora). Tocá{" "}
-          <strong className="font-medium text-[var(--ink)]">Me gusta</strong> en
-          la que preferís. Máximo {MAX_PLAN_OPTIONS}.
+        <p className="mt-1 text-sm text-[var(--mute)] break-words">
+          No crees otra idea: proponé otra {typeLabel}, otro lugar u otro
+          horario acá. Cada uno una opción (máx {MAX_PLAN_OPTIONS}). Tocá{" "}
+          <strong className="font-medium text-[var(--ink)]">Me gusta</strong>.
         </p>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="space-y-2 rounded-none border border-dashed border-[var(--line)] bg-[var(--wash)] px-3 py-4 text-sm text-[var(--mute)]">
+        <div className="space-y-2 border border-dashed border-[var(--line)] bg-[var(--wash)] px-3 py-4 text-sm text-[var(--mute)]">
           {currentPlaceHint ? (
-            <p>
+            <p className="break-words">
               Ahora figura:{" "}
               <strong className="font-medium text-[var(--ink)]">
                 {currentPlaceHint}
               </strong>
-              . Todavía no hay alternativas para votar — proponé una.
+              . Proponé una alternativa si querés cambiar qué, dónde o cuándo.
             </p>
           ) : (
-            <p>
-              Todavía no hay opciones. Proponé lugar, fecha u hora para
-              empezar.
-            </p>
+            <p>Todavía no hay opciones. Proponé la primera.</p>
           )}
         </div>
       ) : (
@@ -177,8 +197,8 @@ export function PlanOptionsSection({
             const votes = option.preferVotes.length;
             const proposer = userOf(option.proposedBy);
             const canDelete =
-              canEdit &&
-              (mine || currentUserId === ideaProposerId);
+              canEdit && (mine || currentUserId === ideaProposerId);
+            const what = option.title?.trim();
 
             return (
               <li
@@ -189,7 +209,7 @@ export function PlanOptionsSection({
                   liked && "border-[var(--pop)]",
                 )}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-semibold text-[var(--mute)]">
@@ -201,16 +221,21 @@ export function PlanOptionsSection({
                         </span>
                       ) : null}
                     </div>
+                    {what ? (
+                      <p className="break-words text-sm font-semibold text-[var(--ink)]">
+                        {what}
+                      </p>
+                    ) : null}
                     {place ? (
-                      <p className="flex items-start gap-1.5 text-sm font-medium text-[var(--ink)]">
+                      <p className="flex items-start gap-1.5 text-sm text-[var(--ink)]">
                         <MapPin className="mt-0.5 size-3.5 shrink-0 text-[var(--pop)]" />
-                        <span>{place}</span>
+                        <span className="min-w-0 break-words">{place}</span>
                       </p>
                     ) : null}
                     {when ? (
                       <p className="text-sm text-[var(--mute)]">{when}</p>
                     ) : null}
-                    {!place && !when ? (
+                    {!what && !place && !when ? (
                       <p className="text-sm text-[var(--mute)]">Sin detalle</p>
                     ) : null}
                     <p className="inline-flex items-center gap-1.5 pt-0.5 text-xs text-[var(--mute)]">
@@ -225,7 +250,7 @@ export function PlanOptionsSection({
                     </p>
                   </div>
 
-                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <div className="flex shrink-0 flex-row items-center gap-2 sm:flex-col sm:items-end">
                     {canEdit ? (
                       <Button
                         type="button"
@@ -236,10 +261,7 @@ export function PlanOptionsSection({
                         className="min-w-[7.5rem]"
                       >
                         <Heart
-                          className={cn(
-                            "size-3.5",
-                            liked && "fill-current",
-                          )}
+                          className={cn("size-3.5", liked && "fill-current")}
                         />
                         {liked ? "Te gusta" : "Me gusta"}
                       </Button>
@@ -279,8 +301,8 @@ export function PlanOptionsSection({
       ) : null}
 
       {myOption && canEdit ? (
-        <p className="text-xs text-[var(--mute)]">
-          Ya propusiste una. Sacala si querés cambiar lugar o horario.
+        <p className="text-xs text-[var(--mute)] break-words">
+          Ya propusiste una. Sacala si querés cambiar qué, lugar u horario.
         </p>
       ) : null}
 
@@ -295,9 +317,22 @@ export function PlanOptionsSection({
           onSubmit={(e) => void submit(e)}
           className="space-y-3 border-t border-[var(--line)] pt-3"
         >
-          <p className="text-sm font-semibold text-[var(--ink)]">
-            Tu opción
-          </p>
+          <p className="text-sm font-semibold text-[var(--ink)]">Tu opción</p>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="opt-title">
+              Qué (opcional) · {IDEA_TYPE_LABELS[ideaType]}
+            </Label>
+            <Input
+              id="opt-title"
+              className="field-input"
+              placeholder={titlePlaceholder(ideaType)}
+              value={draft.title}
+              onChange={(e) =>
+                setDraft((d) => ({ ...d, title: e.target.value }))
+              }
+            />
+          </div>
 
           {members.length > 0 ? (
             <div className="space-y-1.5">
@@ -309,10 +344,7 @@ export function PlanOptionsSection({
                 onChange={(e) => {
                   const id = e.target.value;
                   if (!id) {
-                    setDraft((d) => ({
-                      ...d,
-                      memberHomeId: "",
-                    }));
+                    setDraft((d) => ({ ...d, memberHomeId: "" }));
                     return;
                   }
                   const user = members.find((m) => m.id === id);
@@ -336,7 +368,7 @@ export function PlanOptionsSection({
             </div>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="opt-place">Lugar</Label>
               <Input
@@ -371,7 +403,7 @@ export function PlanOptionsSection({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="opt-date">Fecha</Label>
               <Input
@@ -398,14 +430,15 @@ export function PlanOptionsSection({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={busy}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button type="submit" disabled={busy} className="w-full sm:w-auto">
               Publicar opción
             </Button>
             <Button
               type="button"
               variant="outline"
               disabled={busy}
+              className="w-full sm:w-auto"
               onClick={() => {
                 setOpenForm(false);
                 setDraft(emptyDraft());
@@ -419,7 +452,7 @@ export function PlanOptionsSection({
       ) : null}
 
       {error ? (
-        <p className="text-sm text-[#7f1d1d]">{error}</p>
+        <p className="text-sm text-[#7f1d1d] break-words">{error}</p>
       ) : null}
     </section>
   );

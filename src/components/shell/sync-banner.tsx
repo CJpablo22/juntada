@@ -13,22 +13,26 @@ export function SyncBanner() {
       role="alert"
       className="border-b border-[var(--pop)] bg-[var(--pop)]/10 px-4 py-3 text-sm text-[var(--ink)]"
     >
-      <div className="mx-auto flex max-w-5xl items-start gap-3">
+      <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-start">
         <div className="min-w-0 flex-1 space-y-1">
           <p className="font-semibold">No se guardó en la nube</p>
-          <p className="text-[var(--mute)]">{cloudError}</p>
-          <p className="text-xs text-[var(--mute)]">
+          <p className="text-[var(--mute)] break-words">{cloudError}</p>
+          <p className="text-xs text-[var(--mute)] break-words">
             Sin esto, solo lo ves en este celular. En Supabase → SQL Editor
             corré{" "}
-            <code className="text-[var(--ink)]">
+            <code className="break-all text-[var(--ink)]">
               020_fix_group_members_rls_recursion.sql
-            </code>{" "}
+            </code>
+            ,{" "}
+            <code className="break-all text-[var(--ink)]">021_plan_options.sql</code>{" "}
             y{" "}
-            <code className="text-[var(--ink)]">021_plan_options.sql</code>{" "}
-            (opciones de lugar/fecha). Si faltan, también 017–019.
+            <code className="break-all text-[var(--ink)]">
+              022_plan_option_title.sql
+            </code>
+            . Si faltan, también 017–019.
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 self-end sm:self-start">
           <Button
             type="button"
             variant="outline"

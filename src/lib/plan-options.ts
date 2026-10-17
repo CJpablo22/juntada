@@ -22,6 +22,7 @@ export function normalizePlanOptions(raw: unknown): PlanOption[] {
       return {
         id,
         proposedBy,
+        title: typeof o.title === "string" ? o.title : undefined,
         placeName:
           typeof o.placeName === "string"
             ? o.placeName
@@ -64,10 +65,11 @@ export function normalizePlanOptions(raw: unknown): PlanOption[] {
     .filter(Boolean) as PlanOption[];
 }
 
-/** Si la idea tiene lugar o fecha, arma la 1ª opción del creador. */
+/** Si la idea tiene título / lugar / fecha, arma la 1ª opción del creador. */
 export function seedPlanOptionFromIdea(
   idea: Pick<
     Idea,
+    | "title"
     | "proposedBy"
     | "places"
     | "address"
@@ -77,16 +79,18 @@ export function seedPlanOptionFromIdea(
   >,
   id: string,
 ): PlanOption | null {
+  const title = idea.title?.trim() || undefined;
   const place = idea.places?.[0];
   const placeName = place?.name?.trim() || undefined;
   const placeAddress =
     place?.address?.trim() || idea.address?.trim() || undefined;
   const hasPlace = Boolean(placeName || placeAddress);
   const hasWhen = Boolean(idea.scheduledDate || idea.scheduledTime);
-  if (!hasPlace && !hasWhen) return null;
+  if (!title && !hasPlace && !hasWhen) return null;
   return {
     id,
     proposedBy: idea.proposedBy,
+    title,
     placeName,
     placeAddress,
     memberHomeId:

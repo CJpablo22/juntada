@@ -155,6 +155,7 @@ type AppContextValue = {
   setRsvp: (ideaId: string, status: RsvpStatus) => void;
   addPlanOption: (input: {
     ideaId: string;
+    title?: string;
     placeName?: string;
     placeAddress?: string;
     memberHomeId?: string;
@@ -1086,6 +1087,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addPlanOption = useCallback(
     async (input: {
       ideaId: string;
+      title?: string;
       placeName?: string;
       placeAddress?: string;
       memberHomeId?: string;
@@ -1109,16 +1111,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
           error: "Ya propusiste una opción. Sacala si querés cambiar.",
         };
       }
+      const title = input.title?.trim() || undefined;
       const placeName = input.placeName?.trim() || undefined;
       const placeAddress = input.placeAddress?.trim() || undefined;
       const scheduledDate = input.scheduledDate?.trim() || undefined;
       const scheduledTime = input.scheduledTime?.trim() || undefined;
-      if (!placeName && !placeAddress && !scheduledDate && !scheduledTime) {
-        return { ok: false, error: "Poné un lugar o una fecha/hora." };
+      if (
+        !title &&
+        !placeName &&
+        !placeAddress &&
+        !scheduledDate &&
+        !scheduledTime
+      ) {
+        return {
+          ok: false,
+          error: "Poné qué (título), un lugar o una fecha/hora.",
+        };
       }
       const option: PlanOption = {
         id: cloudConfigured ? newCloudId() : createId("opt"),
         proposedBy: uid,
+        title,
         placeName,
         placeAddress,
         memberHomeId: input.memberHomeId?.trim() || undefined,
@@ -1157,7 +1170,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }));
           return {
             ok: false,
-            error: "No se pudo guardar la opción. ¿Corriste el SQL 021?",
+            error:
+              "No se pudo guardar la opción. ¿Corriste SQL 021 y 022 en Supabase?",
           };
         }
         setState((prev) => ({
@@ -1173,7 +1187,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         groupId: idea.groupId,
         eventType: "generic",
         title: `Nueva opción · ${idea.title}`,
-        body: `${who} propuso otro lugar o horario. Tocá para votar.`,
+        body: `${who} propuso otra opción (qué, dónde o cuándo). Tocá para votar.`,
         payload: { ideaId: idea.id, groupId: idea.groupId },
       });
       return { ok: true };
@@ -1279,6 +1293,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         i.id === ideaId
           ? {
               ...i,
+              title: win.title?.trim() || i.title,
               places: places.length ? places : i.places,
               address: places[0]?.address || i.address,
               scheduledDate: win.scheduledDate ?? i.scheduledDate,
@@ -1288,6 +1303,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
       if (cloudConfigured) {
         void cloudUpdateIdea(createSupabaseBrowserClient(), ideaId, {
+          title: win.title?.trim() || undefined,
           places: places.length ? places : undefined,
           address: places[0]?.address ?? null,
           scheduled_date: win.scheduledDate ?? null,
@@ -1305,6 +1321,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const setIdeaTiming = useCallback((ideaId: string, timing: IdeaTiming) => {
     setState((prev) => {
+      const uid = prev.currentUserId;
+      const idea = prev.ideas.find((i) => i.id === ideaId);
+      // Solo quien propuso mueve Catálogo ↔ Pronto
+      if (!idea || !uid || idea.proposedBy !== uid) return prev;
       const nextIdeas = prev.ideas.map((i) =>
         i.id === ideaId
           ? {
@@ -1473,6 +1493,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               timing: "soon",
               ...(win
                 ? {
+                    title: win.title?.trim() || i.title,
                     places: winPlaces.length ? winPlaces : i.places,
                     address: winPlaces[0]?.address || i.address,
                     scheduledDate: win.scheduledDate ?? i.scheduledDate,
@@ -1504,6 +1525,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             timing: i.timing,
           };
           if (i.id === ideaId && win) {
+            if (win.title?.trim()) patch.title = win.title.trim();
             if (winPlaces.length) patch.places = winPlaces;
             patch.address = winPlaces[0]?.address ?? null;
             patch.scheduled_date = win.scheduledDate ?? null;

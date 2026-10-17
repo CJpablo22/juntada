@@ -60,6 +60,7 @@ import {
   type MovieVenue,
   type User,
 } from "@/lib/types";
+import { loadBrainstorm, saveBrainstorm } from "@/lib/brainstorm";
 import { parseImportLink } from "@/lib/import-link";
 import { isMapsLink } from "@/lib/maps";
 import { ideaUsesOnlyMemberHomes, memberHomePlace } from "@/lib/places";
@@ -93,6 +94,7 @@ export default function GroupPage() {
   const [mgmtError, setMgmtError] = useState("");
   const [mgmtBusy, setMgmtBusy] = useState(false);
   const [captainMsg, setCaptainMsg] = useState("");
+  const [brainstorm, setBrainstorm] = useState(false);
 
   const group = state.groups.find((g) => g.id === params.groupId);
   const isOwner = Boolean(
@@ -197,6 +199,7 @@ export default function GroupPage() {
     if (!group) return;
     if (soonCount > 0) setShelf("soon");
     else setShelf("catalog");
+    setBrainstorm(loadBrainstorm(group.id));
     // solo al montar / cambiar de grupo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group?.id]);
@@ -250,7 +253,7 @@ export default function GroupPage() {
               title: "Nada en Pronto todavía",
               action: "Ver catálogo",
               onClick: () => setShelf("catalog"),
-              hint: "Abrí una idea del catálogo y pasala a Pronto para decidir.",
+              hint: "Quien propuso cada idea la pasa a Pronto. El resto propone alternativas adentro.",
             }
           : {
               title: "Este grupo está vacío",
@@ -514,23 +517,30 @@ export default function GroupPage() {
 
 
       {nextStep ? (
-        <section className="surface-panel flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-          <div className="min-w-0">
+        <section className="surface-panel flex flex-col gap-3 p-3.5 lg:flex-row lg:items-center lg:justify-between lg:p-4">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
               Siguiente paso
             </p>
-            <p className="mt-1 font-semibold text-[var(--ink)]">{nextStep.title}</p>
-            <p className="mt-1 text-sm text-[var(--mute)]">{nextStep.hint}</p>
+            <p className="mt-1 font-semibold text-[var(--ink)] break-words">
+              {nextStep.title}
+            </p>
+            <p className="mt-1 text-sm text-[var(--mute)] break-words">
+              {nextStep.hint}
+            </p>
           </div>
           {"href" in nextStep && nextStep.href ? (
-            <Link href={nextStep.href} className="btn-primary w-full sm:w-auto sm:shrink-0">
+            <Link
+              href={nextStep.href}
+              className="btn-primary w-full shrink-0 lg:w-auto"
+            >
               {nextStep.action}
               <ArrowRight className="size-4" />
             </Link>
           ) : (
             <button
               type="button"
-              className="btn-primary w-full sm:w-auto sm:shrink-0"
+              className="btn-primary w-full shrink-0 lg:w-auto"
               onClick={nextStep.onClick}
             >
               {nextStep.action}
@@ -540,7 +550,7 @@ export default function GroupPage() {
         </section>
       ) : null}
 
-      <section className="h-scroll sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible">
+      <section className="h-scroll md:grid md:grid-cols-3 md:gap-2 md:overflow-visible">
         {(
           [
             {
@@ -706,8 +716,8 @@ export default function GroupPage() {
       ) : null}
 
       <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
             <h2 className="text-lg font-semibold text-[var(--ink)]">
               {shelf === "catalog"
                 ? "Ideas guardadas"
@@ -715,35 +725,68 @@ export default function GroupPage() {
                   ? "Para decidir"
                   : "Ya hechas"}
             </h2>
-            <p className="text-sm text-[var(--mute)]">
+            <p className="text-sm text-[var(--mute)] break-words">
               {shelf === "catalog"
-                ? "Tocá una idea para verla o pasarla a Pronto."
+                ? "Tocá una idea para ver opciones. Solo quien la creó la pasa a Pronto."
                 : shelf === "soon"
                   ? "Tocá una idea para votar en secreto."
                   : "Recuerdos y valoraciones del grupo."}
             </p>
           </div>
           {shelf !== "done" ? (
-            <NewIdeaDialog
-              open={openIdea}
-              onOpenChange={setOpenIdea}
-              members={members.filter(Boolean) as User[]}
-              currentUser={currentUser}
-              defaultTiming={shelf === "soon" ? "soon" : "catalog"}
-              onSubmit={async (data) => {
-                const result = await addIdea({ groupId: group.id, ...data });
-                if (!result.synced || !result.id) {
-                  throw new Error(
-                    result.error ??
-                      "No se pudo guardar en la nube. Revisá el aviso arriba.",
-                  );
-                }
-                setOpenIdea(false);
-                router.push(`/app/group/${group.id}/idea/${result.id}`);
-              }}
-            />
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+              <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[var(--ink)]">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--pop)]"
+                  checked={brainstorm}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setBrainstorm(on);
+                    saveBrainstorm(group.id, on);
+                  }}
+                />
+                Lluvia de ideas
+              </label>
+              <NewIdeaDialog
+                open={openIdea}
+                onOpenChange={setOpenIdea}
+                members={members.filter(Boolean) as User[]}
+                currentUser={currentUser}
+                defaultTiming={shelf === "soon" ? "soon" : "catalog"}
+                onSubmit={async (data) => {
+                  const result = await addIdea({ groupId: group.id, ...data });
+                  if (!result.synced || !result.id) {
+                    throw new Error(
+                      result.error ??
+                        "No se pudo guardar en la nube. Revisá el aviso arriba.",
+                    );
+                  }
+                  setOpenIdea(false);
+                  router.push(`/app/group/${group.id}/idea/${result.id}`);
+                }}
+              />
+            </div>
           ) : null}
         </div>
+
+        {shelf !== "done" ? (
+          <p className="text-sm text-[var(--mute)] break-words border border-dashed border-[var(--line)] bg-[var(--wash)] px-3 py-2">
+            {brainstorm ? (
+              <>
+                <strong className="text-[var(--ink)]">Lluvia activa:</strong>{" "}
+                sumá ideas sueltas con «Proponer idea».
+              </>
+            ) : (
+              <>
+                Si es <strong className="text-[var(--ink)]">otra serie, día o lugar</strong>{" "}
+                de algo que ya está, abrí esa idea y usá «Proponer otra» — no
+                crees una idea nueva. Activá «Lluvia de ideas» solo para tirar
+                ideas sueltas.
+              </>
+            )}
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap gap-2 text-sm">
           <button
@@ -924,7 +967,9 @@ export default function GroupPage() {
                         </span>
                       </div>
                     </button>
-                    {idea.timing === "catalog" && idea.status !== "done" ? (
+                    {idea.timing === "catalog" &&
+                    idea.status !== "done" &&
+                    idea.proposedBy === currentUser.id ? (
                       <Button
                         variant="outline"
                         size="sm"

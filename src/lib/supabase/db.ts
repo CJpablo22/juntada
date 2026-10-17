@@ -653,6 +653,7 @@ export async function cloudAddPlanOption(
     p_idea_id: ideaId,
     p_option: {
       id: option.id,
+      title: option.title ?? "",
       placeName: option.placeName ?? "",
       placeAddress: option.placeAddress ?? "",
       memberHomeId: option.memberHomeId ?? "",

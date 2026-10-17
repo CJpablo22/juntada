@@ -145,10 +145,12 @@ export type Idea = {
 
 export type RsvpStatus = "yes" | "no";
 
-/** Una propuesta concreta de dónde / cuándo para una idea. */
+/** Una propuesta concreta: qué / dónde / cuándo (misma idea, no otra nueva). */
 export type PlanOption = {
   id: string;
   proposedBy: string;
+  /** Alternativa de contenido: otra serie, peli, sitio… */
+  title?: string;
   placeName?: string;
   placeAddress?: string;
   /** Si es casa de un miembro */

@@ -131,14 +131,24 @@ export default function IdeaDetailPage() {
     if (idea.proposedBy !== currentUser.id) return;
     if ((idea.planOptions ?? []).length > 0) return;
     if (idea.status === "done" || idea.status === "archived") return;
+    const title = idea.title?.trim();
     const place = idea.places?.[0];
     const placeName = place?.name?.trim();
     const placeAddress = place?.address?.trim() || idea.address?.trim();
     const scheduledDate = idea.scheduledDate?.trim();
     const scheduledTime = idea.scheduledTime?.trim();
-    if (!placeName && !placeAddress && !scheduledDate && !scheduledTime) return;
+    if (
+      !title &&
+      !placeName &&
+      !placeAddress &&
+      !scheduledDate &&
+      !scheduledTime
+    ) {
+      return;
+    }
     void addPlanOption({
       ideaId: idea.id,
+      title,
       placeName,
       placeAddress,
       memberHomeId:
@@ -151,6 +161,7 @@ export default function IdeaDetailPage() {
     idea?.proposedBy,
     idea?.planOptions,
     idea?.status,
+    idea?.title,
     idea?.places,
     idea?.address,
     idea?.scheduledDate,
@@ -351,9 +362,11 @@ export default function IdeaDetailPage() {
           members={optionMembers}
           currentUserId={currentUser.id}
           ideaProposerId={idea.proposedBy}
+          ideaType={idea.type}
           canEdit={canTouchOptions}
           currentPlaceHint={
             [
+              idea.title,
               idea.places?.[0]
                 ? formatPlace(idea.places[0])
                 : idea.address,
@@ -548,36 +561,59 @@ export default function IdeaDetailPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--mute)]">
             Paso 1 · ¿Dónde la ponen?
           </p>
-          <p className="text-sm text-[var(--mute)]">
-            <strong className="text-[var(--ink)]">Catálogo</strong> = solo
-            guardar. <strong className="text-[var(--ink)]">Pronto</strong> =
-            votar y decidir.
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Button
-              variant={idea.timing === "catalog" ? "default" : "outline"}
-              className="justify-start"
-              onClick={() => setIdeaTiming(idea.id, "catalog")}
-            >
-              <BookmarkPlus className="size-4" />
-              Catálogo (guardar)
-            </Button>
-            <Button
-              variant={idea.timing === "soon" ? "secondary" : "outline"}
-              className="justify-start"
-              onClick={() => setIdeaTiming(idea.id, "soon")}
-            >
-              <Zap className="size-4" />
-              Pronto (decidir)
-            </Button>
-          </div>
+          {isProposer ? (
+            <>
+              <p className="text-sm text-[var(--mute)] break-words">
+                <strong className="text-[var(--ink)]">Catálogo</strong> = solo
+                guardar. <strong className="text-[var(--ink)]">Pronto</strong> =
+                votar y decidir. Solo vos podés moverla.
+              </p>
+              <div className="grid gap-2 md:grid-cols-2">
+                <Button
+                  variant={idea.timing === "catalog" ? "default" : "outline"}
+                  className="justify-start"
+                  onClick={() => setIdeaTiming(idea.id, "catalog")}
+                >
+                  <BookmarkPlus className="size-4" />
+                  Catálogo (guardar)
+                </Button>
+                <Button
+                  variant={idea.timing === "soon" ? "secondary" : "outline"}
+                  className="justify-start"
+                  onClick={() => setIdeaTiming(idea.id, "soon")}
+                >
+                  <Zap className="size-4" />
+                  Pronto (decidir)
+                </Button>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-[var(--mute)] break-words">
+              Está en{" "}
+              <strong className="text-[var(--ink)]">
+                {idea.timing === "soon" ? "Pronto" : "Catálogo"}
+              </strong>
+              . Solo quien la propuso puede moverla. Vos podés proponer
+              alternativas arriba (otra serie, día o lugar).
+            </p>
+          )}
         </section>
       ) : null}
 
       {inCatalog ? (
-        <section className="border border-dashed border-[var(--line)] bg-[var(--wash)] p-4 text-sm text-[var(--mute)]">
-          Está en el catálogo: nadie vota todavía. Cuando quieran decidirla,
-          pasala a <strong className="text-[var(--ink)]">Pronto</strong>.
+        <section className="border border-dashed border-[var(--line)] bg-[var(--wash)] p-4 text-sm text-[var(--mute)] break-words">
+          {isProposer ? (
+            <>
+              En catálogo: todavía no se vota 1–5. Cuando quieras decidir,
+              pasala a <strong className="text-[var(--ink)]">Pronto</strong>.
+              Mientras, el grupo puede proponer alternativas.
+            </>
+          ) : (
+            <>
+              En catálogo (la movió {proposer?.name ?? "quien la propuso"}).
+              Podés proponer otra opción arriba; no podés pasarla a Pronto.
+            </>
+          )}
         </section>
       ) : null}
 

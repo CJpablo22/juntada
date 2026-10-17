@@ -241,7 +241,8 @@
     gap: 0.65rem;
   }
 
-  @media (min-width: 640px) {
+  /* iPad (~768–1024): columnas; desktop ancho recién en lg */
+  @media (min-width: 1024px) {
     .btn-stack {
       width: auto;
       flex-direction: row;
@@ -256,7 +257,7 @@
     width: 100%;
   }
 
-  @media (min-width: 640px) {
+  @media (min-width: 1024px) {
     .btn-stack .btn-primary,
     .btn-stack .btn-ghost,
     .btn-stack [data-slot="button"] {
@@ -269,13 +270,15 @@
     max-width: 64rem;
     margin-inline: auto;
     padding-inline: 1rem;
-    padding-block: 1rem 5.5rem;
+    /* Bottom nav visible hasta lg (incluye iPad portrait) */
+    padding-block: 1rem 5.75rem;
+    overflow-x: clip;
   }
 
-  @media (min-width: 640px) {
+  @media (min-width: 768px) {
     .page-shell {
       padding-inline: 1.25rem;
-      padding-block: 1.5rem 2rem;
+      padding-block: 1.35rem 5.75rem;
     }
   }
 
